@@ -1,0 +1,623 @@
+Write Camera REG address = 0x301A data = 0x0059
+Write Camera REG address = 0x3000 data = 0x0000
+Camera_API : CAMERA_Base_Config
+CAMERA_Base_Config : read address = 0x3000 data = 0x2604
+CAMERA_Base_Config : read address = 0x300E data = 0x2000
+CAMERA_Base_Config : read address = 0x30F0 data = 0x1208
+CAMERA_Base_Config : read address = 0x3072 data = 0x8
+Write 0x301A=0x59
+Write Camera REG address = 0x301A data = 0x0059
+Write 0x301A=0x59
+Failed to write . Error Code = 0x4A
+Write Camera REG address = 0x301A data = 0x0059
+Sensor read retry = 1
+Write 0x301A=0x58
+Write Camera REG address = 0x301A data = 0x0058
+Write 0x302A=0x4
+Write Camera REG address = 0x302A data = 0x0004
+Write 0x302C=0x2
+Write Camera REG address = 0x302C data = 0x0002
+Write 0x302E=0x1
+Write Camera REG address = 0x302E data = 0x0001
+Write 0x3030=0x20
+Write Camera REG address = 0x3030 data = 0x0020
+Write 0x3036=0x8
+Write Camera REG address = 0x3036 data = 0x0008
+Write 0x3038=0x1
+Write Camera REG address = 0x3038 data = 0x0001
+Write 0x31AC=0x808
+Write Camera REG address = 0x31AC data = 0x0808
+Write 0x31AE=0x202
+Write Camera REG address = 0x31AE data = 0x0202
+Write 0x31B0=0x28
+Write Camera REG address = 0x31B0 data = 0x0028
+Write 0x31B2=0xE
+Write Camera REG address = 0x31B2 data = 0x000E
+Write 0x31B4=0x2743
+Write Camera REG address = 0x31B4 data = 0x2743
+Write 0x31B6=0x114E
+Write Camera REG address = 0x31B6 data = 0x114E
+Write 0x31B8=0x2049
+Write Camera REG address = 0x31B8 data = 0x2049
+Write 0x31BA=0x186
+Write Camera REG address = 0x31BA data = 0x0186
+Write 0x31BC=0x8005
+Write Camera REG address = 0x31BC data = 0x8005
+Write 0x31BE=0x2003
+Write Camera REG address = 0x31BE data = 0x2003
+Write 0x3002=0x216
+Write Camera REG address = 0x3002 data = 0x0216
+Write 0x3004=0x346
+Write Camera REG address = 0x3004 data = 0x0346
+Write 0x3006=0x3F5
+Write Camera REG address = 0x3006 data = 0x03F5
+Write 0x3008=0x5C5
+Write Camera REG address = 0x3008 data = 0x05C5
+Write 0x300A=0x508
+Write Camera REG address = 0x300A data = 0x0508
+Write 0x300C=0x4DA
+Write Camera REG address = 0x300C data = 0x04DA
+Write 0x3012=0x304
+Write Camera REG address = 0x3012 data = 0x0304
+Write 0x3014=0x0
+Write Camera REG address = 0x3014 data = 0x0000
+Write 0x30A2=0x1
+Write Camera REG address = 0x30A2 data = 0x0001
+Write 0x30A6=0x1
+Write Camera REG address = 0x30A6 data = 0x0001
+Write 0x308C=0x216
+Write Camera REG address = 0x308C data = 0x0216
+Write 0x308A=0x346
+Write Camera REG address = 0x308A data = 0x0346
+Write 0x3090=0x3F5
+Write Camera REG address = 0x3090 data = 0x03F5
+Write 0x308E=0x5C5
+Write Camera REG address = 0x308E data = 0x05C5
+Write 0x30AA=0x508
+Write Camera REG address = 0x30AA data = 0x0508
+Write 0x303E=0x4DA
+Write Camera REG address = 0x303E data = 0x04DA
+Write 0x3016=0x304
+Write Camera REG address = 0x3016 data = 0x0304
+Write 0x3018=0x0
+Write Camera REG address = 0x3018 data = 0x0000
+Write 0x30AE=0x1
+Write Camera REG address = 0x30AE data = 0x0001
+Write 0x30A8=0x1
+Write Camera REG address = 0x30A8 data = 0x0001
+Write 0x3040=0x0
+Write Camera REG address = 0x3040 data = 0x0000
+Write 0x3042=0x130
+Write Camera REG address = 0x3042 data = 0x0130
+Write 0x30BA=0x2C
+Write Camera REG address = 0x30BA data = 0x002C
+Write 0x31E0=0x303
+Write Camera REG address = 0x31E0 data = 0x0303
+Write 0x3064=0x1802
+Write Camera REG address = 0x3064 data = 0x1802
+Write 0x3ED2=0x146
+Write Camera REG address = 0x3ED2 data = 0x0146
+Write 0x3ED4=0x8F6C
+Write Camera REG address = 0x3ED4 data = 0x8F6C
+Write 0x3ED6=0x66CC
+Write Camera REG address = 0x3ED6 data = 0x66CC
+Write 0x3ED8=0x8C42
+Write Camera REG address = 0x3ED8 data = 0x8C42
+Write 0x3EDA=0x88BC
+Write Camera REG address = 0x3EDA data = 0x88BC
+Write 0x3EDC=0xAA63
+Write Camera REG address = 0x3EDC data = 0xAA63
+Write 0x305E=0xA0
+Write Camera REG address = 0x305E data = 0x00A0
+Write 0x3ED2=0x146
+Write Camera REG address = 0x3ED2 data = 0x0146
+Write 0x3EDA=0x88BC
+Write Camera REG address = 0x3EDA data = 0x88BC
+Write 0x3EDC=0xAA63
+Write Camera REG address = 0x3EDC data = 0xAA63
+Write 0x305E=0xA0
+Write Camera REG address = 0x305E data = 0x00A0
+CAMERA_Auto_Focus_Config ================
+
+bRType = 0x1, bRequest = 0xB, wValue = 0x0, wIndex = 0x1, wLength= 0x0
+AplnStop:ChannelReset Err = 0x40
+bRType = 0xA1, bRequest = 0x87, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0x21, bRequest = 0x1, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0xA1, bRequest = 0x81, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+Firmware Version: 1.3.131.308
+
+
+*************************
+*** when Cheese opens ***
+*************************
+
+bRType = 0x81, bRequest = 0x0, wValue = 0x0, wIndex = 0x0, wLength= 0x2
+bRType = 0x21, bRequest = 0x1, wValue = 0x200, wIndex = 0x1, wLength= 0x1A
+esSetCameraResolution == 1 ==
+CAMERA_1080P_config =============
+Write 0x301A=0x59
+Write Camera REG address = 0x301A data = 0x0059
+Write 0x31AE=0x202
+Write Camera REG address = 0x31AE data = 0x0202
+Write 0x3004=0x6
+Write Camera REG address = 0x3004 data = 0x0006
+Write 0x3008=0x905
+Write Camera REG address = 0x3008 data = 0x0905
+Write 0x3002=0x78
+Write Camera REG address = 0x3002 data = 0x0078
+Write 0x3006=0x587
+Write Camera REG address = 0x3006 data = 0x0587
+Write 0x30A2=0x1
+Write Camera REG address = 0x30A2 data = 0x0001
+Write 0x30A6=0x1
+Write Camera REG address = 0x30A6 data = 0x0001
+Write 0x3040=0x0
+Write Camera REG address = 0x3040 data = 0x0000
+Write 0x300C=0x4E0
+Write Camera REG address = 0x300C data = 0x04E0
+Write 0x300A=0x6AD
+Write Camera REG address = 0x300A data = 0x06AD
+Write 0x3014=0x0
+Write Camera REG address = 0x3014 data = 0x0000
+Write 0x3012=0x545
+Write Camera REG address = 0x3012 data = 0x0545
+Write 0x3042=0x0
+Write Camera REG address = 0x3042 data = 0x0000
+Write 0x30BA=0x2C
+Write Camera REG address = 0x30BA data = 0x002C
+Write 0x301A=0x58
+Write Camera REG address = 0x301A data = 0x0058
+CAMERA_Base_Config : read address = 0x3000 data = 0x2604
+CAMERA_Base_Config : read address = 0x3002 data = 0x78
+CAMERA_Base_Config : read address = 0x3004 data = 0x6
+CAMERA_Base_Config : read address = 0x3006 data = 0x587
+CAMERA_Base_Config : read address = 0x3008 data = 0x905
+CAMERA_Base_Config : read address = 0x300A data = 0x6AD
+CAMERA_Base_Config : read address = 0x300C data = 0x4E0
+CAMERA_Base_Config : read address = 0x300E data = 0x2000
+CAMERA_Base_Config : read address = 0x3010 data = 0xBEEF
+CAMERA_Base_Config : read address = 0x3012 data = 0x545
+CAMERA_Base_Config : read address = 0x3014 data = 0x0
+CAMERA_Base_Config : read address = 0x3016 data = 0x10
+CAMERA_Base_Config : read address = 0x3018 data = 0x0
+CAMERA_Base_Config : read address = 0x301A data = 0x58
+CAMERA_Base_Config : read address = 0x301C data = 0x0
+CAMERA_Base_Config : read address = 0x301E data = 0xA8
+CAMERA_Base_Config : read address = 0x3020 data = 0x0
+CAMERA_Base_Config : read address = 0x3022 data = 0x0
+CAMERA_Base_Config : read address = 0x3024 data = 0x0
+CAMERA_Base_Config : read address = 0x3026 data = 0x6500
+CAMERA_Base_Config : read address = 0x3028 data = 0x10
+CAMERA_Base_Config : read address = 0x302A data = 0x6
+CAMERA_Base_Config : read address = 0x302C data = 0x1
+CAMERA_Base_Config : read address = 0x302E data = 0x4
+CAMERA_Base_Config : read address = 0x3030 data = 0x62
+CAMERA_Base_Config : read address = 0x3032 data = 0x0
+CAMERA_Base_Config : read address = 0x3034 data = 0x0
+CAMERA_Base_Config : read address = 0x3036 data = 0xC
+CAMERA_Base_Config : read address = 0x3038 data = 0x1
+CAMERA_Base_Config : read address = 0x303A data = 0xFFFF
+CAMERA_Base_Config : read address = 0x303C data = 0x2
+CAMERA_Base_Config : read address = 0x303E data = 0x4E0
+CAMERA_Base_Config : read address = 0x3040 data = 0x0
+CAMERA_Base_Config : read address = 0x3042 data = 0x0
+CAMERA_Base_Config : read address = 0x3044 data = 0x400
+CAMERA_Base_Config : read address = 0x3046 data = 0x0
+CAMERA_Base_Config : read address = 0x3048 data = 0x100
+CAMERA_Base_Config : read address = 0x304A data = 0x60
+CAMERA_Base_Config : read address = 0x304C data = 0x200
+CAMERA_Base_Config : read address = 0x304E data = 0x0
+CAMERA_Base_Config : read address = 0x3050 data = 0x2F00
+CAMERA_Base_Config : read address = 0x3052 data = 0xA174
+CAMERA_Base_Config : read address = 0x3054 data = 0x0
+CAMERA_Base_Config : read address = 0x3056 data = 0x80
+CAMERA_Base_Config : read address = 0x3058 data = 0x80
+CAMERA_Base_Config : read address = 0x305A data = 0x80
+CAMERA_Base_Config : read address = 0x305C data = 0x80
+CAMERA_Base_Config : read address = 0x305E data = 0x80
+CAMERA_Base_Config : read address = 0x3060 data = 0x0
+CAMERA_Base_Config : read address = 0x3062 data = 0x333
+CAMERA_Base_Config : read address = 0x3064 data = 0x1902
+CAMERA_Base_Config : read address = 0x3066 data = 0x0
+CAMERA_Base_Config : read address = 0x3068 data = 0x0
+CAMERA_Base_Config : read address = 0x306A data = 0x0
+CAMERA_Base_Config : read address = 0x306C data = 0x1000
+CAMERA_Base_Config : read address = 0x306E data = 0x9010
+CAMERA_Base_Config : read address = 0x3070 data = 0x0
+CAMERA_Base_Config : read address = 0x3072 data = 0x8
+CAMERA_Base_Config : read address = 0x3074 data = 0x0
+CAMERA_Base_Config : read address = 0x3076 data = 0x1
+CAMERA_Base_Config : read address = 0x3078 data = 0x0
+CAMERA_Base_Config : read address = 0x307A data = 0x0
+CAMERA_Base_Config : read address = 0x307C data = 0x0
+CAMERA_Base_Config : read address = 0x307E data = 0x0
+CAMERA_Base_Config : read address = 0x3080 data = 0x0
+CAMERA_Base_Config : read address = 0x3082 data = 0x1
+CAMERA_Base_Config : read address = 0x3084 data = 0x0
+CAMERA_Base_Config : read address = 0x3086 data = 0x7F00
+CAMERA_Base_Config : read address = 0x3088 data = 0x813C
+CAMERA_Base_Config : read address = 0x308A data = 0x86
+CAMERA_Base_Config : read address = 0x308C data = 0x4
+CAMERA_Base_Config : read address = 0x308E data = 0x885
+CAMERA_Base_Config : read address = 0x3090 data = 0x603
+CAMERA_Base_Config : read address = 0x3092 data = 0xF
+CAMERA_Base_Config : read address = 0x3094 data = 0x0
+CAMERA_Base_Config : read address = 0x3096 data = 0x80
+CAMERA_Base_Config : read address = 0x3098 data = 0x80
+CAMERA_Base_Config : read address = 0x309A data = 0x0
+CAMERA_Base_Config : read address = 0x309C data = 0x0
+CAMERA_Base_Config : read address = 0x309E data = 0x0
+CAMERA_Base_Config : read address = 0x30A0 data = 0x1
+CAMERA_Base_Config : read address = 0x30A2 data = 0x1
+CAMERA_Base_Config : read address = 0x30A4 data = 0x1
+CAMERA_Base_Config : read address = 0x30A6 data = 0x1
+CAMERA_Base_Config : read address = 0x30A8 data = 0x1
+CAMERA_Base_Config : read address = 0x30AA data = 0x60C
+CAMERA_Base_Config : read address = 0x30AC data = 0x0
+CAMERA_Base_Config : read address = 0x30AE data = 0x5
+CAMERA_Base_Config : read address = 0x30B0 data = 0x8000
+CAMERA_Base_Config : read address = 0x30B2 data = 0x0
+CAMERA_Base_Config : read address = 0x30B4 data = 0x0
+CAMERA_Base_Config : read address = 0x30B6 data = 0x0
+CAMERA_Base_Config : read address = 0x30B8 data = 0x0
+CAMERA_Base_Config : read address = 0x30BA data = 0x2C
+CAMERA_Base_Config : read address = 0x30BC data = 0x80
+CAMERA_Base_Config : read address = 0x30BE data = 0x80
+CAMERA_Base_Config : read address = 0x30C0 data = 0x80
+CAMERA_Base_Config : read address = 0x30C2 data = 0x80
+CAMERA_Base_Config : read address = 0x30C4 data = 0x80
+CAMERA_Base_Config : read address = 0x30C6 data = 0x0
+CAMERA_Base_Config : read address = 0x30C8 data = 0x0
+CAMERA_Base_Config : read address = 0x30CA data = 0x0
+CAMERA_Base_Config : read address = 0x30CC data = 0x0
+CAMERA_Base_Config : read address = 0x30CE data = 0x0
+CAMERA_Base_Config : read address = 0x30D0 data = 0x5
+CAMERA_Base_Config : read address = 0x30D2 data = 0x4
+CAMERA_Base_Config : read address = 0x30D4 data = 0x0
+CAMERA_Base_Config : read address = 0x30D6 data = 0x0
+CAMERA_Base_Config : read address = 0x30D8 data = 0x0
+CAMERA_Base_Config : read address = 0x30DA data = 0xA
+CAMERA_Base_Config : read address = 0x30DC data = 0x0
+CAMERA_Base_Config : read address = 0x30DE data = 0x10C0
+CAMERA_Base_Config : read address = 0x30E0 data = 0x1208
+CAMERA_Base_Config : read address = 0x30E2 data = 0xA000
+CAMERA_Base_Config : read address = 0x30E4 data = 0x1200
+CAMERA_Base_Config : read address = 0x30E6 data = 0x4000
+CAMERA_Base_Config : read address = 0x30E8 data = 0x1210
+CAMERA_Base_Config : read address = 0x30EA data = 0x1110
+CAMERA_Base_Config : read address = 0x30EC data = 0x0
+CAMERA_Base_Config : read address = 0x30EE data = 0x10C0
+CAMERA_Base_Config : read address = 0x30F0 data = 0x1208
+CAMERA_Base_Config : read address = 0x30F2 data = 0x1200
+CAMERA_Base_Config : read address = 0x30F4 data = 0xA000
+CAMERA_Base_Config : read address = 0x30F6 data = 0x1210
+CAMERA_Base_Config : read address = 0x30F8 data = 0x1110
+CAMERA_Base_Config : read address = 0x30FA data = 0x0
+CAMERA_Base_Config : read address = 0x30FC data = 0x0
+CAMERA_Base_Config : read address = 0x30FE data = 0x80
+CAMERA_Base_Config : read address = 0x3100 data = 0x0
+CAMERA_Base_Config : read address = 0x3102 data = 0x0
+CAMERA_Base_Config : read address = 0x3104 data = 0x0
+CAMERA_Base_Config : read address = 0x3106 data = 0x0
+CAMERA_Base_Config : read address = 0x3108 data = 0x0
+CAMERA_Base_Config : read address = 0x310A data = 0x0
+CAMERA_Base_Config : read address = 0x310C data = 0x0
+CAMERA_Base_Config : read address = 0x310E data = 0x0
+CAMERA_Base_Config : read address = 0x3110 data = 0x0
+CAMERA_Base_Config : read address = 0x3112 data = 0x0
+CAMERA_Base_Config : read address = 0x3114 data = 0x0
+CAMERA_Base_Config : read address = 0x3116 data = 0x0
+CAMERA_Base_Config : read address = 0x3118 data = 0x0
+CAMERA_Base_Config : read address = 0x311A data = 0x0
+CAMERA_Base_Config : read address = 0x311C data = 0x0
+CAMERA_Base_Config : read address = 0x311E data = 0x0
+CAMERA_Base_Config : read address = 0x3120 data = 0x0
+CAMERA_Base_Config : read address = 0x3122 data = 0x0
+CAMERA_Base_Config : read address = 0x3124 data = 0x0
+CAMERA_Base_Config : read address = 0x3126 data = 0x0
+CAMERA_Base_Config : read address = 0x3128 data = 0x0
+CAMERA_Base_Config : read address = 0x312A data = 0x20
+CAMERA_Base_Config : read address = 0x312C data = 0x0
+CAMERA_Base_Config : read address = 0x312E data = 0x0
+CAMERA_Base_Config : read address = 0x3130 data = 0xF1F
+CAMERA_Base_Config : read address = 0x3132 data = 0xF1F
+CAMERA_Base_Config : read address = 0x3134 data = 0x1818
+CAMERA_Base_Config : read address = 0x3136 data = 0x3131
+CAMERA_Base_Config : read address = 0x3138 data = 0x4431
+CAMERA_Base_Config : read address = 0x313A data = 0x0
+CAMERA_Base_Config : read address = 0x313C data = 0x0
+CAMERA_Base_Config : read address = 0x313E data = 0x0
+CAMERA_Base_Config : read address = 0x3140 data = 0x0
+CAMERA_Base_Config : read address = 0x3142 data = 0x0
+CAMERA_Base_Config : read address = 0x3144 data = 0x0
+CAMERA_Base_Config : read address = 0x3146 data = 0x0
+CAMERA_Base_Config : read address = 0x3148 data = 0x0
+CAMERA_Base_Config : read address = 0x314A data = 0x0
+CAMERA_Base_Config : read address = 0x314C data = 0x0
+CAMERA_Base_Config : read address = 0x314E data = 0x0
+CAMERA_Base_Config : read address = 0x3150 data = 0x0
+CAMERA_Base_Config : read address = 0x3152 data = 0x0
+CAMERA_Base_Config : read address = 0x3154 data = 0x0
+CAMERA_Base_Config : read address = 0x3156 data = 0x0
+CAMERA_Base_Config : read address = 0x3158 data = 0x0
+CAMERA_Base_Config : read address = 0x315A data = 0x0
+CAMERA_Base_Config : read address = 0x315C data = 0x0
+CAMERA_Base_Config : read address = 0x315E data = 0x0
+CAMERA_Base_Config : read address = 0x3160 data = 0x0
+CAMERA_Base_Config : read address = 0x3162 data = 0x0
+CAMERA_Base_Config : read address = 0x3164 data = 0x0
+CAMERA_Base_Config : read address = 0x3166 data = 0x0
+CAMERA_Base_Config : read address = 0x3168 data = 0x0
+CAMERA_Base_Config : read address = 0x316A data = 0x0
+CAMERA_Base_Config : read address = 0x316C data = 0x0
+CAMERA_Base_Config : read address = 0x316E data = 0x0
+CAMERA_Base_Config : read address = 0x3170 data = 0x0
+CAMERA_Base_Config : read address = 0x3172 data = 0x0
+CAMERA_Base_Config : read address = 0x3174 data = 0x0
+CAMERA_Base_Config : read address = 0x3176 data = 0x80
+CAMERA_Base_Config : read address = 0x3178 data = 0x80
+CAMERA_Base_Config : read address = 0x317A data = 0x80
+CAMERA_Base_Config : read address = 0x317C data = 0x80
+CAMERA_Base_Config : read address = 0x317E data = 0x87FF
+CAMERA_Base_Config : read address = 0x3180 data = 0x8089
+CAMERA_Base_Config : read address = 0x3182 data = 0x0
+CAMERA_Base_Config : read address = 0x3184 data = 0x0
+CAMERA_Base_Config : read address = 0x3186 data = 0x0
+CAMERA_Base_Config : read address = 0x3188 data = 0x0
+CAMERA_Base_Config : read address = 0x318A data = 0x0
+CAMERA_Base_Config : read address = 0x318C data = 0x0
+CAMERA_Base_Config : read address = 0x318E data = 0x0
+CAMERA_Base_Config : read address = 0x3190 data = 0x0
+CAMERA_Base_Config : read address = 0x3192 data = 0x0
+CAMERA_Base_Config : read address = 0x3194 data = 0x0
+CAMERA_Base_Config : read address = 0x3196 data = 0x0
+CAMERA_Base_Config : read address = 0x3198 data = 0x0
+CAMERA_Base_Config : read address = 0x319A data = 0x0
+CAMERA_Base_Config : read address = 0x319C data = 0x0
+CAMERA_Base_Config : read address = 0x319E data = 0x0
+CAMERA_Base_Config : read address = 0x31A0 data = 0x0
+CAMERA_Base_Config : read address = 0x31A2 data = 0x0
+CAMERA_Base_Config : read address = 0x31A4 data = 0x0
+CAMERA_Base_Config : read address = 0x31A6 data = 0x0
+CAMERA_Base_Config : read address = 0x31A8 data = 0x0
+CAMERA_Base_Config : read address = 0x31AA data = 0x0
+CAMERA_Base_Config : read address = 0x31AC data = 0xC0C
+CAMERA_Base_Config : read address = 0x31AE data = 0x202
+CAMERA_Base_Config : read address = 0x31B0 data = 0x24
+CAMERA_Base_Config : read address = 0x31B2 data = 0xC
+CAMERA_Base_Config : read address = 0x31B4 data = 0x2643
+CAMERA_Base_Config : read address = 0x31B6 data = 0x114E
+CAMERA_Base_Config : read address = 0x31B8 data = 0x2048
+CAMERA_Base_Config : read address = 0x31BA data = 0x186
+CAMERA_Base_Config : read address = 0x31BC data = 0x8005
+CAMERA_Base_Config : read address = 0x31BE data = 0xC003
+CAMERA_Base_Config : read address = 0x31C0 data = 0x8000
+CAMERA_Base_Config : read address = 0x31C2 data = 0xFFFF
+CAMERA_Base_Config : read address = 0x31C4 data = 0xF555
+CAMERA_Base_Config : read address = 0x31C6 data = 0x8000
+CAMERA_Base_Config : read address = 0x31C8 data = 0x0
+CAMERA_Base_Config : read address = 0x31CA data = 0x0
+CAMERA_Base_Config : read address = 0x31CC data = 0x0
+CAMERA_Base_Config : read address = 0x31CE data = 0x0
+CAMERA_Base_Config : read address = 0x31D0 data = 0x0
+CAMERA_Base_Config : read address = 0x31D2 data = 0x0
+CAMERA_Base_Config : read address = 0x31D4 data = 0x0
+CAMERA_Base_Config : read address = 0x31D6 data = 0xD8B
+CAMERA_Base_Config : read address = 0x31D8 data = 0x0
+CAMERA_Base_Config : read address = 0x31DA data = 0x0
+CAMERA_Base_Config : read address = 0x31DC data = 0x0
+CAMERA_Base_Config : read address = 0x31DE data = 0x0
+CAMERA_Base_Config : read address = 0x31E0 data = 0x3
+CAMERA_Base_Config : read address = 0x31E2 data = 0x860
+CAMERA_Base_Config : read address = 0x31E4 data = 0x1870
+CAMERA_Base_Config : read address = 0x31E6 data = 0x8000
+CAMERA_Base_Config : read address = 0x31E8 data = 0x0
+CAMERA_Base_Config : read address = 0x31EA data = 0x0
+CAMERA_Base_Config : read address = 0x31EC data = 0x0
+CAMERA_Base_Config : read address = 0x31EE data = 0x0
+CAMERA_Base_Config : read address = 0x31F0 data = 0x0
+CAMERA_Base_Config : read address = 0x31F2 data = 0x0
+CAMERA_Base_Config : read address = 0x31F4 data = 0x0
+CAMERA_Base_Config : read address = 0x31F6 data = 0x0
+CAMERA_Base_Config : read address = 0x31F8 data = 0x0
+CAMERA_Base_Config : read address = 0x31FA data = 0x0
+CAMERA_Base_Config : read address = 0x31FC data = 0x3020
+CAMERA_Base_Config : read address = 0x31FE data = 0x32
+CAMERA_Base_Config : read address = 0x3ED0 data = 0xE4F6
+CAMERA_Base_Config : read address = 0x3ED2 data = 0x106
+CAMERA_Base_Config : read address = 0x3ED4 data = 0x8F6C
+CAMERA_Base_Config : read address = 0x3ED6 data = 0x66CC
+CAMERA_Base_Config : read address = 0x3ED8 data = 0x8C42
+CAMERA_Base_Config : read address = 0x3EDA data = 0x889B
+CAMERA_Base_Config : read address = 0x3EDC data = 0x8863
+CAMERA_Base_Config : read address = 0x3EDE data = 0xAA04
+CAMERA_Base_Config : read address = 0x3EE0 data = 0x15F0
+CAMERA_Base_Config : read address = 0x3EE6 data = 0x8C
+CAMERA_Base_Config : read address = 0x3EE8 data = 0x2024
+CAMERA_Base_Config : read address = 0x3EEA data = 0xFF1F
+CAMERA_Base_Config : read address = 0x3F06 data = 0x46A
+CAMERA_Base_Config : read address = 0x305E data = 0x80
+
+CAMERA_SetAutofocus ================
+
+CAMERA_GetSaturation ================  = 0x700, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetSaturation ================  = 0x700, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetSaturation ================  = 0x700, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetSaturation ================  = 0x700, wIndex = 0x200, wLength= 0x2
+
+CAMERA_SetHue ================  wValue = 0x600, wIndex = 0x200, wLength= 0x2
+
+CAMERA_SetHue ================  wValue = 0x600, wIndex = 0x200, wLength= 0x2
+
+CAMERA_SetHue ================  wValue = 0x600, wIndex = 0x200, wLength= 0x2
+
+CAMERA_SetHue ================  wValue = 0x600, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetAutoWhiteBalance ================ 00, wIndex = 0x200, wLength= 0x1
+
+CAMERA_GetAutoWhiteBalance ================ 00, wIndex = 0x200, wLength= 0x1
+
+CAMERA_GetWhiteBalance ================  0xA00, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetWhiteBalance ================  0xA00, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetWhiteBalance ================  0xA00, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetWhiteBalance ================  0xA00, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetSharpness ================ e = 0x800, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetSharpness ================ e = 0x800, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetSharpness ================ e = 0x800, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetSharpness ================ e = 0x800, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetBrightness ================  = 0x200, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetBrightness ================  = 0x200, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetBrightness ================  = 0x200, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetBrightness ================  = 0x200, wIndex = 0x200, wLength= 0x2
+
+CAMERA_GetContrast ================ ue = 0x300, wIndex = 0x200, wLength= 0x2
+Error count 1073775136
+frmErrCnt =  0
+crcErrCnt =  0
+mdlErrCnt =  0
+ctlErrCnt =  0
+eidErrCnt =  0
+recrErrCnt =  0
+unrcErrCnt =  0
+recSyncErrCnt =  0
+unrSyncErrCnt =  0
+
+CAMERA_GetContrast ================ ue = 0x300, wIndex = 0x200, wLength= 0x2
+Error count 1073775136
+frmErrCnt =  0
+crcErrCnt =  0
+mdlErrCnt =  0
+ctlErrCnt =  0
+eidErrCnt =  0
+recrErrCnt =  0
+unrcErrCnt =  0
+recSyncErrCnt =  0
+unrSyncErrCnt =  0
+
+CAMERA_GetContrast ================ ue = 0x300, wIndex = 0x200, wLength= 0x2
+Error count 1073775136
+frmErrCnt =  0
+crcErrCnt =  0
+mdlErrCnt =  0
+ctlErrCnt =  0
+eidErrCnt =  0
+recrErrCnt =  0
+unrcErrCnt =  0
+recSyncErrCnt =  0
+unrSyncErrCnt =  0
+
+CAMERA_GetContrast ================ ue = 0x300, wIndex = 0x200, wLength= 0x2
+Error count 1073775136
+frmErrCnt =  0
+crcErrCnt =  0
+mdlErrCnt =  0
+ctlErrCnt =  0
+eidErrCnt =  0
+recrErrCnt =  0
+unrcErrCnt =  0
+recSyncErrCnt =  0
+unrSyncErrCnt =  0
+
+CAMERA_GetAutoExposure ================  0x200, wIndex = 0x100, wLength= 0x1
+
+CAMERA_GetAutoExposure ================  0x200, wIndex = 0x100, wLength= 0x1
+
+CAMERA_GetAutoExposure ================  0x200, wIndex = 0x100, wLength= 0x1
+
+CAMERA_GetExposure ================ ue = 0x400, wIndex = 0x100, wLength= 0x4
+Error count 1073775136
+frmErrCnt =  0
+crcErrCnt =  0
+mdlErrCnt =  0
+ctlErrCnt =  0
+eidErrCnt =  0
+recrErrCnt =  0
+unrcErrCnt =  0
+recSyncErrCnt =  0
+unrSyncErrCnt =  0
+
+CAMERA_GetExposure ================ ue = 0x400, wIndex = 0x100, wLength= 0x4
+Error count 1073775136
+frmErrCnt =  0
+crcErrCnt =  0
+mdlErrCnt =  0
+ctlErrCnt =  0
+eidErrCnt =  0
+recrErrCnt =  0
+unrcErrCnt =  0
+recSyncErrCnt =  0
+unrSyncErrCnt =  0
+
+CAMERA_GetExposure ================ ue = 0x400, wIndex = 0x100, wLength= 0x4
+Error count 1073775136
+frmErrCnt =  0
+crcErrCnt =  0
+mdlErrCnt =  0
+ctlErrCnt =  0
+eidErrCnt =  0
+recrErrCnt =  0
+unrcErrCnt =  0
+recSyncErrCnt =  0
+unrSyncErrCnt =  0
+
+CAMERA_GetExposure ================ ue = 0x400, wIndex = 0x100, wLength= 0x4
+Error count 1073775136
+frmErrCnt =  0
+crcErrCnt =  0
+mdlErrCnt =  0
+ctlErrCnt =  0
+eidErrCnt =  0
+recrErrCnt =  0
+unrcErrCnt =  0
+recSyncErrCnt =  0
+unrSyncErrCnt =  0
+
+bRType = 0xA1, bRequest = 0x81, wValue = 0x800, wIndex = 0x100, wLength= 0x1
+CAMERA_GetAutofocus ================
+
+CAMERA_GetManualfocus ================ = 0x600, wIndex = 0x100, wLength= 0x2
+
+CAMERA_GetManualfocus ================ = 0x600, wIndex = 0x100, wLength= 0x2
+
+CAMERA_GetManualfocus ================ = 0x600, wIndex = 0x100, wLength= 0x2
+
+CAMERA_GetManualfocus ================ = 0x600, wIndex = 0x100, wLength= 0x2
+
+bRType = 0xA1, bRequest = 0x87, wValue = 0x800, wIndex = 0x100, wLength= 0x1
+CAMERA_GetAutofocus ================
+
+bRType = 0x21, bRequest = 0x1, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0xA1, bRequest = 0x82, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0xA1, bRequest = 0x83, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0x21, bRequest = 0x1, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0xA1, bRequest = 0x81, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0x21, bRequest = 0x1, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0xA1, bRequest = 0x82, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0xA1, bRequest = 0x83, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0x21, bRequest = 0x1, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0xA1, bRequest = 0x81, wValue = 0x100, wIndex = 0x1, wLength= 0x1A
+bRType = 0x21, bRequest = 0x1, wValue = 0x200, wIndex = 0x1, wLength= 0x1A
+esSetCameraResolution == 1 ==
+CAMERA_5MP_config =============
+
+CAMERA_SetAutofocus ================
+
+**************************
+*** when Cheese closes ***
+**************************
+
+bRType = 0x2, bRequest = 0x1, wValue = 0x0, wIndex = 0x83, wLength= 0x0·´4

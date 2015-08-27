@@ -1,0 +1,2959 @@
+   1              		.cpu arm926ej-s
+   2              		.fpu softvfp
+   3              		.eabi_attribute 20, 1
+   4              		.eabi_attribute 21, 1
+   5              		.eabi_attribute 23, 3
+   6              		.eabi_attribute 24, 1
+   7              		.eabi_attribute 25, 1
+   8              		.eabi_attribute 26, 1
+   9              		.eabi_attribute 30, 4
+  10              		.eabi_attribute 34, 0
+  11              		.eabi_attribute 18, 4
+  12              		.file	"CX3RDKOV5640.c"
+  13              		.section	.text.esUVCApplnLPMRqtCB,"ax",%progbits
+  14              		.align	2
+  16              	esUVCApplnLPMRqtCB:
+  17              		@ args = 0, pretend = 0, frame = 0
+  18              		@ frame_needed = 0, uses_anonymous_args = 0
+  19              		@ link register save eliminated.
+  20 0000 0100A0E3 		mov	r0, #1
+  21 0004 1EFF2FE1 		bx	lr
+  23              		.section	.text.UvcAppProgressTimer,"ax",%progbits
+  24              		.align	2
+  26              	UvcAppProgressTimer:
+  27              		@ args = 0, pretend = 0, frame = 0
+  28              		@ frame_needed = 0, uses_anonymous_args = 0
+  29              		@ link register save eliminated.
+  30 0000 08009FE5 		ldr	r0, .L3
+  31 0004 1010A0E3 		mov	r1, #16
+  32 0008 0020A0E3 		mov	r2, #0
+  33 000c FEFFFFEA 		b	_txe_event_flags_set
+  34              	.L4:
+  35              		.align	2
+  36              	.L3:
+  37 0010 00000000 		.word	glTimerEvent
+  39              		.section	.text.esUVCGpifCB,"ax",%progbits
+  40              		.align	2
+  41              		.global	esUVCGpifCB
+  43              	esUVCGpifCB:
+  44              		@ args = 0, pretend = 0, frame = 0
+  45              		@ frame_needed = 0, uses_anonymous_args = 0
+  46 0000 010050E3 		cmp	r0, #1
+  47 0004 08402DE9 		stmfd	sp!, {r3, lr}
+  48 0008 0030A0E1 		mov	r3, r0
+  49 000c 0880BD18 		ldmnefd	sp!, {r3, pc}
+  50 0010 090051E3 		cmp	r1, #9
+  51 0014 0700001A 		bne	.L8
+  52 0018 0010A0E3 		mov	r1, #0
+  53 001c 40009FE5 		ldr	r0, .L18
+  54 0020 FEFFFFEB 		bl	CyU3PDmaMultiChannelSetWrapUp
+  55 0024 002050E2 		subs	r2, r0, #0
+  56 0028 0400A013 		movne	r0, #4
+  57 002c 34109F15 		ldrne	r1, .L18+4
+  58 0030 0880BD08 		ldmeqfd	sp!, {r3, pc}
+  59 0034 080000EA 		b	.L16
+  60              	.L8:
+  61 0038 0A0051E3 		cmp	r1, #10
+  62 003c 0880BD18 		ldmnefd	sp!, {r3, pc}
+  63 0040 1C009FE5 		ldr	r0, .L18
+  64 0044 0310A0E1 		mov	r1, r3
+  65 0048 FEFFFFEB 		bl	CyU3PDmaMultiChannelSetWrapUp
+  66 004c 002050E2 		subs	r2, r0, #0
+  67 0050 0880BD08 		ldmeqfd	sp!, {r3, pc}
+  68 0054 10109FE5 		ldr	r1, .L18+8
+  69 0058 0400A0E3 		mov	r0, #4
+  70              	.L16:
+  71 005c 0840BDE8 		ldmfd	sp!, {r3, lr}
+  72 0060 FEFFFFEA 		b	CyU3PDebugPrint
+  73              	.L19:
+  74              		.align	2
+  75              	.L18:
+  76 0064 00000000 		.word	glChHandleUVCStream
+  77 0068 00000000 		.word	.LC0
+  78 006c 20000000 		.word	.LC1
+  80              		.section	.text.esUVCUvcAppDmaCallback,"ax",%progbits
+  81              		.align	2
+  82              		.global	esUVCUvcAppDmaCallback
+  84              	esUVCUvcAppDmaCallback:
+  85              		@ args = 0, pretend = 0, frame = 16
+  86              		@ frame_needed = 0, uses_anonymous_args = 0
+  87 0000 080051E3 		cmp	r1, #8
+  88 0004 F0432DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, r9, lr}
+  89 0008 0050A0E1 		mov	r5, r0
+  90 000c 1CD04DE2 		sub	sp, sp, #28
+  91 0010 4700001A 		bne	.L21
+  92 0014 FEFFFFEB 		bl	CyU3PUsbGetSpeed
+  93 0018 030050E3 		cmp	r0, #3
+  94 001c 0A00001A 		bne	.L22
+  95 0020 68429FE5 		ldr	r4, .L40
+  96 0024 003094E5 		ldr	r3, [r4]
+  97 0028 000053E3 		cmp	r3, #0
+  98 002c 0600000A 		beq	.L22
+  99 0030 FEFFFFEB 		bl	CyU3PUsbLPMDisable
+ 100 0034 0000A0E3 		mov	r0, #0
+ 101 0038 FEFFFFEB 		bl	CyU3PUsbSetLinkPowerState
+ 102 003c C800A0E3 		mov	r0, #200
+ 103 0040 FEFFFFEB 		bl	CyFx3BusyWait
+ 104 0044 0030A0E3 		mov	r3, #0
+ 105 0048 003084E5 		str	r3, [r4]
+ 106              	.L22:
+ 107 004c 40029FE5 		ldr	r0, .L40+4
+ 108 0050 FEFFFFEB 		bl	_txe_timer_activate
+ 109 0054 0500A0E1 		mov	r0, r5
+ 110 0058 0C108DE2 		add	r1, sp, #12
+ 111 005c 0020A0E3 		mov	r2, #0
+ 112 0060 FEFFFFEB 		bl	CyU3PDmaMultiChannelGetBuffer
+ 113 0064 2C829FE5 		ldr	r8, .L40+8
+ 114 0068 2C929FE5 		ldr	r9, .L40+12
+ 115 006c 2C729FE5 		ldr	r7, .L40+16
+ 116              	.L23:
+ 117 0070 000050E3 		cmp	r0, #0
+ 118 0074 8300001A 		bne	.L20
+ 119 0078 B021DDE1 		ldrh	r2, [sp, #16]
+ 120 007c B030D8E1 		ldrh	r3, [r8]
+ 121 0080 0C409DE5 		ldr	r4, [sp, #12]
+ 122 0084 030052E1 		cmp	r2, r3
+ 123 0088 0D00002A 		bcs	.L24
+ 124 008c 10629FE5 		ldr	r6, .L40+20
+ 125 0090 0C0044E2 		sub	r0, r4, #12
+ 126 0094 0610A0E1 		mov	r1, r6
+ 127 0098 0C20A0E3 		mov	r2, #12
+ 128 009c FEFFFFEB 		bl	CyU3PMemCopy
+ 129 00a0 0130D6E5 		ldrb	r3, [r6, #1]	@ zero_extendqisi2
+ 130 00a4 013023E2 		eor	r3, r3, #1
+ 131 00a8 0130C6E5 		strb	r3, [r6, #1]
+ 132 00ac 0B3054E5 		ldrb	r3, [r4, #-11]	@ zero_extendqisi2
+ 133 00b0 023083E3 		orr	r3, r3, #2
+ 134 00b4 0B3044E5 		strb	r3, [r4, #-11]
+ 135 00b8 0130A0E3 		mov	r3, #1
+ 136 00bc 003089E5 		str	r3, [r9]
+ 137 00c0 030000EA 		b	.L25
+ 138              	.L24:
+ 139 00c4 0C0044E2 		sub	r0, r4, #12
+ 140 00c8 D4119FE5 		ldr	r1, .L40+20
+ 141 00cc 0C20A0E3 		mov	r2, #12
+ 142 00d0 FEFFFFEB 		bl	CyU3PMemCopy
+ 143              	.L25:
+ 144 00d4 B011DDE1 		ldrh	r1, [sp, #16]
+ 145 00d8 0020A0E3 		mov	r2, #0
+ 146 00dc 0C1081E2 		add	r1, r1, #12
+ 147 00e0 0118A0E1 		mov	r1, r1, asl #16
+ 148 00e4 0500A0E1 		mov	r0, r5
+ 149 00e8 2118A0E1 		mov	r1, r1, lsr #16
+ 150 00ec FEFFFFEB 		bl	CyU3PDmaMultiChannelCommitBuffer
+ 151 00f0 002050E2 		subs	r2, r0, #0
+ 152 00f4 5500001A 		bne	.L39
+ 153 00f8 003097E5 		ldr	r3, [r7]
+ 154 00fc 0500A0E1 		mov	r0, r5
+ 155 0100 013083E2 		add	r3, r3, #1
+ 156 0104 003087E5 		str	r3, [r7]
+ 157 0108 98319FE5 		ldr	r3, .L40+24
+ 158 010c 001093E5 		ldr	r1, [r3]
+ 159 0110 011081E2 		add	r1, r1, #1
+ 160 0114 001083E5 		str	r1, [r3]
+ 161 0118 8C319FE5 		ldr	r3, .L40+28
+ 162 011c 0010D3E5 		ldrb	r1, [r3]	@ zero_extendqisi2
+ 163 0120 011021E2 		eor	r1, r1, #1
+ 164 0124 0010C3E5 		strb	r1, [r3]
+ 165 0128 0C108DE2 		add	r1, sp, #12
+ 166 012c FEFFFFEB 		bl	CyU3PDmaMultiChannelGetBuffer
+ 167 0130 CEFFFFEA 		b	.L23
+ 168              	.L21:
+ 169 0134 100051E3 		cmp	r1, #16
+ 170 0138 5200001A 		bne	.L20
+ 171 013c 64319FE5 		ldr	r3, .L40+24
+ 172 0140 0110A0E3 		mov	r1, #1
+ 173 0144 002093E5 		ldr	r2, [r3]
+ 174 0148 012042E2 		sub	r2, r2, #1
+ 175 014c 002083E5 		str	r2, [r3]
+ 176 0150 58219FE5 		ldr	r2, .L40+32
+ 177 0154 001082E5 		str	r1, [r2]
+ 178 0158 3C219FE5 		ldr	r2, .L40+12
+ 179 015c 001092E5 		ldr	r1, [r2]
+ 180 0160 010051E3 		cmp	r1, #1
+ 181 0164 4700001A 		bne	.L20
+ 182 0168 004093E5 		ldr	r4, [r3]
+ 183 016c 000054E3 		cmp	r4, #0
+ 184 0170 4400001A 		bne	.L20
+ 185 0174 24319FE5 		ldr	r3, .L40+16
+ 186 0178 14019FE5 		ldr	r0, .L40+4
+ 187 017c 004082E5 		str	r4, [r2]
+ 188 0180 004083E5 		str	r4, [r3]
+ 189 0184 FEFFFFEB 		bl	_txe_timer_deactivate
+ 190 0188 1C319FE5 		ldr	r3, .L40+28
+ 191 018c 20019FE5 		ldr	r0, .L40+36
+ 192 0190 0010D3E5 		ldrb	r1, [r3]	@ zero_extendqisi2
+ 193 0194 0230A0E3 		mov	r3, #2
+ 194 0198 FF1011E2 		ands	r1, r1, #255
+ 195 019c 00308DE5 		str	r3, [sp]
+ 196 01a0 0D10A013 		movne	r1, #13
+ 197 01a4 0430A011 		movne	r3, r4
+ 198 01a8 0130A001 		moveq	r3, r1
+ 199 01ac 0020A011 		movne	r2, r0
+ 200 01b0 0020A001 		moveq	r2, r0
+ 201 01b4 FEFFFFEB 		bl	CyU3PGpifSMSwitch
+ 202 01b8 FEFFFFEB 		bl	CyU3PUsbLPMEnable
+ 203 01bc CC309FE5 		ldr	r3, .L40
+ 204 01c0 F0409FE5 		ldr	r4, .L40+40
+ 205 01c4 0120A0E3 		mov	r2, #1
+ 206 01c8 002083E5 		str	r2, [r3]
+ 207 01cc C0009FE5 		ldr	r0, .L40+4
+ 208 01d0 7D1FA0E3 		mov	r1, #500
+ 209 01d4 0020A0E3 		mov	r2, #0
+ 210 01d8 FEFFFFEB 		bl	_txe_timer_change
+ 211 01dc 003094E5 		ldr	r3, [r4]
+ 212 01e0 010053E3 		cmp	r3, #1
+ 213 01e4 0C00001A 		bne	.L32
+ 214 01e8 B4309FE5 		ldr	r3, .L40+20
+ 215 01ec 0020A0E3 		mov	r2, #0
+ 216 01f0 0110D3E5 		ldrb	r1, [r3, #1]	@ zero_extendqisi2
+ 217 01f4 C0009FE5 		ldr	r0, .L40+44
+ 218 01f8 201021E2 		eor	r1, r1, #32
+ 219 01fc 0110C3E5 		strb	r1, [r3, #1]
+ 220 0200 B8309FE5 		ldr	r3, .L40+48
+ 221 0204 002084E5 		str	r2, [r4]
+ 222 0208 0010D3E5 		ldrb	r1, [r3]	@ zero_extendqisi2
+ 223 020c B0309FE5 		ldr	r3, .L40+52
+ 224 0210 0010C3E5 		strb	r1, [r3]
+ 225 0214 1010A0E3 		mov	r1, #16
+ 226 0218 FEFFFFEB 		bl	_txe_event_flags_set
+ 227              	.L32:
+ 228 021c A4009FE5 		ldr	r0, .L40+56
+ 229 0220 001090E5 		ldr	r1, [r0]
+ 230 0224 010051E3 		cmp	r1, #1
+ 231 0228 1600001A 		bne	.L20
+ 232 022c 98209FE5 		ldr	r2, .L40+60
+ 233 0230 0030D2E5 		ldrb	r3, [r2]	@ zero_extendqisi2
+ 234 0234 030053E3 		cmp	r3, #3
+ 235 0238 0900001A 		bne	.L33
+ 236 023c 0230A0E3 		mov	r3, #2
+ 237 0240 0030C2E5 		strb	r3, [r2]
+ 238 0244 78309FE5 		ldr	r3, .L40+52
+ 239 0248 0420A0E3 		mov	r2, #4
+ 240 024c 0020C3E5 		strb	r2, [r3]
+ 241              	.L39:
+ 242 0250 1010A0E3 		mov	r1, #16
+ 243 0254 0020A0E3 		mov	r2, #0
+ 244 0258 5C009FE5 		ldr	r0, .L40+44
+ 245 025c FEFFFFEB 		bl	_txe_event_flags_set
+ 246 0260 080000EA 		b	.L20
+ 247              	.L33:
+ 248 0264 000053E3 		cmp	r3, #0
+ 249 0268 00308005 		streq	r3, [r0]
+ 250 026c 30309F05 		ldreq	r3, .L40+20
+ 251 0270 01304312 		subne	r3, r3, #1
+ 252 0274 0120D305 		ldreqb	r2, [r3, #1]	@ zero_extendqisi2
+ 253 0278 00108405 		streq	r1, [r4]
+ 254 027c 20202202 		eoreq	r2, r2, #32
+ 255 0280 0120C305 		streqb	r2, [r3, #1]
+ 256 0284 0030C215 		strneb	r3, [r2]
+ 257              	.L20:
+ 258 0288 1CD08DE2 		add	sp, sp, #28
+ 259              		@ sp needed
+ 260 028c F083BDE8 		ldmfd	sp!, {r4, r5, r6, r7, r8, r9, pc}
+ 261              	.L41:
+ 262              		.align	2
+ 263              	.L40:
+ 264 0290 00000000 		.word	.LANCHOR0
+ 265 0294 00000000 		.word	.LANCHOR1
+ 266 0298 00000000 		.word	.LANCHOR2
+ 267 029c 00000000 		.word	.LANCHOR4
+ 268 02a0 00000000 		.word	.LANCHOR5
+ 269 02a4 00000000 		.word	.LANCHOR3
+ 270 02a8 00000000 		.word	.LANCHOR6
+ 271 02ac 00000000 		.word	.LANCHOR7
+ 272 02b0 00000000 		.word	.LANCHOR8
+ 273 02b4 01010000 		.word	257
+ 274 02b8 00000000 		.word	.LANCHOR9
+ 275 02bc 00000000 		.word	glTimerEvent
+ 276 02c0 00000000 		.word	.LANCHOR11
+ 277 02c4 00000000 		.word	.LANCHOR10
+ 278 02c8 00000000 		.word	.LANCHOR12
+ 279 02cc 00000000 		.word	.LANCHOR13
+ 281              		.section	.text.esUVCAppErrorHandler,"ax",%progbits
+ 282              		.align	2
+ 283              		.global	esUVCAppErrorHandler
+ 285              	esUVCAppErrorHandler:
+ 286              		@ Volatile: function does not return.
+ 287              		@ args = 0, pretend = 0, frame = 0
+ 288              		@ frame_needed = 0, uses_anonymous_args = 0
+ 289 0000 08402DE9 		stmfd	sp!, {r3, lr}
+ 290              	.L43:
+ 291 0004 6400A0E3 		mov	r0, #100
+ 292 0008 FEFFFFEB 		bl	_tx_thread_sleep
+ 293 000c FCFFFFEA 		b	.L43
+ 295              		.section	.text.esUVCUvcApplnStart,"ax",%progbits
+ 296              		.align	2
+ 297              		.global	esUVCUvcApplnStart
+ 299              	esUVCUvcApplnStart:
+ 300              		@ args = 0, pretend = 0, frame = 0
+ 301              		@ frame_needed = 0, uses_anonymous_args = 0
+ 302 0000 1C319FE5 		ldr	r3, .L51
+ 303 0004 37402DE9 		stmfd	sp!, {r0, r1, r2, r4, r5, lr}
+ 304 0008 18219FE5 		ldr	r2, .L51+4
+ 305 000c 0150A0E3 		mov	r5, #1
+ 306 0010 005083E5 		str	r5, [r3]
+ 307 0014 0030A0E3 		mov	r3, #0
+ 308 0018 003082E5 		str	r3, [r2]
+ 309 001c 08219FE5 		ldr	r2, .L51+8
+ 310 0020 08019FE5 		ldr	r0, .L51+12
+ 311 0024 003082E5 		str	r3, [r2]
+ 312 0028 04219FE5 		ldr	r2, .L51+16
+ 313 002c 003082E5 		str	r3, [r2]
+ 314 0030 00319FE5 		ldr	r3, .L51+20
+ 315 0034 005083E5 		str	r5, [r3]
+ 316 0038 FEFFFFEB 		bl	_txe_timer_deactivate
+ 317 003c 0510A0E1 		mov	r1, r5
+ 318 0040 8300A0E3 		mov	r0, #131
+ 319 0044 FEFFFFEB 		bl	CyU3PUsbSetEpNak
+ 320 0048 6400A0E3 		mov	r0, #100
+ 321 004c FEFFFFEB 		bl	CyFx3BusyWait
+ 322 0050 8300A0E3 		mov	r0, #131
+ 323 0054 FEFFFFEB 		bl	CyU3PUsbFlushEp
+ 324 0058 DC009FE5 		ldr	r0, .L51+24
+ 325 005c FEFFFFEB 		bl	CyU3PDmaMultiChannelReset
+ 326 0060 004050E2 		subs	r4, r0, #0
+ 327 0064 0400A013 		movne	r0, #4
+ 328 0068 D0109F15 		ldrne	r1, .L51+28
+ 329 006c 0700001A 		bne	.L50
+ 330              	.L45:
+ 331 0070 0410A0E1 		mov	r1, r4
+ 332 0074 0420A0E1 		mov	r2, r4
+ 333 0078 BC009FE5 		ldr	r0, .L51+24
+ 334 007c FEFFFFEB 		bl	CyU3PDmaMultiChannelSetXfer
+ 335 0080 004050E2 		subs	r4, r0, #0
+ 336 0084 0400000A 		beq	.L47
+ 337 0088 B4109FE5 		ldr	r1, .L51+32
+ 338 008c 0400A0E3 		mov	r0, #4
+ 339              	.L50:
+ 340 0090 0420A0E1 		mov	r2, r4
+ 341 0094 FEFFFFEB 		bl	CyU3PDebugPrint
+ 342 0098 1E0000EA 		b	.L48
+ 343              	.L47:
+ 344 009c 0410A0E1 		mov	r1, r4
+ 345 00a0 8300A0E3 		mov	r0, #131
+ 346 00a4 FEFFFFEB 		bl	CyU3PUsbSetEpNak
+ 347 00a8 C800A0E3 		mov	r0, #200
+ 348 00ac FEFFFFEB 		bl	CyFx3BusyWait
+ 349 00b0 0400A0E1 		mov	r0, r4
+ 350 00b4 FEFFFFEB 		bl	CyU3PGpifSMControl
+ 351 00b8 88309FE5 		ldr	r3, .L51+36
+ 352 00bc 88009FE5 		ldr	r0, .L51+40
+ 353 00c0 0040C3E5 		strb	r4, [r3]
+ 354 00c4 0230A0E3 		mov	r3, #2
+ 355 00c8 0410A0E1 		mov	r1, r4
+ 356 00cc 0020A0E1 		mov	r2, r0
+ 357 00d0 00308DE5 		str	r3, [sp]
+ 358 00d4 0430A0E1 		mov	r3, r4
+ 359 00d8 FEFFFFEB 		bl	CyU3PGpifSMSwitch
+ 360 00dc 0A00A0E3 		mov	r0, #10
+ 361 00e0 FEFFFFEB 		bl	_tx_thread_sleep
+ 362 00e4 FEFFFFEB 		bl	CyU3PMipicsiWakeup
+ 363 00e8 FEFFFFEB 		bl	esCamera_Power_Up
+ 364 00ec 5C309FE5 		ldr	r3, .L51+44
+ 365 00f0 005083E5 		str	r5, [r3]
+ 366 00f4 58309FE5 		ldr	r3, .L51+48
+ 367 00f8 003093E5 		ldr	r3, [r3]
+ 368 00fc 010053E3 		cmp	r3, #1
+ 369 0100 0400000A 		beq	.L48
+ 370 0104 4C309FE5 		ldr	r3, .L51+52
+ 371 0108 0000D3E5 		ldrb	r0, [r3]	@ zero_extendqisi2
+ 372 010c 000050E3 		cmp	r0, #0
+ 373 0110 0100000A 		beq	.L46
+ 374 0114 FEFFFFEB 		bl	esOV5640_SetAutofocus
+ 375              	.L48:
+ 376 0118 0400A0E1 		mov	r0, r4
+ 377              	.L46:
+ 378 011c 0CD08DE2 		add	sp, sp, #12
+ 379              		@ sp needed
+ 380 0120 3080BDE8 		ldmfd	sp!, {r4, r5, pc}
+ 381              	.L52:
+ 382              		.align	2
+ 383              	.L51:
+ 384 0124 00000000 		.word	.LANCHOR14
+ 385 0128 00000000 		.word	.LANCHOR6
+ 386 012c 00000000 		.word	.LANCHOR5
+ 387 0130 00000000 		.word	.LANCHOR1
+ 388 0134 00000000 		.word	.LANCHOR4
+ 389 0138 00000000 		.word	.LANCHOR0
+ 390 013c 00000000 		.word	glChHandleUVCStream
+ 391 0140 40000000 		.word	.LC2
+ 392 0144 63000000 		.word	.LC3
+ 393 0148 00000000 		.word	.LANCHOR7
+ 394 014c 01010000 		.word	257
+ 395 0150 00000000 		.word	.LANCHOR15
+ 396 0154 00000000 		.word	.LANCHOR12
+ 397 0158 00000000 		.word	.LANCHOR16
+ 399              		.section	.text.esUVCUvcApplnStop,"ax",%progbits
+ 400              		.align	2
+ 401              		.global	esUVCUvcApplnStop
+ 403              	esUVCUvcApplnStop:
+ 404              		@ args = 0, pretend = 0, frame = 0
+ 405              		@ frame_needed = 0, uses_anonymous_args = 0
+ 406 0000 C0309FE5 		ldr	r3, .L62
+ 407 0004 10402DE9 		stmfd	sp!, {r4, lr}
+ 408 0008 0040A0E3 		mov	r4, #0
+ 409 000c 004083E5 		str	r4, [r3]
+ 410 0010 FEFFFFEB 		bl	CyU3PMipicsiSleep
+ 411 0014 FEFFFFEB 		bl	esCamera_Power_Down
+ 412 0018 AC309FE5 		ldr	r3, .L62+4
+ 413 001c AC009FE5 		ldr	r0, .L62+8
+ 414 0020 004083E5 		str	r4, [r3]
+ 415 0024 FEFFFFEB 		bl	_txe_timer_deactivate
+ 416 0028 0100A0E3 		mov	r0, #1
+ 417 002c FEFFFFEB 		bl	CyU3PGpifSMControl
+ 418 0030 0110A0E3 		mov	r1, #1
+ 419 0034 8300A0E3 		mov	r0, #131
+ 420 0038 FEFFFFEB 		bl	CyU3PUsbSetEpNak
+ 421 003c 6400A0E3 		mov	r0, #100
+ 422 0040 FEFFFFEB 		bl	CyFx3BusyWait
+ 423 0044 88009FE5 		ldr	r0, .L62+12
+ 424 0048 FEFFFFEB 		bl	CyU3PDmaMultiChannelReset
+ 425 004c 002050E2 		subs	r2, r0, #0
+ 426 0050 0200000A 		beq	.L54
+ 427 0054 0400A0E3 		mov	r0, #4
+ 428 0058 78109FE5 		ldr	r1, .L62+16
+ 429 005c FEFFFFEB 		bl	CyU3PDebugPrint
+ 430              	.L54:
+ 431 0060 74409FE5 		ldr	r4, .L62+20
+ 432 0064 1900A0E3 		mov	r0, #25
+ 433 0068 FEFFFFEB 		bl	_tx_thread_sleep
+ 434 006c 8300A0E3 		mov	r0, #131
+ 435 0070 FEFFFFEB 		bl	CyU3PUsbFlushEp
+ 436 0074 003094E5 		ldr	r3, [r4]
+ 437 0078 000053E3 		cmp	r3, #0
+ 438 007c 0500000A 		beq	.L55
+ 439 0080 8300A0E3 		mov	r0, #131
+ 440 0084 0010A0E3 		mov	r1, #0
+ 441 0088 0120A0E3 		mov	r2, #1
+ 442 008c FEFFFFEB 		bl	CyU3PUsbStall
+ 443 0090 0030A0E3 		mov	r3, #0
+ 444 0094 003084E5 		str	r3, [r4]
+ 445              	.L55:
+ 446 0098 0010A0E3 		mov	r1, #0
+ 447 009c 8300A0E3 		mov	r0, #131
+ 448 00a0 FEFFFFEB 		bl	CyU3PUsbSetEpNak
+ 449 00a4 C800A0E3 		mov	r0, #200
+ 450 00a8 FEFFFFEB 		bl	CyFx3BusyWait
+ 451 00ac 2C209FE5 		ldr	r2, .L62+24
+ 452 00b0 0030A0E3 		mov	r3, #0
+ 453 00b4 003082E5 		str	r3, [r2]
+ 454 00b8 24209FE5 		ldr	r2, .L62+28
+ 455 00bc 1040BDE8 		ldmfd	sp!, {r4, lr}
+ 456 00c0 003082E5 		str	r3, [r2]
+ 457 00c4 FEFFFFEA 		b	CyU3PUsbLPMEnable
+ 458              	.L63:
+ 459              		.align	2
+ 460              	.L62:
+ 461 00c8 00000000 		.word	.LANCHOR14
+ 462 00cc 00000000 		.word	.LANCHOR15
+ 463 00d0 00000000 		.word	.LANCHOR1
+ 464 00d4 00000000 		.word	glChHandleUVCStream
+ 465 00d8 81000000 		.word	.LC4
+ 466 00dc 00000000 		.word	.LANCHOR17
+ 467 00e0 00000000 		.word	.LANCHOR5
+ 468 00e4 00000000 		.word	.LANCHOR6
+ 470              		.section	.text.esUVCUvcApplnUSBEventCB,"ax",%progbits
+ 471              		.align	2
+ 473              	esUVCUvcApplnUSBEventCB:
+ 474              		@ args = 0, pretend = 0, frame = 0
+ 475              		@ frame_needed = 0, uses_anonymous_args = 0
+ 476 0000 070050E3 		cmp	r0, #7
+ 477 0004 38402DE9 		stmfd	sp!, {r3, r4, r5, lr}
+ 478 0008 3880BD88 		ldmhifd	sp!, {r3, r4, r5, pc}
+ 479 000c 0140A0E3 		mov	r4, #1
+ 480 0010 1430A0E1 		mov	r3, r4, asl r0
+ 481 0014 33C013E2 		ands	ip, r3, #51
+ 482 0018 2B00001A 		bne	.L67
+ 483 001c 802013E2 		ands	r2, r3, #128
+ 484 0020 0700001A 		bne	.L68
+ 485 0024 040013E3 		tst	r3, #4
+ 486 0028 3880BD08 		ldmeqfd	sp!, {r3, r4, r5, pc}
+ 487 002c DC309FE5 		ldr	r3, .L86
+ 488 0030 DC009FE5 		ldr	r0, .L86+4
+ 489 0034 002083E5 		str	r2, [r3]
+ 490 0038 2010A0E3 		mov	r1, #32
+ 491 003c 3840BDE8 		ldmfd	sp!, {r3, r4, r5, lr}
+ 492 0040 FEFFFFEA 		b	_txe_event_flags_set
+ 493              	.L68:
+ 494 0044 C4209FE5 		ldr	r2, .L86
+ 495 0048 FF3001E2 		and	r3, r1, #255
+ 496 004c 2114A0E1 		mov	r1, r1, lsr #8
+ 497 0050 00C082E5 		str	ip, [r2]
+ 498 0054 012051E2 		subs	r2, r1, #1
+ 499 0058 001072E2 		rsbs	r1, r2, #0
+ 500 005c 0210B1E0 		adcs	r1, r1, r2
+ 501 0060 010053E3 		cmp	r3, #1
+ 502 0064 0050A013 		movne	r5, #0
+ 503 0068 01500102 		andeq	r5, r1, #1
+ 504 006c 000055E3 		cmp	r5, #0
+ 505 0070 0800000A 		beq	.L70
+ 506 0074 9C309FE5 		ldr	r3, .L86+8
+ 507 0078 003093E5 		ldr	r3, [r3]
+ 508 007c 000053E3 		cmp	r3, #0
+ 509 0080 0200000A 		beq	.L71
+ 510 0084 90309FE5 		ldr	r3, .L86+12
+ 511 0088 004083E5 		str	r4, [r3]
+ 512 008c FEFFFFEB 		bl	esUVCUvcApplnStop
+ 513              	.L71:
+ 514 0090 3840BDE8 		ldmfd	sp!, {r3, r4, r5, lr}
+ 515 0094 FEFFFFEA 		b	esUVCUvcApplnStart
+ 516              	.L70:
+ 517 0098 000053E3 		cmp	r3, #0
+ 518 009c 0010A013 		movne	r1, #0
+ 519 00a0 01100102 		andeq	r1, r1, #1
+ 520 00a4 000051E3 		cmp	r1, #0
+ 521 00a8 3880BD08 		ldmeqfd	sp!, {r3, r4, r5, pc}
+ 522 00ac 6C309FE5 		ldr	r3, .L86+16
+ 523 00b0 005083E5 		str	r5, [r3]
+ 524 00b4 60309FE5 		ldr	r3, .L86+12
+ 525 00b8 004083E5 		str	r4, [r3]
+ 526 00bc FEFFFFEB 		bl	esUVCUvcApplnStop
+ 527 00c0 5C309FE5 		ldr	r3, .L86+20
+ 528 00c4 0050C3E5 		strb	r5, [r3]
+ 529 00c8 3880BDE8 		ldmfd	sp!, {r3, r4, r5, pc}
+ 530              	.L67:
+ 531 00cc 3C309FE5 		ldr	r3, .L86
+ 532 00d0 0020A0E3 		mov	r2, #0
+ 533 00d4 002083E5 		str	r2, [r3]
+ 534 00d8 053050E2 		subs	r3, r0, #5
+ 535 00dc 000073E2 		rsbs	r0, r3, #0
+ 536 00e0 0300B0E0 		adcs	r0, r0, r3
+ 537 00e4 3C309FE5 		ldr	r3, .L86+24
+ 538 00e8 000083E5 		str	r0, [r3]
+ 539 00ec FEFFFFEB 		bl	CyU3PUsbLPMEnable
+ 540 00f0 20309FE5 		ldr	r3, .L86+8
+ 541 00f4 003093E5 		ldr	r3, [r3]
+ 542 00f8 000053E3 		cmp	r3, #0
+ 543 00fc 3880BD08 		ldmeqfd	sp!, {r3, r4, r5, pc}
+ 544 0100 14309FE5 		ldr	r3, .L86+12
+ 545 0104 004083E5 		str	r4, [r3]
+ 546 0108 3840BDE8 		ldmfd	sp!, {r3, r4, r5, lr}
+ 547 010c FEFFFFEA 		b	esUVCUvcApplnStop
+ 548              	.L87:
+ 549              		.align	2
+ 550              	.L86:
+ 551 0110 00000000 		.word	.LANCHOR8
+ 552 0114 00000000 		.word	glTimerEvent
+ 553 0118 00000000 		.word	.LANCHOR14
+ 554 011c 00000000 		.word	.LANCHOR17
+ 555 0120 00000000 		.word	.LANCHOR18
+ 556 0124 00000000 		.word	.LANCHOR19
+ 557 0128 00000000 		.word	.LANCHOR20
+ 559              		.section	.text.esSetCameraResolution,"ax",%progbits
+ 560              		.align	2
+ 561              		.global	esSetCameraResolution
+ 563              	esSetCameraResolution:
+ 564              		@ args = 0, pretend = 0, frame = 0
+ 565              		@ frame_needed = 0, uses_anonymous_args = 0
+ 566 0000 10402DE9 		stmfd	sp!, {r4, lr}
+ 567 0004 34119FE5 		ldr	r1, .L120
+ 568 0008 0040A0E1 		mov	r4, r0
+ 569 000c 0400A0E3 		mov	r0, #4
+ 570 0010 FEFFFFEB 		bl	CyU3PDebugPrint
+ 571 0014 FEFFFFEB 		bl	CyU3PUsbGetSpeed
+ 572 0018 030050E3 		cmp	r0, #3
+ 573 001c 2F00001A 		bne	.L89
+ 574 0020 010054E3 		cmp	r4, #1
+ 575 0024 0900001A 		bne	.L90
+ 576 0028 14019FE5 		ldr	r0, .L120+4
+ 577 002c 0010A0E3 		mov	r1, #0
+ 578 0030 FEFFFFEB 		bl	CyU3PMipicsiSetIntfParams
+ 579 0034 002050E2 		subs	r2, r0, #0
+ 580 0038 0200000A 		beq	.L91
+ 581 003c 0400A0E3 		mov	r0, #4
+ 582 0040 00119FE5 		ldr	r1, .L120+8
+ 583 0044 FEFFFFEB 		bl	CyU3PDebugPrint
+ 584              	.L91:
+ 585 0048 1040BDE8 		ldmfd	sp!, {r4, lr}
+ 586 004c FEFFFFEA 		b	esOV5640_1080P_config
+ 587              	.L90:
+ 588 0050 020054E3 		cmp	r4, #2
+ 589 0054 0900001A 		bne	.L92
+ 590 0058 EC009FE5 		ldr	r0, .L120+12
+ 591 005c 0010A0E3 		mov	r1, #0
+ 592 0060 FEFFFFEB 		bl	CyU3PMipicsiSetIntfParams
+ 593 0064 002050E2 		subs	r2, r0, #0
+ 594 0068 0200000A 		beq	.L93
+ 595 006c 0400A0E3 		mov	r0, #4
+ 596 0070 D8109FE5 		ldr	r1, .L120+16
+ 597 0074 FEFFFFEB 		bl	CyU3PDebugPrint
+ 598              	.L93:
+ 599 0078 1040BDE8 		ldmfd	sp!, {r4, lr}
+ 600 007c FEFFFFEA 		b	esOV5640_VGA_config
+ 601              	.L92:
+ 602 0080 030054E3 		cmp	r4, #3
+ 603 0084 0900001A 		bne	.L94
+ 604 0088 C4009FE5 		ldr	r0, .L120+20
+ 605 008c 0010A0E3 		mov	r1, #0
+ 606 0090 FEFFFFEB 		bl	CyU3PMipicsiSetIntfParams
+ 607 0094 002050E2 		subs	r2, r0, #0
+ 608 0098 0200000A 		beq	.L95
+ 609 009c 0400A0E3 		mov	r0, #4
+ 610 00a0 B0109FE5 		ldr	r1, .L120+24
+ 611 00a4 FEFFFFEB 		bl	CyU3PDebugPrint
+ 612              	.L95:
+ 613 00a8 1040BDE8 		ldmfd	sp!, {r4, lr}
+ 614 00ac FEFFFFEA 		b	esOV5640_720P_config
+ 615              	.L94:
+ 616 00b0 040054E3 		cmp	r4, #4
+ 617 00b4 1080BD18 		ldmnefd	sp!, {r4, pc}
+ 618 00b8 9C009FE5 		ldr	r0, .L120+28
+ 619 00bc 0010A0E3 		mov	r1, #0
+ 620 00c0 FEFFFFEB 		bl	CyU3PMipicsiSetIntfParams
+ 621 00c4 002050E2 		subs	r2, r0, #0
+ 622 00c8 0200000A 		beq	.L98
+ 623 00cc 0400A0E1 		mov	r0, r4
+ 624 00d0 80109FE5 		ldr	r1, .L120+24
+ 625 00d4 FEFFFFEB 		bl	CyU3PDebugPrint
+ 626              	.L98:
+ 627 00d8 1040BDE8 		ldmfd	sp!, {r4, lr}
+ 628 00dc FEFFFFEA 		b	esOV5640_5MP_config
+ 629              	.L89:
+ 630 00e0 FEFFFFEB 		bl	CyU3PUsbGetSpeed
+ 631 00e4 020050E3 		cmp	r0, #2
+ 632 00e8 0A00001A 		bne	.L99
+ 633 00ec 58009FE5 		ldr	r0, .L120+12
+ 634 00f0 0010A0E3 		mov	r1, #0
+ 635 00f4 FEFFFFEB 		bl	CyU3PMipicsiSetIntfParams
+ 636 00f8 002050E2 		subs	r2, r0, #0
+ 637 00fc 0200000A 		beq	.L100
+ 638 0100 0400A0E3 		mov	r0, #4
+ 639 0104 54109FE5 		ldr	r1, .L120+32
+ 640 0108 FEFFFFEB 		bl	CyU3PDebugPrint
+ 641              	.L100:
+ 642 010c FEFFFFEB 		bl	esOV5640_VGA_config
+ 643 0110 1040BDE8 		ldmfd	sp!, {r4, lr}
+ 644 0114 FEFFFFEA 		b	esOV5640_VGA_HS_config
+ 645              	.L99:
+ 646 0118 FEFFFFEB 		bl	esOV5640_VGA_config
+ 647 011c 28009FE5 		ldr	r0, .L120+12
+ 648 0120 0010A0E3 		mov	r1, #0
+ 649 0124 FEFFFFEB 		bl	CyU3PMipicsiSetIntfParams
+ 650 0128 002050E2 		subs	r2, r0, #0
+ 651 012c 1080BD08 		ldmeqfd	sp!, {r4, pc}
+ 652 0130 0400A0E3 		mov	r0, #4
+ 653 0134 14109FE5 		ldr	r1, .L120+16
+ 654 0138 1040BDE8 		ldmfd	sp!, {r4, lr}
+ 655 013c FEFFFFEA 		b	CyU3PDebugPrint
+ 656              	.L121:
+ 657              		.align	2
+ 658              	.L120:
+ 659 0140 A4000000 		.word	.LC5
+ 660 0144 00000000 		.word	cfgUvc1080p30NoMclk
+ 661 0148 BC000000 		.word	.LC6
+ 662 014c 00000000 		.word	cfgUvcVga30NoMclk
+ 663 0150 E4000000 		.word	.LC7
+ 664 0154 00000000 		.word	cfgUvc720p60NoMclk
+ 665 0158 0B010000 		.word	.LC8
+ 666 015c 00000000 		.word	cfgUvc5Mp15NoMclk
+ 667 0160 33010000 		.word	.LC9
+ 669              		.section	.text.esUVCUvcApplnUSBSetupCB,"ax",%progbits
+ 670              		.align	2
+ 672              	esUVCUvcApplnUSBSetupCB:
+ 673              		@ args = 0, pretend = 0, frame = 8
+ 674              		@ frame_needed = 0, uses_anonymous_args = 0
+ 675 0000 F04F2DE9 		stmfd	sp!, {r4, r5, r6, r7, r8, r9, r10, fp, lr}
+ 676 0004 FF4C00E2 		and	r4, r0, #65280
+ 677 0008 0178A0E1 		mov	r7, r1, asl #16
+ 678 000c 1CD04DE2 		sub	sp, sp, #28
+ 679 0010 FFA000E2 		and	r10, r0, #255
+ 680 0014 2444A0E1 		mov	r4, r4, lsr #8
+ 681 0018 2058A0E1 		mov	r5, r0, lsr #16
+ 682 001c 2118A0E1 		mov	r1, r1, lsr #16
+ 683 0020 2778A0E1 		mov	r7, r7, lsr #16
+ 684 0024 0080A0E3 		mov	r8, #0
+ 685 0028 039000E2 		and	r9, r0, #3
+ 686 002c FF6004E2 		and	r6, r4, #255
+ 687 0030 08108DE5 		str	r1, [sp, #8]
+ 688 0034 A0008DE8 		stmia	sp, {r5, r7}
+ 689 0038 1C1A9FE5 		ldr	r1, .L448
+ 690 003c 0400A0E3 		mov	r0, #4
+ 691 0040 0A20A0E1 		mov	r2, r10
+ 692 0044 0430A0E1 		mov	r3, r4
+ 693 0048 B681CDE1 		strh	r8, [sp, #22]	@ movhi
+ 694 004c 1380CDE5 		strb	r8, [sp, #19]
+ 695 0050 FEFFFFEB 		bl	CyU3PDebugPrint
+ 696 0054 01E056E2 		subs	lr, r6, #1
+ 697 0058 00B07EE2 		rsbs	fp, lr, #0
+ 698 005c 0EB0BBE0 		adcs	fp, fp, lr
+ 699 0060 020059E3 		cmp	r9, #2
+ 700 0064 01005603 		cmpeq	r6, #1
+ 701 0068 1500001A 		bne	.L123
+ 702 006c 830057E3 		cmp	r7, #131
+ 703 0070 08005501 		cmpeq	r5, r8
+ 704 0074 1200001A 		bne	.L123
+ 705 0078 E0399FE5 		ldr	r3, .L448+4
+ 706 007c 003093E5 		ldr	r3, [r3]
+ 707 0080 080053E1 		cmp	r3, r8
+ 708 0084 0100001A 		bne	.L124
+ 709              	.L126:
+ 710 0088 0000A0E3 		mov	r0, #0
+ 711 008c 700200EA 		b	.L125
+ 712              	.L124:
+ 713 0090 CC399FE5 		ldr	r3, .L448+8
+ 714 0094 003093E5 		ldr	r3, [r3]
+ 715 0098 000053E3 		cmp	r3, #0
+ 716 009c F9FFFF0A 		beq	.L126
+ 717 00a0 C0399FE5 		ldr	r3, .L448+12
+ 718 00a4 0120A0E3 		mov	r2, #1
+ 719 00a8 008083E5 		str	r8, [r3]
+ 720 00ac B8399FE5 		ldr	r3, .L448+16
+ 721 00b0 002083E5 		str	r2, [r3]
+ 722 00b4 FEFFFFEB 		bl	esUVCUvcApplnStop
+ 723 00b8 B0399FE5 		ldr	r3, .L448+20
+ 724 00bc 0080C3E5 		strb	r8, [r3]
+ 725 00c0 F0FFFFEA 		b	.L126
+ 726              	.L123:
+ 727 00c4 80005AE3 		cmp	r10, #128
+ 728 00c8 0400001A 		bne	.L128
+ 729 00cc FEFFFFEB 		bl	CyU3PUsbGetSpeed
+ 730 00d0 030050E3 		cmp	r0, #3
+ 731 00d4 0100001A 		bne	.L128
+ 732 00d8 0000A0E3 		mov	r0, #0
+ 733 00dc FEFFFFEB 		bl	CyU3PUsbSetLinkPowerState
+ 734              	.L128:
+ 735 00e0 010059E3 		cmp	r9, #1
+ 736 00e4 0E00001A 		bne	.L130
+ 737 00e8 FD3006E2 		and	r3, r6, #253
+ 738 00ec 010053E3 		cmp	r3, #1
+ 739 00f0 0B00001A 		bne	.L130
+ 740 00f4 000055E3 		cmp	r5, #0
+ 741 00f8 0900001A 		bne	.L130
+ 742 00fc 70399FE5 		ldr	r3, .L448+24
+ 743 0100 003093E5 		ldr	r3, [r3]
+ 744 0104 000053E3 		cmp	r3, #0
+ 745 0108 0100000A 		beq	.L131
+ 746 010c FEFFFFEB 		bl	CyU3PUsbAckSetup
+ 747 0110 4E0200EA 		b	.L235
+ 748              	.L131:
+ 749 0114 0000A0E3 		mov	r0, #0
+ 750 0118 0110A0E3 		mov	r1, #1
+ 751 011c 0020A0E1 		mov	r2, r0
+ 752 0120 490200EA 		b	.L416
+ 753              	.L130:
+ 754 0124 000056E3 		cmp	r6, #0
+ 755 0128 01005903 		cmpeq	r9, #1
+ 756 012c 0700001A 		bne	.L132
+ 757 0130 000057E3 		cmp	r7, #0
+ 758 0134 F6FFFF1A 		bne	.L131
+ 759 0138 14108DE2 		add	r1, sp, #20
+ 760 013c 0200A0E3 		mov	r0, #2
+ 761 0140 1470CDE5 		strb	r7, [sp, #20]
+ 762 0144 1570CDE5 		strb	r7, [sp, #21]
+ 763 0148 FEFFFFEB 		bl	CyU3PUsbSendEP0Data
+ 764 014c 3F0200EA 		b	.L235
+ 765              	.L132:
+ 766 0150 60000AE2 		and	r0, r10, #96
+ 767 0154 200050E3 		cmp	r0, #32
+ 768 0158 CAFFFF1A 		bne	.L126
+ 769 015c FF8007E2 		and	r8, r7, #255
+ 770 0160 010058E3 		cmp	r8, #1
+ 771 0164 B100001A 		bne	.L133
+ 772 0168 7F3086E2 		add	r3, r6, #127
+ 773 016c FF3003E2 		and	r3, r3, #255
+ 774 0170 870056E3 		cmp	r6, #135
+ 775 0174 02005313 		cmpne	r3, #2
+ 776 0178 3300008A 		bhi	.L134
+ 777 017c 010C55E3 		cmp	r5, #256
+ 778 0180 020C5513 		cmpne	r5, #512
+ 779 0184 2200001A 		bne	.L135
+ 780 0188 FEFFFFEB 		bl	CyU3PUsbGetSpeed
+ 781 018c 030050E3 		cmp	r0, #3
+ 782 0190 1400001A 		bne	.L136
+ 783 0194 DC389FE5 		ldr	r3, .L448+28
+ 784 0198 0030D3E5 		ldrb	r3, [r3]	@ zero_extendqisi2
+ 785 019c 040053E3 		cmp	r3, #4
+ 786 01a0 D4089F05 		ldreq	r0, .L448+32
+ 787 01a4 D4189F05 		ldreq	r1, .L448+36
+ 788 01a8 0B00000A 		beq	.L410
+ 789              	.L137:
+ 790 01ac 030053E3 		cmp	r3, #3
+ 791 01b0 C4089F05 		ldreq	r0, .L448+32
+ 792 01b4 C8189F05 		ldreq	r1, .L448+40
+ 793 01b8 0700000A 		beq	.L410
+ 794              	.L139:
+ 795 01bc 020053E3 		cmp	r3, #2
+ 796 01c0 B4089F05 		ldreq	r0, .L448+32
+ 797 01c4 BC189F05 		ldreq	r1, .L448+44
+ 798 01c8 0300000A 		beq	.L410
+ 799              	.L140:
+ 800 01cc 010053E3 		cmp	r3, #1
+ 801 01d0 0C00001A 		bne	.L138
+ 802 01d4 A0089FE5 		ldr	r0, .L448+32
+ 803 01d8 AC189FE5 		ldr	r1, .L448+48
+ 804              	.L410:
+ 805 01dc 1A20A0E3 		mov	r2, #26
+ 806 01e0 FEFFFFEB 		bl	CyU3PMemCopy
+ 807 01e4 070000EA 		b	.L138
+ 808              	.L136:
+ 809 01e8 FEFFFFEB 		bl	CyU3PUsbGetSpeed
+ 810 01ec 020050E3 		cmp	r0, #2
+ 811 01f0 84089F05 		ldreq	r0, .L448+32
+ 812 01f4 94189F05 		ldreq	r1, .L448+52
+ 813 01f8 F7FFFF0A 		beq	.L410
+ 814              	.L141:
+ 815 01fc 0400A0E3 		mov	r0, #4
+ 816 0200 8C189FE5 		ldr	r1, .L448+56
+ 817 0204 FEFFFFEB 		bl	CyU3PDebugPrint
+ 818              	.L138:
+ 819 0208 1A00A0E3 		mov	r0, #26
+ 820 020c 68189FE5 		ldr	r1, .L448+32
+ 821 0210 070000EA 		b	.L442
+ 822              	.L135:
+ 823 0214 030C55E3 		cmp	r5, #768
+ 824 0218 010B5513 		cmpne	r5, #1024
+ 825 021c 0B02001A 		bne	.L235
+ 826 0220 FEFFFFEB 		bl	CyU3PUsbGetSpeed
+ 827 0224 030050E3 		cmp	r0, #3
+ 828 0228 0802001A 		bne	.L235
+ 829 022c 64189FE5 		ldr	r1, .L448+60
+ 830 0230 0B00A0E3 		mov	r0, #11
+ 831              	.L442:
+ 832 0234 FEFFFFEB 		bl	CyU3PUsbSendEP0Data
+ 833 0238 002050E2 		subs	r2, r0, #0
+ 834 023c 0400A013 		movne	r0, #4
+ 835 0240 54189F15 		ldrne	r1, .L448+64
+ 836 0244 0102000A 		beq	.L235
+ 837 0248 250100EA 		b	.L415
+ 838              	.L134:
+ 839 024c 00005BE3 		cmp	fp, #0
+ 840 0250 8CFFFF0A 		beq	.L126
+ 841 0254 011C55E2 		subs	r1, r5, #256
+ 842 0258 006071E2 		rsbs	r6, r1, #0
+ 843 025c 0160B6E0 		adcs	r6, r6, r1
+ 844 0260 02CC55E2 		subs	ip, r5, #512
+ 845 0264 00407CE2 		rsbs	r4, ip, #0
+ 846 0268 0C40B4E0 		adcs	r4, r4, ip
+ 847 026c 063094E1 		orrs	r3, r4, r6
+ 848 0270 3A00000A 		beq	.L144
+ 849 0274 16208DE2 		add	r2, sp, #22
+ 850 0278 20189FE5 		ldr	r1, .L448+68
+ 851 027c FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 852 0280 002050E2 		subs	r2, r0, #0
+ 853 0284 0200000A 		beq	.L145
+ 854 0288 0400A0E3 		mov	r0, #4
+ 855 028c 10189FE5 		ldr	r1, .L448+72
+ 856 0290 FEFFFFEB 		bl	CyU3PDebugPrint
+ 857              	.L145:
+ 858 0294 B631DDE1 		ldrh	r3, [sp, #22]
+ 859 0298 1A0053E3 		cmp	r3, #26
+ 860 029c 0300009A 		bls	.L146
+ 861              	.L154:
+ 862 02a0 00189FE5 		ldr	r1, .L448+76
+ 863 02a4 0400A0E3 		mov	r0, #4
+ 864 02a8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 865 02ac E70100EA 		b	.L235
+ 866              	.L146:
+ 867 02b0 000056E3 		cmp	r6, #0
+ 868 02b4 E4379F15 		ldrne	r3, .L448+68
+ 869 02b8 0320D315 		ldrneb	r2, [r3, #3]	@ zero_extendqisi2
+ 870 02bc B4379F15 		ldrne	r3, .L448+28
+ 871 02c0 3101001A 		bne	.L411
+ 872              	.L147:
+ 873 02c4 000054E3 		cmp	r4, #0
+ 874 02c8 E001000A 		beq	.L235
+ 875 02cc 9C379FE5 		ldr	r3, .L448+20
+ 876 02d0 C8279FE5 		ldr	r2, .L448+68
+ 877 02d4 0010D3E5 		ldrb	r1, [r3]	@ zero_extendqisi2
+ 878 02d8 0300A0E1 		mov	r0, r3
+ 879 02dc 000051E3 		cmp	r1, #0
+ 880 02e0 C4379FE5 		ldr	r3, .L448+80
+ 881 02e4 0300000A 		beq	.L148
+ 882 02e8 0040D3E5 		ldrb	r4, [r3]	@ zero_extendqisi2
+ 883 02ec 03C0D2E5 		ldrb	ip, [r2, #3]	@ zero_extendqisi2
+ 884 02f0 0C0054E1 		cmp	r4, ip
+ 885 02f4 D501000A 		beq	.L235
+ 886              	.L148:
+ 887 02f8 011081E2 		add	r1, r1, #1
+ 888 02fc 0010C0E5 		strb	r1, [r0]
+ 889 0300 0300D2E5 		ldrb	r0, [r2, #3]	@ zero_extendqisi2
+ 890 0304 0140A0E3 		mov	r4, #1
+ 891 0308 0000C3E5 		strb	r0, [r3]
+ 892 030c 64379FE5 		ldr	r3, .L448+28
+ 893 0310 0000C3E5 		strb	r0, [r3]
+ 894 0314 94379FE5 		ldr	r3, .L448+84
+ 895 0318 0000C3E5 		strb	r0, [r3]
+ 896 031c 44379FE5 		ldr	r3, .L448+12
+ 897 0320 004083E5 		str	r4, [r3]
+ 898 0324 FEFFFFEB 		bl	esSetCameraResolution
+ 899 0328 30379FE5 		ldr	r3, .L448+4
+ 900 032c 003093E5 		ldr	r3, [r3]
+ 901 0330 000053E3 		cmp	r3, #0
+ 902 0334 0700000A 		beq	.L149
+ 903 0338 30379FE5 		ldr	r3, .L448+20
+ 904 033c 0030D3E5 		ldrb	r3, [r3]	@ zero_extendqisi2
+ 905 0340 000053E3 		cmp	r3, #0
+ 906 0344 20379FE5 		ldr	r3, .L448+16
+ 907 0348 0020A013 		movne	r2, #0
+ 908 034c 00208315 		strne	r2, [r3]
+ 909 0350 00408305 		streq	r4, [r3]
+ 910 0354 FEFFFFEB 		bl	esUVCUvcApplnStop
+ 911              	.L149:
+ 912 0358 FEFFFFEB 		bl	esUVCUvcApplnStart
+ 913 035c BB0100EA 		b	.L235
+ 914              	.L144:
+ 915 0360 033C55E2 		subs	r3, r5, #768
+ 916 0364 006073E2 		rsbs	r6, r3, #0
+ 917 0368 0360B6E0 		adcs	r6, r6, r3
+ 918 036c 012B55E2 		subs	r2, r5, #1024
+ 919 0370 004072E2 		rsbs	r4, r2, #0
+ 920 0374 0240B4E0 		adcs	r4, r4, r2
+ 921 0378 063094E1 		orrs	r3, r4, r6
+ 922 037c 1300000A 		beq	.L152
+ 923 0380 16208DE2 		add	r2, sp, #22
+ 924 0384 28179FE5 		ldr	r1, .L448+88
+ 925 0388 FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 926 038c 002050E2 		subs	r2, r0, #0
+ 927 0390 0200000A 		beq	.L153
+ 928 0394 0400A0E3 		mov	r0, #4
+ 929 0398 04179FE5 		ldr	r1, .L448+72
+ 930 039c FEFFFFEB 		bl	CyU3PDebugPrint
+ 931              	.L153:
+ 932 03a0 B631DDE1 		ldrh	r3, [sp, #22]
+ 933 03a4 0B0053E3 		cmp	r3, #11
+ 934 03a8 BCFFFF8A 		bhi	.L154
+ 935 03ac 000056E3 		cmp	r6, #0
+ 936 03b0 0300000A 		beq	.L155
+ 937              	.L156:
+ 938 03b4 F8369FE5 		ldr	r3, .L448+88
+ 939 03b8 0120D3E5 		ldrb	r2, [r3, #1]	@ zero_extendqisi2
+ 940 03bc F4369FE5 		ldr	r3, .L448+92
+ 941 03c0 F10000EA 		b	.L411
+ 942              	.L155:
+ 943 03c4 000054E3 		cmp	r4, #0
+ 944 03c8 A001000A 		beq	.L235
+ 945 03cc F8FFFFEA 		b	.L156
+ 946              	.L152:
+ 947 03d0 050C55E3 		cmp	r5, #1280
+ 948 03d4 9D01001A 		bne	.L235
+ 949 03d8 16208DE2 		add	r2, sp, #22
+ 950 03dc 1000A0E3 		mov	r0, #16
+ 951 03e0 D4169FE5 		ldr	r1, .L448+96
+ 952 03e4 FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 953 03e8 002050E2 		subs	r2, r0, #0
+ 954 03ec 0200000A 		beq	.L157
+ 955 03f0 0400A0E3 		mov	r0, #4
+ 956 03f4 A8169FE5 		ldr	r1, .L448+72
+ 957 03f8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 958              	.L157:
+ 959 03fc B631DDE1 		ldrh	r3, [sp, #22]
+ 960 0400 010053E3 		cmp	r3, #1
+ 961 0404 A5FFFF8A 		bhi	.L154
+ 962 0408 AC369FE5 		ldr	r3, .L448+96
+ 963 040c 0000D3E5 		ldrb	r0, [r3]	@ zero_extendqisi2
+ 964 0410 010050E3 		cmp	r0, #1
+ 965 0414 8D01001A 		bne	.L235
+ 966 0418 A0369FE5 		ldr	r3, .L448+100
+ 967 041c 0320A0E3 		mov	r2, #3
+ 968 0420 0020C3E5 		strb	r2, [r3]
+ 969 0424 98369FE5 		ldr	r3, .L448+104
+ 970 0428 000083E5 		str	r0, [r3]
+ 971 042c 880100EA 		b	.L125
+ 972              	.L133:
+ 973 0430 000058E3 		cmp	r8, #0
+ 974 0434 13FFFF1A 		bne	.L126
+ 975 0438 02AC57E2 		subs	r10, r7, #512
+ 976 043c 00307AE2 		rsbs	r3, r10, #0
+ 977 0440 0A30B3E0 		adcs	r3, r3, r10
+ 978 0444 02BC55E2 		subs	fp, r5, #512
+ 979 0448 00007BE2 		rsbs	r0, fp, #0
+ 980 044c 0B00B0E0 		adcs	r0, r0, fp
+ 981 0450 030010E1 		tst	r0, r3
+ 982 0454 1A00000A 		beq	.L158
+ 983 0458 840054E3 		cmp	r4, #132
+ 984 045c 040000CA 		bgt	.L159
+ 985 0460 810054E3 		cmp	r4, #129
+ 986 0464 060000AA 		bge	.L160
+ 987 0468 010054E3 		cmp	r4, #1
+ 988 046c 0700000A 		beq	.L161
+ 989 0470 760100EA 		b	.L235
+ 990              	.L159:
+ 991 0474 860054E3 		cmp	r4, #134
+ 992 0478 8A00000A 		beq	.L186
+ 993 047c 870054E3 		cmp	r4, #135
+ 994 0480 7201001A 		bne	.L235
+ 995              	.L160:
+ 996 0484 0F0006E2 		and	r0, r6, #15
+ 997 0488 FEFFFFEB 		bl	esOV5640_GetBrightness
+ 998 048c AC0000EA 		b	.L443
+ 999              	.L161:
+ 1000 0490 16208DE2 		add	r2, sp, #22
+ 1001 0494 1000A0E3 		mov	r0, #16
+ 1002 0498 28169FE5 		ldr	r1, .L448+108
+ 1003 049c FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1004 04a0 002050E2 		subs	r2, r0, #0
+ 1005 04a4 0200000A 		beq	.L163
+ 1006 04a8 0400A0E3 		mov	r0, #4
+ 1007 04ac 18169FE5 		ldr	r1, .L448+112
+ 1008 04b0 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1009              	.L163:
+ 1010 04b4 0C369FE5 		ldr	r3, .L448+108
+ 1011 04b8 D000D3E1 		ldrsb	r0, [r3]
+ 1012 04bc FEFFFFEB 		bl	esOV5640_SetBrightness
+ 1013 04c0 620100EA 		b	.L235
+ 1014              	.L158:
+ 1015 04c4 019C57E2 		subs	r9, r7, #256
+ 1016 04c8 002079E2 		rsbs	r2, r9, #0
+ 1017 04cc 0920B2E0 		adcs	r2, r2, r9
+ 1018 04d0 020010E1 		tst	r0, r2
+ 1019 04d4 1C00000A 		beq	.L164
+ 1020 04d8 840054E3 		cmp	r4, #132
+ 1021 04dc 040000CA 		bgt	.L165
+ 1022 04e0 810054E3 		cmp	r4, #129
+ 1023 04e4 060000AA 		bge	.L166
+ 1024 04e8 010054E3 		cmp	r4, #1
+ 1025 04ec 0900000A 		beq	.L167
+ 1026 04f0 560100EA 		b	.L235
+ 1027              	.L165:
+ 1028 04f4 860054E3 		cmp	r4, #134
+ 1029 04f8 6A00000A 		beq	.L186
+ 1030 04fc 870054E3 		cmp	r4, #135
+ 1031 0500 5201001A 		bne	.L235
+ 1032              	.L166:
+ 1033 0504 0F0006E2 		and	r0, r6, #15
+ 1034 0508 FEFFFFEB 		bl	esOV5640_GetAutoExposure
+ 1035 050c BC159FE5 		ldr	r1, .L448+116
+ 1036 0510 B000C1E1 		strh	r0, [r1]	@ movhi
+ 1037 0514 660000EA 		b	.L444
+ 1038              	.L167:
+ 1039 0518 16208DE2 		add	r2, sp, #22
+ 1040 051c 1000A0E3 		mov	r0, #16
+ 1041 0520 AC159FE5 		ldr	r1, .L448+120
+ 1042 0524 FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1043 0528 002050E2 		subs	r2, r0, #0
+ 1044 052c 0200000A 		beq	.L169
+ 1045 0530 0400A0E3 		mov	r0, #4
+ 1046 0534 90159FE5 		ldr	r1, .L448+112
+ 1047 0538 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1048              	.L169:
+ 1049 053c 90359FE5 		ldr	r3, .L448+120
+ 1050 0540 0000D3E5 		ldrb	r0, [r3]	@ zero_extendqisi2
+ 1051 0544 FEFFFFEB 		bl	esOV5640_SetAutoExposure
+ 1052 0548 400100EA 		b	.L235
+ 1053              	.L164:
+ 1054 054c 030C55E3 		cmp	r5, #768
+ 1055 0550 0010A013 		movne	r1, #0
+ 1056 0554 01100302 		andeq	r1, r3, #1
+ 1057 0558 000051E3 		cmp	r1, #0
+ 1058 055c 1A00000A 		beq	.L170
+ 1059 0560 840054E3 		cmp	r4, #132
+ 1060 0564 040000CA 		bgt	.L171
+ 1061 0568 810054E3 		cmp	r4, #129
+ 1062 056c 060000AA 		bge	.L172
+ 1063 0570 010054E3 		cmp	r4, #1
+ 1064 0574 0700000A 		beq	.L173
+ 1065 0578 340100EA 		b	.L235
+ 1066              	.L171:
+ 1067 057c 860054E3 		cmp	r4, #134
+ 1068 0580 4800000A 		beq	.L186
+ 1069 0584 870054E3 		cmp	r4, #135
+ 1070 0588 3001001A 		bne	.L235
+ 1071              	.L172:
+ 1072 058c 0F0006E2 		and	r0, r6, #15
+ 1073 0590 FEFFFFEB 		bl	esOV5640_GetContrast
+ 1074 0594 6A0000EA 		b	.L443
+ 1075              	.L173:
+ 1076 0598 16208DE2 		add	r2, sp, #22
+ 1077 059c 1000A0E3 		mov	r0, #16
+ 1078 05a0 20159FE5 		ldr	r1, .L448+108
+ 1079 05a4 FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1080 05a8 002050E2 		subs	r2, r0, #0
+ 1081 05ac 0200000A 		beq	.L175
+ 1082 05b0 0400A0E3 		mov	r0, #4
+ 1083 05b4 10159FE5 		ldr	r1, .L448+112
+ 1084 05b8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1085              	.L175:
+ 1086 05bc 04359FE5 		ldr	r3, .L448+108
+ 1087 05c0 D000D3E1 		ldrsb	r0, [r3]
+ 1088 05c4 FEFFFFEB 		bl	esOV5640_SetContrast
+ 1089 05c8 200100EA 		b	.L235
+ 1090              	.L170:
+ 1091 05cc 010B55E3 		cmp	r5, #1024
+ 1092 05d0 0010A013 		movne	r1, #0
+ 1093 05d4 01100202 		andeq	r1, r2, #1
+ 1094 05d8 000051E3 		cmp	r1, #0
+ 1095 05dc 1A00000A 		beq	.L176
+ 1096 05e0 840054E3 		cmp	r4, #132
+ 1097 05e4 040000CA 		bgt	.L177
+ 1098 05e8 810054E3 		cmp	r4, #129
+ 1099 05ec 060000AA 		bge	.L178
+ 1100 05f0 010054E3 		cmp	r4, #1
+ 1101 05f4 0700000A 		beq	.L179
+ 1102 05f8 140100EA 		b	.L235
+ 1103              	.L177:
+ 1104 05fc 860054E3 		cmp	r4, #134
+ 1105 0600 2800000A 		beq	.L186
+ 1106 0604 870054E3 		cmp	r4, #135
+ 1107 0608 1001001A 		bne	.L235
+ 1108              	.L178:
+ 1109 060c 0F0006E2 		and	r0, r6, #15
+ 1110 0610 FEFFFFEB 		bl	esOV5640_GetExposure
+ 1111 0614 2A0000EA 		b	.L418
+ 1112              	.L179:
+ 1113 0618 16208DE2 		add	r2, sp, #22
+ 1114 061c 1000A0E3 		mov	r0, #16
+ 1115 0620 B0149FE5 		ldr	r1, .L448+124
+ 1116 0624 FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1117 0628 002050E2 		subs	r2, r0, #0
+ 1118 062c 0200000A 		beq	.L181
+ 1119 0630 0400A0E3 		mov	r0, #4
+ 1120 0634 90149FE5 		ldr	r1, .L448+112
+ 1121 0638 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1122              	.L181:
+ 1123 063c 94349FE5 		ldr	r3, .L448+124
+ 1124 0640 000093E5 		ldr	r0, [r3]
+ 1125 0644 FEFFFFEB 		bl	esOV5640_SetExposure
+ 1126 0648 000100EA 		b	.L235
+ 1127              	.L176:
+ 1128 064c 068C55E2 		subs	r8, r5, #1536
+ 1129 0650 001078E2 		rsbs	r1, r8, #0
+ 1130 0654 0810B1E0 		adcs	r1, r1, r8
+ 1131 0658 030011E1 		tst	r1, r3
+ 1132 065c 0B00000A 		beq	.L182
+ 1133 0660 840054E3 		cmp	r4, #132
+ 1134 0664 040000CA 		bgt	.L183
+ 1135 0668 810054E3 		cmp	r4, #129
+ 1136 066c 120000AA 		bge	.L184
+ 1137 0670 010054E3 		cmp	r4, #1
+ 1138 0674 1C00000A 		beq	.L185
+ 1139 0678 F40000EA 		b	.L235
+ 1140              	.L183:
+ 1141 067c 860054E3 		cmp	r4, #134
+ 1142 0680 0800000A 		beq	.L186
+ 1143 0684 870054E3 		cmp	r4, #135
+ 1144 0688 0B00000A 		beq	.L184
+ 1145 068c EF0000EA 		b	.L235
+ 1146              	.L182:
+ 1147 0690 020011E1 		tst	r1, r2
+ 1148 0694 3E00000A 		beq	.L188
+ 1149 0698 840054E3 		cmp	r4, #132
+ 1150 069c 1F0000DA 		ble	.L446
+ 1151 06a0 860054E3 		cmp	r4, #134
+ 1152 06a4 2200001A 		bne	.L447
+ 1153              	.L186:
+ 1154 06a8 2C149FE5 		ldr	r1, .L448+128
+ 1155 06ac 0330A0E3 		mov	r3, #3
+ 1156 06b0 0030C1E5 		strb	r3, [r1]
+ 1157              	.L444:
+ 1158 06b4 0100A0E3 		mov	r0, #1
+ 1159 06b8 040000EA 		b	.L420
+ 1160              	.L184:
+ 1161 06bc 0F0006E2 		and	r0, r6, #15
+ 1162 06c0 FEFFFFEB 		bl	esOV5640_GetHue
+ 1163              	.L418:
+ 1164 06c4 14149FE5 		ldr	r1, .L448+132
+ 1165 06c8 000081E5 		str	r0, [r1]
+ 1166 06cc 0400A0E3 		mov	r0, #4
+ 1167              	.L420:
+ 1168 06d0 FEFFFFEB 		bl	CyU3PUsbSendEP0Data
+ 1169 06d4 002050E2 		subs	r2, r0, #0
+ 1170 06d8 DC00000A 		beq	.L235
+ 1171 06dc E8139FE5 		ldr	r1, .L448+112
+ 1172 06e0 0400A0E3 		mov	r0, #4
+ 1173              	.L415:
+ 1174 06e4 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1175 06e8 D80000EA 		b	.L235
+ 1176              	.L185:
+ 1177 06ec 16208DE2 		add	r2, sp, #22
+ 1178 06f0 1000A0E3 		mov	r0, #16
+ 1179 06f4 DC139FE5 		ldr	r1, .L448+124
+ 1180 06f8 FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1181 06fc 002050E2 		subs	r2, r0, #0
+ 1182 0700 0200000A 		beq	.L187
+ 1183 0704 0400A0E3 		mov	r0, #4
+ 1184 0708 BC139FE5 		ldr	r1, .L448+112
+ 1185 070c FEFFFFEB 		bl	CyU3PDebugPrint
+ 1186              	.L187:
+ 1187 0710 C0339FE5 		ldr	r3, .L448+124
+ 1188 0714 D000D3E1 		ldrsb	r0, [r3]
+ 1189 0718 FEFFFFEB 		bl	esOV5640_SetHue
+ 1190 071c CB0000EA 		b	.L235
+ 1191              	.L446:
+ 1192 0720 810054E3 		cmp	r4, #129
+ 1193 0724 040000AA 		bge	.L190
+ 1194 0728 010054E3 		cmp	r4, #1
+ 1195 072c 0800000A 		beq	.L191
+ 1196 0730 C60000EA 		b	.L235
+ 1197              	.L447:
+ 1198 0734 870054E3 		cmp	r4, #135
+ 1199 0738 C400001A 		bne	.L235
+ 1200              	.L190:
+ 1201 073c 0F0006E2 		and	r0, r6, #15
+ 1202 0740 FEFFFFEB 		bl	esOV5640_GetManualfocus
+ 1203              	.L443:
+ 1204 0744 98139FE5 		ldr	r1, .L448+136
+ 1205              	.L445:
+ 1206 0748 B000C1E1 		strh	r0, [r1]	@ movhi
+ 1207 074c 0200A0E3 		mov	r0, #2
+ 1208 0750 DEFFFFEA 		b	.L420
+ 1209              	.L191:
+ 1210 0754 16208DE2 		add	r2, sp, #22
+ 1211 0758 1000A0E3 		mov	r0, #16
+ 1212 075c 64139FE5 		ldr	r1, .L448+108
+ 1213 0760 FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1214 0764 002050E2 		subs	r2, r0, #0
+ 1215 0768 0200000A 		beq	.L193
+ 1216 076c 0400A0E3 		mov	r0, #4
+ 1217 0770 54139FE5 		ldr	r1, .L448+112
+ 1218 0774 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1219              	.L193:
+ 1220 0778 48339FE5 		ldr	r3, .L448+108
+ 1221 077c B000D3E1 		ldrh	r0, [r3]
+ 1222 0780 FEFFFFEB 		bl	esOV5640_SetManualfocus
+ 1223 0784 5C339FE5 		ldr	r3, .L448+140
+ 1224 0788 0020A0E3 		mov	r2, #0
+ 1225              	.L411:
+ 1226 078c 0020C3E5 		strb	r2, [r3]
+ 1227 0790 AE0000EA 		b	.L235
+ 1228              	.L188:
+ 1229 0794 070C55E3 		cmp	r5, #1792
+ 1230 0798 0010A013 		movne	r1, #0
+ 1231 079c 01100302 		andeq	r1, r3, #1
+ 1232 07a0 000051E3 		cmp	r1, #0
+ 1233 07a4 1A00000A 		beq	.L194
+ 1234 07a8 840054E3 		cmp	r4, #132
+ 1235 07ac 040000CA 		bgt	.L195
+ 1236 07b0 810054E3 		cmp	r4, #129
+ 1237 07b4 060000AA 		bge	.L196
+ 1238 07b8 010054E3 		cmp	r4, #1
+ 1239 07bc 0700000A 		beq	.L197
+ 1240 07c0 A20000EA 		b	.L235
+ 1241              	.L195:
+ 1242 07c4 860054E3 		cmp	r4, #134
+ 1243 07c8 B6FFFF0A 		beq	.L186
+ 1244 07cc 870054E3 		cmp	r4, #135
+ 1245 07d0 9E00001A 		bne	.L235
+ 1246              	.L196:
+ 1247 07d4 0F0006E2 		and	r0, r6, #15
+ 1248 07d8 FEFFFFEB 		bl	esOV5640_GetSaturation
+ 1249 07dc D8FFFFEA 		b	.L443
+ 1250              	.L197:
+ 1251 07e0 16208DE2 		add	r2, sp, #22
+ 1252 07e4 1000A0E3 		mov	r0, #16
+ 1253 07e8 D8129FE5 		ldr	r1, .L448+108
+ 1254 07ec FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1255 07f0 002050E2 		subs	r2, r0, #0
+ 1256 07f4 0200000A 		beq	.L199
+ 1257 07f8 0400A0E3 		mov	r0, #4
+ 1258 07fc C8129FE5 		ldr	r1, .L448+112
+ 1259 0800 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1260              	.L199:
+ 1261 0804 BC329FE5 		ldr	r3, .L448+108
+ 1262 0808 F000D3E1 		ldrsh	r0, [r3]
+ 1263 080c FEFFFFEB 		bl	esOV5640_SetSaturation
+ 1264 0810 8E0000EA 		b	.L235
+ 1265              	.L194:
+ 1266 0814 02CB55E2 		subs	ip, r5, #2048
+ 1267 0818 00107CE2 		rsbs	r1, ip, #0
+ 1268 081c 0C10B1E0 		adcs	r1, r1, ip
+ 1269 0820 030011E1 		tst	r1, r3
+ 1270 0824 1A00000A 		beq	.L200
+ 1271 0828 840054E3 		cmp	r4, #132
+ 1272 082c 040000CA 		bgt	.L201
+ 1273 0830 810054E3 		cmp	r4, #129
+ 1274 0834 060000AA 		bge	.L202
+ 1275 0838 010054E3 		cmp	r4, #1
+ 1276 083c 0700000A 		beq	.L203
+ 1277 0840 820000EA 		b	.L235
+ 1278              	.L201:
+ 1279 0844 860054E3 		cmp	r4, #134
+ 1280 0848 96FFFF0A 		beq	.L186
+ 1281 084c 870054E3 		cmp	r4, #135
+ 1282 0850 7E00001A 		bne	.L235
+ 1283              	.L202:
+ 1284 0854 0F0006E2 		and	r0, r6, #15
+ 1285 0858 FEFFFFEB 		bl	esOV5640_GetSharpness
+ 1286 085c B8FFFFEA 		b	.L443
+ 1287              	.L203:
+ 1288 0860 16208DE2 		add	r2, sp, #22
+ 1289 0864 1000A0E3 		mov	r0, #16
+ 1290 0868 58129FE5 		ldr	r1, .L448+108
+ 1291 086c FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1292 0870 002050E2 		subs	r2, r0, #0
+ 1293 0874 0200000A 		beq	.L205
+ 1294 0878 0400A0E3 		mov	r0, #4
+ 1295 087c 48129FE5 		ldr	r1, .L448+112
+ 1296 0880 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1297              	.L205:
+ 1298 0884 3C329FE5 		ldr	r3, .L448+108
+ 1299 0888 0000D3E5 		ldrb	r0, [r3]	@ zero_extendqisi2
+ 1300 088c FEFFFFEB 		bl	esOV5640_SetSharpness
+ 1301 0890 6E0000EA 		b	.L235
+ 1302              	.L200:
+ 1303 0894 020011E1 		tst	r1, r2
+ 1304 0898 2100000A 		beq	.L206
+ 1305 089c 0400A0E3 		mov	r0, #4
+ 1306 08a0 44129FE5 		ldr	r1, .L448+144
+ 1307 08a4 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1308 08a8 840054E3 		cmp	r4, #132
+ 1309 08ac 040000CA 		bgt	.L207
+ 1310 08b0 810054E3 		cmp	r4, #129
+ 1311 08b4 060000AA 		bge	.L208
+ 1312 08b8 010054E3 		cmp	r4, #1
+ 1313 08bc 0800000A 		beq	.L209
+ 1314 08c0 620000EA 		b	.L235
+ 1315              	.L207:
+ 1316 08c4 860054E3 		cmp	r4, #134
+ 1317 08c8 76FFFF0A 		beq	.L186
+ 1318 08cc 870054E3 		cmp	r4, #135
+ 1319 08d0 5E00001A 		bne	.L235
+ 1320              	.L208:
+ 1321 08d4 0F0006E2 		and	r0, r6, #15
+ 1322 08d8 FEFFFFEB 		bl	esOV5640_GetAutofocus
+ 1323 08dc EC119FE5 		ldr	r1, .L448+116
+ 1324 08e0 98FFFFEA 		b	.L445
+ 1325              	.L209:
+ 1326 08e4 16208DE2 		add	r2, sp, #22
+ 1327 08e8 1000A0E3 		mov	r0, #16
+ 1328 08ec E0119FE5 		ldr	r1, .L448+120
+ 1329 08f0 FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1330 08f4 002050E2 		subs	r2, r0, #0
+ 1331 08f8 0200000A 		beq	.L211
+ 1332 08fc 0400A0E3 		mov	r0, #4
+ 1333 0900 C4119FE5 		ldr	r1, .L448+112
+ 1334 0904 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1335              	.L211:
+ 1336 0908 C4319FE5 		ldr	r3, .L448+120
+ 1337 090c 0000D3E5 		ldrb	r0, [r3]	@ zero_extendqisi2
+ 1338 0910 FEFFFFEB 		bl	esOV5640_SetAutofocus
+ 1339 0914 CC319FE5 		ldr	r3, .L448+140
+ 1340 0918 0100A0E3 		mov	r0, #1
+ 1341 091c 0000C3E5 		strb	r0, [r3]
+ 1342 0920 4B0000EA 		b	.L125
+ 1343              	.L206:
+ 1344 0924 0A0C55E3 		cmp	r5, #2560
+ 1345 0928 0020A013 		movne	r2, #0
+ 1346 092c 01200302 		andeq	r2, r3, #1
+ 1347 0930 000052E3 		cmp	r2, #0
+ 1348 0934 1A00000A 		beq	.L212
+ 1349 0938 840054E3 		cmp	r4, #132
+ 1350 093c 040000CA 		bgt	.L213
+ 1351 0940 810054E3 		cmp	r4, #129
+ 1352 0944 060000AA 		bge	.L214
+ 1353 0948 010054E3 		cmp	r4, #1
+ 1354 094c 0700000A 		beq	.L215
+ 1355 0950 3E0000EA 		b	.L235
+ 1356              	.L213:
+ 1357 0954 860054E3 		cmp	r4, #134
+ 1358 0958 52FFFF0A 		beq	.L186
+ 1359 095c 870054E3 		cmp	r4, #135
+ 1360 0960 3A00001A 		bne	.L235
+ 1361              	.L214:
+ 1362 0964 0F0006E2 		and	r0, r6, #15
+ 1363 0968 FEFFFFEB 		bl	esOV5640_GetWhiteBalance
+ 1364 096c 74FFFFEA 		b	.L443
+ 1365              	.L215:
+ 1366 0970 16208DE2 		add	r2, sp, #22
+ 1367 0974 1000A0E3 		mov	r0, #16
+ 1368 0978 48119FE5 		ldr	r1, .L448+108
+ 1369 097c FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1370 0980 002050E2 		subs	r2, r0, #0
+ 1371 0984 0200000A 		beq	.L217
+ 1372 0988 0400A0E3 		mov	r0, #4
+ 1373 098c 38119FE5 		ldr	r1, .L448+112
+ 1374 0990 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1375              	.L217:
+ 1376 0994 2C319FE5 		ldr	r3, .L448+108
+ 1377 0998 0000D3E5 		ldrb	r0, [r3]	@ zero_extendqisi2
+ 1378 099c FEFFFFEB 		bl	esOV5640_SetWhiteBalance
+ 1379 09a0 2A0000EA 		b	.L235
+ 1380              	.L212:
+ 1381 09a4 0B0C55E3 		cmp	r5, #2816
+ 1382 09a8 0050A013 		movne	r5, #0
+ 1383 09ac 01500302 		andeq	r5, r3, #1
+ 1384 09b0 000055E3 		cmp	r5, #0
+ 1385 09b4 1A00000A 		beq	.L218
+ 1386 09b8 840054E3 		cmp	r4, #132
+ 1387 09bc 040000CA 		bgt	.L219
+ 1388 09c0 810054E3 		cmp	r4, #129
+ 1389 09c4 060000AA 		bge	.L220
+ 1390 09c8 010054E3 		cmp	r4, #1
+ 1391 09cc 0700000A 		beq	.L221
+ 1392 09d0 1E0000EA 		b	.L235
+ 1393              	.L219:
+ 1394 09d4 860054E3 		cmp	r4, #134
+ 1395 09d8 32FFFF0A 		beq	.L186
+ 1396 09dc 870054E3 		cmp	r4, #135
+ 1397 09e0 1A00001A 		bne	.L235
+ 1398              	.L220:
+ 1399 09e4 0F0006E2 		and	r0, r6, #15
+ 1400 09e8 FEFFFFEB 		bl	esOV5640_GetAutoWhiteBalance
+ 1401 09ec 54FFFFEA 		b	.L443
+ 1402              	.L221:
+ 1403 09f0 16208DE2 		add	r2, sp, #22
+ 1404 09f4 1000A0E3 		mov	r0, #16
+ 1405 09f8 C8109FE5 		ldr	r1, .L448+108
+ 1406 09fc FEFFFFEB 		bl	CyU3PUsbGetEP0Data
+ 1407 0a00 002050E2 		subs	r2, r0, #0
+ 1408 0a04 0200000A 		beq	.L223
+ 1409 0a08 0400A0E3 		mov	r0, #4
+ 1410 0a0c B8109FE5 		ldr	r1, .L448+112
+ 1411 0a10 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1412              	.L223:
+ 1413 0a14 AC309FE5 		ldr	r3, .L448+108
+ 1414 0a18 0000D3E5 		ldrb	r0, [r3]	@ zero_extendqisi2
+ 1415 0a1c FEFFFFEB 		bl	esOV5640_SetAutoWhiteBalance
+ 1416 0a20 0A0000EA 		b	.L235
+ 1417              	.L218:
+ 1418 0a24 000057E3 		cmp	r7, #0
+ 1419 0a28 0000A013 		movne	r0, #0
+ 1420 0a2c 01000002 		andeq	r0, r0, #1
+ 1421 0a30 000050E3 		cmp	r0, #0
+ 1422 0a34 18108D12 		addne	r1, sp, #24
+ 1423 0a38 0630A013 		movne	r3, #6
+ 1424 0a3c 05306115 		strneb	r3, [r1, #-5]!
+ 1425 0a40 1BFFFF1A 		bne	.L444
+ 1426              	.L224:
+ 1427 0a44 0110A0E3 		mov	r1, #1
+ 1428 0a48 0120A0E1 		mov	r2, r1
+ 1429              	.L416:
+ 1430 0a4c FEFFFFEB 		bl	CyU3PUsbStall
+ 1431              	.L235:
+ 1432 0a50 0100A0E3 		mov	r0, #1
+ 1433              	.L125:
+ 1434 0a54 1CD08DE2 		add	sp, sp, #28
+ 1435              		@ sp needed
+ 1436 0a58 F08FBDE8 		ldmfd	sp!, {r4, r5, r6, r7, r8, r9, r10, fp, pc}
+ 1437              	.L449:
+ 1438              		.align	2
+ 1439              	.L448:
+ 1440 0a5c 5A010000 		.word	.LC10
+ 1441 0a60 00000000 		.word	.LANCHOR14
+ 1442 0a64 00000000 		.word	.LANCHOR8
+ 1443 0a68 00000000 		.word	.LANCHOR18
+ 1444 0a6c 00000000 		.word	.LANCHOR17
+ 1445 0a70 00000000 		.word	.LANCHOR19
+ 1446 0a74 00000000 		.word	.LANCHOR20
+ 1447 0a78 00000000 		.word	.LANCHOR11
+ 1448 0a7c 00000000 		.word	glProbeCtrl
+ 1449 0a80 00000000 		.word	gl5MpProbeCtrl
+ 1450 0a84 00000000 		.word	gl720pProbeCtrl
+ 1451 0a88 00000000 		.word	glVga60ProbeCtrl
+ 1452 0a8c 00000000 		.word	gl1080pProbeCtrl
+ 1453 0a90 00000000 		.word	glVga30ProbeCtrl
+ 1454 0a94 A8010000 		.word	.LC11
+ 1455 0a98 00000000 		.word	glStillProbeCtrl
+ 1456 0a9c C4010000 		.word	.LC12
+ 1457 0aa0 00000000 		.word	glCommitCtrl
+ 1458 0aa4 EE010000 		.word	.LC13
+ 1459 0aa8 18020000 		.word	.LC14
+ 1460 0aac 00000000 		.word	.LANCHOR21
+ 1461 0ab0 00000000 		.word	.LANCHOR10
+ 1462 0ab4 00000000 		.word	glStillCommitCtrl
+ 1463 0ab8 00000000 		.word	.LANCHOR22
+ 1464 0abc 00000000 		.word	.LANCHOR23
+ 1465 0ac0 00000000 		.word	.LANCHOR13
+ 1466 0ac4 00000000 		.word	.LANCHOR12
+ 1467 0ac8 00000000 		.word	gl16SetControl
+ 1468 0acc 3C020000 		.word	.LC15
+ 1469 0ad0 00000000 		.word	.LANCHOR26
+ 1470 0ad4 00000000 		.word	.LANCHOR27
+ 1471 0ad8 00000000 		.word	gl32SetControl
+ 1472 0adc 00000000 		.word	.LANCHOR24
+ 1473 0ae0 00000000 		.word	.LANCHOR28
+ 1474 0ae4 00000000 		.word	.LANCHOR25
+ 1475 0ae8 00000000 		.word	.LANCHOR16
+ 1476 0aec 5C020000 		.word	.LC16
+ 1478              		.section	.text.esUVCUvcApplnInit,"ax",%progbits
+ 1479              		.align	2
+ 1480              		.global	esUVCUvcApplnInit
+ 1482              	esUVCUvcApplnInit:
+ 1483              		@ args = 0, pretend = 0, frame = 56
+ 1484              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1485 0000 30402DE9 		stmfd	sp!, {r4, r5, lr}
+ 1486 0004 0100A0E3 		mov	r0, #1
+ 1487 0008 4CD04DE2 		sub	sp, sp, #76
+ 1488 000c FEFFFFEB 		bl	CyU3PMipicsiInitializeI2c
+ 1489 0010 002050E2 		subs	r2, r0, #0
+ 1490 0014 0500000A 		beq	.L451
+ 1491 0018 0400A0E3 		mov	r0, #4
+ 1492 001c 6C169FE5 		ldr	r1, .L513
+ 1493 0020 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1494              	.L452:
+ 1495 0024 6400A0E3 		mov	r0, #100
+ 1496 0028 FEFFFFEB 		bl	_tx_thread_sleep
+ 1497 002c FCFFFFEA 		b	.L452
+ 1498              	.L451:
+ 1499 0030 FEFFFFEB 		bl	CyU3PMipicsiInitializeGPIO
+ 1500 0034 002050E2 		subs	r2, r0, #0
+ 1501 0038 0500000A 		beq	.L453
+ 1502 003c 0400A0E3 		mov	r0, #4
+ 1503 0040 4C169FE5 		ldr	r1, .L513+4
+ 1504 0044 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1505              	.L454:
+ 1506 0048 6400A0E3 		mov	r0, #100
+ 1507 004c FEFFFFEB 		bl	_tx_thread_sleep
+ 1508 0050 FCFFFFEA 		b	.L454
+ 1509              	.L453:
+ 1510 0054 FEFFFFEB 		bl	CyU3PMipicsiInitializePIB
+ 1511 0058 002050E2 		subs	r2, r0, #0
+ 1512 005c 0500000A 		beq	.L455
+ 1513 0060 0400A0E3 		mov	r0, #4
+ 1514 0064 2C169FE5 		ldr	r1, .L513+8
+ 1515 0068 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1516              	.L456:
+ 1517 006c 6400A0E3 		mov	r0, #100
+ 1518 0070 FEFFFFEB 		bl	_tx_thread_sleep
+ 1519 0074 FCFFFFEA 		b	.L456
+ 1520              	.L455:
+ 1521 0078 FEFFFFEB 		bl	CyU3PUsbStart
+ 1522 007c 004050E2 		subs	r4, r0, #0
+ 1523 0080 0600000A 		beq	.L457
+ 1524 0084 0400A0E3 		mov	r0, #4
+ 1525 0088 0C169FE5 		ldr	r1, .L513+12
+ 1526 008c 0420A0E1 		mov	r2, r4
+ 1527 0090 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1528              	.L458:
+ 1529 0094 6400A0E3 		mov	r0, #100
+ 1530 0098 FEFFFFEB 		bl	_tx_thread_sleep
+ 1531 009c FCFFFFEA 		b	.L458
+ 1532              	.L457:
+ 1533 00a0 0110A0E3 		mov	r1, #1
+ 1534 00a4 F4059FE5 		ldr	r0, .L513+16
+ 1535 00a8 FEFFFFEB 		bl	CyU3PUsbRegisterSetupCallback
+ 1536 00ac F0059FE5 		ldr	r0, .L513+20
+ 1537 00b0 FEFFFFEB 		bl	CyU3PUsbRegisterEventCallback
+ 1538 00b4 EC059FE5 		ldr	r0, .L513+24
+ 1539 00b8 FEFFFFEB 		bl	CyU3PUsbRegisterLPMRequestCallback
+ 1540 00bc E8259FE5 		ldr	r2, .L513+28
+ 1541 00c0 0400A0E1 		mov	r0, r4
+ 1542 00c4 0410A0E1 		mov	r1, r4
+ 1543 00c8 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1544 00cc 002050E2 		subs	r2, r0, #0
+ 1545 00d0 0500000A 		beq	.L459
+ 1546 00d4 0400A0E3 		mov	r0, #4
+ 1547 00d8 D0159FE5 		ldr	r1, .L513+32
+ 1548 00dc FEFFFFEB 		bl	CyU3PDebugPrint
+ 1549              	.L460:
+ 1550 00e0 6400A0E3 		mov	r0, #100
+ 1551 00e4 FEFFFFEB 		bl	_tx_thread_sleep
+ 1552 00e8 FCFFFFEA 		b	.L460
+ 1553              	.L459:
+ 1554 00ec 0210A0E1 		mov	r1, r2
+ 1555 00f0 0100A0E3 		mov	r0, #1
+ 1556 00f4 B8259FE5 		ldr	r2, .L513+36
+ 1557 00f8 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1558 00fc 002050E2 		subs	r2, r0, #0
+ 1559 0100 0500000A 		beq	.L461
+ 1560 0104 0400A0E3 		mov	r0, #4
+ 1561 0108 A8159FE5 		ldr	r1, .L513+40
+ 1562 010c FEFFFFEB 		bl	CyU3PDebugPrint
+ 1563              	.L462:
+ 1564 0110 6400A0E3 		mov	r0, #100
+ 1565 0114 FEFFFFEB 		bl	_tx_thread_sleep
+ 1566 0118 FCFFFFEA 		b	.L462
+ 1567              	.L461:
+ 1568 011c 0210A0E1 		mov	r1, r2
+ 1569 0120 0700A0E3 		mov	r0, #7
+ 1570 0124 90259FE5 		ldr	r2, .L513+44
+ 1571 0128 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1572 012c 002050E2 		subs	r2, r0, #0
+ 1573 0130 0500000A 		beq	.L463
+ 1574 0134 0400A0E3 		mov	r0, #4
+ 1575 0138 80159FE5 		ldr	r1, .L513+48
+ 1576 013c FEFFFFEB 		bl	CyU3PDebugPrint
+ 1577              	.L464:
+ 1578 0140 6400A0E3 		mov	r0, #100
+ 1579 0144 FEFFFFEB 		bl	_tx_thread_sleep
+ 1580 0148 FCFFFFEA 		b	.L464
+ 1581              	.L463:
+ 1582 014c 0210A0E1 		mov	r1, r2
+ 1583 0150 0200A0E3 		mov	r0, #2
+ 1584 0154 68259FE5 		ldr	r2, .L513+52
+ 1585 0158 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1586 015c 002050E2 		subs	r2, r0, #0
+ 1587 0160 0500000A 		beq	.L465
+ 1588 0164 0400A0E3 		mov	r0, #4
+ 1589 0168 58159FE5 		ldr	r1, .L513+56
+ 1590 016c FEFFFFEB 		bl	CyU3PDebugPrint
+ 1591              	.L466:
+ 1592 0170 6400A0E3 		mov	r0, #100
+ 1593 0174 FEFFFFEB 		bl	_tx_thread_sleep
+ 1594 0178 FCFFFFEA 		b	.L466
+ 1595              	.L465:
+ 1596 017c 0210A0E1 		mov	r1, r2
+ 1597 0180 0600A0E3 		mov	r0, #6
+ 1598 0184 40259FE5 		ldr	r2, .L513+60
+ 1599 0188 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1600 018c 002050E2 		subs	r2, r0, #0
+ 1601 0190 0400A0E3 		mov	r0, #4
+ 1602 0194 0400000A 		beq	.L467
+ 1603 0198 30159FE5 		ldr	r1, .L513+64
+ 1604 019c FEFFFFEB 		bl	CyU3PDebugPrint
+ 1605              	.L468:
+ 1606 01a0 6400A0E3 		mov	r0, #100
+ 1607 01a4 FEFFFFEB 		bl	_tx_thread_sleep
+ 1608 01a8 FCFFFFEA 		b	.L468
+ 1609              	.L467:
+ 1610 01ac 0210A0E1 		mov	r1, r2
+ 1611 01b0 1C259FE5 		ldr	r2, .L513+68
+ 1612 01b4 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1613 01b8 002050E2 		subs	r2, r0, #0
+ 1614 01bc 0500000A 		beq	.L469
+ 1615 01c0 0400A0E3 		mov	r0, #4
+ 1616 01c4 0C159FE5 		ldr	r1, .L513+72
+ 1617 01c8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1618              	.L470:
+ 1619 01cc 6400A0E3 		mov	r0, #100
+ 1620 01d0 FEFFFFEB 		bl	_tx_thread_sleep
+ 1621 01d4 FCFFFFEA 		b	.L470
+ 1622              	.L469:
+ 1623 01d8 FC249FE5 		ldr	r2, .L513+76
+ 1624 01dc 0300A0E3 		mov	r0, #3
+ 1625 01e0 0010A0E3 		mov	r1, #0
+ 1626 01e4 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1627 01e8 002050E2 		subs	r2, r0, #0
+ 1628 01ec 0500000A 		beq	.L471
+ 1629 01f0 0400A0E3 		mov	r0, #4
+ 1630 01f4 E4149FE5 		ldr	r1, .L513+80
+ 1631 01f8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1632              	.L472:
+ 1633 01fc 6400A0E3 		mov	r0, #100
+ 1634 0200 FEFFFFEB 		bl	_tx_thread_sleep
+ 1635 0204 FCFFFFEA 		b	.L472
+ 1636              	.L471:
+ 1637 0208 0210A0E1 		mov	r1, r2
+ 1638 020c 0500A0E3 		mov	r0, #5
+ 1639 0210 CC249FE5 		ldr	r2, .L513+84
+ 1640 0214 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1641 0218 002050E2 		subs	r2, r0, #0
+ 1642 021c 0500000A 		beq	.L473
+ 1643 0220 0400A0E3 		mov	r0, #4
+ 1644 0224 BC149FE5 		ldr	r1, .L513+88
+ 1645 0228 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1646              	.L474:
+ 1647 022c 6400A0E3 		mov	r0, #100
+ 1648 0230 FEFFFFEB 		bl	_tx_thread_sleep
+ 1649 0234 FCFFFFEA 		b	.L474
+ 1650              	.L473:
+ 1651 0238 AC249FE5 		ldr	r2, .L513+92
+ 1652 023c 0500A0E3 		mov	r0, #5
+ 1653 0240 0110A0E3 		mov	r1, #1
+ 1654 0244 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1655 0248 002050E2 		subs	r2, r0, #0
+ 1656 024c 0500000A 		beq	.L475
+ 1657 0250 0400A0E3 		mov	r0, #4
+ 1658 0254 94149FE5 		ldr	r1, .L513+96
+ 1659 0258 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1660              	.L476:
+ 1661 025c 6400A0E3 		mov	r0, #100
+ 1662 0260 FEFFFFEB 		bl	_tx_thread_sleep
+ 1663 0264 FCFFFFEA 		b	.L476
+ 1664              	.L475:
+ 1665 0268 84249FE5 		ldr	r2, .L513+100
+ 1666 026c 0500A0E3 		mov	r0, #5
+ 1667 0270 0210A0E3 		mov	r1, #2
+ 1668 0274 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1669 0278 002050E2 		subs	r2, r0, #0
+ 1670 027c 0500000A 		beq	.L477
+ 1671 0280 0400A0E3 		mov	r0, #4
+ 1672 0284 6C149FE5 		ldr	r1, .L513+104
+ 1673 0288 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1674              	.L478:
+ 1675 028c 6400A0E3 		mov	r0, #100
+ 1676 0290 FEFFFFEB 		bl	_tx_thread_sleep
+ 1677 0294 FCFFFFEA 		b	.L478
+ 1678              	.L477:
+ 1679 0298 5C249FE5 		ldr	r2, .L513+108
+ 1680 029c 0500A0E3 		mov	r0, #5
+ 1681 02a0 0310A0E3 		mov	r1, #3
+ 1682 02a4 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1683 02a8 002050E2 		subs	r2, r0, #0
+ 1684 02ac 0500000A 		beq	.L479
+ 1685 02b0 0400A0E3 		mov	r0, #4
+ 1686 02b4 44149FE5 		ldr	r1, .L513+112
+ 1687 02b8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1688              	.L480:
+ 1689 02bc 6400A0E3 		mov	r0, #100
+ 1690 02c0 FEFFFFEB 		bl	_tx_thread_sleep
+ 1691 02c4 FCFFFFEA 		b	.L480
+ 1692              	.L479:
+ 1693 02c8 34249FE5 		ldr	r2, .L513+116
+ 1694 02cc 0500A0E3 		mov	r0, #5
+ 1695 02d0 0410A0E3 		mov	r1, #4
+ 1696 02d4 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1697 02d8 002050E2 		subs	r2, r0, #0
+ 1698 02dc 0500000A 		beq	.L481
+ 1699 02e0 0400A0E3 		mov	r0, #4
+ 1700 02e4 1C149FE5 		ldr	r1, .L513+120
+ 1701 02e8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1702              	.L482:
+ 1703 02ec 6400A0E3 		mov	r0, #100
+ 1704 02f0 FEFFFFEB 		bl	_tx_thread_sleep
+ 1705 02f4 FCFFFFEA 		b	.L482
+ 1706              	.L481:
+ 1707 02f8 0500A0E3 		mov	r0, #5
+ 1708 02fc 0010A0E1 		mov	r1, r0
+ 1709 0300 04249FE5 		ldr	r2, .L513+124
+ 1710 0304 FEFFFFEB 		bl	CyU3PUsbSetDesc
+ 1711 0308 004050E2 		subs	r4, r0, #0
+ 1712 030c 0600000A 		beq	.L483
+ 1713 0310 0400A0E3 		mov	r0, #4
+ 1714 0314 F4139FE5 		ldr	r1, .L513+128
+ 1715 0318 0420A0E1 		mov	r2, r4
+ 1716 031c FEFFFFEB 		bl	CyU3PDebugPrint
+ 1717              	.L484:
+ 1718 0320 6400A0E3 		mov	r0, #100
+ 1719 0324 FEFFFFEB 		bl	_tx_thread_sleep
+ 1720 0328 FCFFFFEA 		b	.L484
+ 1721              	.L483:
+ 1722 032c 0100A0E3 		mov	r0, #1
+ 1723 0330 FEFFFFEB 		bl	CyU3PUsbVBattEnable
+ 1724 0334 0110A0E3 		mov	r1, #1
+ 1725 0338 0400A0E1 		mov	r0, r4
+ 1726 033c FEFFFFEB 		bl	CyU3PUsbControlVBusDetect
+ 1727 0340 FEFFFFEB 		bl	esOV5640_Base_Config
+ 1728 0344 FEFFFFEB 		bl	esOV5640_Auto_Focus_Config
+ 1729 0348 FEFFFFEB 		bl	esCamera_Power_Down
+ 1730 034c 0100A0E3 		mov	r0, #1
+ 1731 0350 0010A0E1 		mov	r1, r0
+ 1732 0354 FEFFFFEB 		bl	CyU3PConnectState
+ 1733 0358 002050E2 		subs	r2, r0, #0
+ 1734 035c 0500000A 		beq	.L485
+ 1735 0360 0400A0E3 		mov	r0, #4
+ 1736 0364 A8139FE5 		ldr	r1, .L513+132
+ 1737 0368 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1738              	.L486:
+ 1739 036c 6400A0E3 		mov	r0, #100
+ 1740 0370 FEFFFFEB 		bl	_tx_thread_sleep
+ 1741 0374 FCFFFFEA 		b	.L486
+ 1742              	.L485:
+ 1743 0378 0330A0E3 		mov	r3, #3
+ 1744 037c 0140A0E3 		mov	r4, #1
+ 1745 0380 1830CDE5 		strb	r3, [sp, #24]
+ 1746 0384 8200A0E3 		mov	r0, #130
+ 1747 0388 4030A0E3 		mov	r3, #64
+ 1748 038c 14108DE2 		add	r1, sp, #20
+ 1749 0390 14408DE5 		str	r4, [sp, #20]
+ 1750 0394 BC31CDE1 		strh	r3, [sp, #28]	@ movhi
+ 1751 0398 1F40CDE5 		strb	r4, [sp, #31]
+ 1752 039c 1E40CDE5 		strb	r4, [sp, #30]
+ 1753 03a0 FEFFFFEB 		bl	CyU3PSetEpConfig
+ 1754 03a4 005050E2 		subs	r5, r0, #0
+ 1755 03a8 0600000A 		beq	.L487
+ 1756 03ac 0400A0E3 		mov	r0, #4
+ 1757 03b0 60139FE5 		ldr	r1, .L513+136
+ 1758 03b4 0520A0E1 		mov	r2, r5
+ 1759 03b8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1760              	.L488:
+ 1761 03bc 6400A0E3 		mov	r0, #100
+ 1762 03c0 FEFFFFEB 		bl	_tx_thread_sleep
+ 1763 03c4 FCFFFFEA 		b	.L488
+ 1764              	.L487:
+ 1765 03c8 8200A0E3 		mov	r0, #130
+ 1766 03cc FEFFFFEB 		bl	CyU3PUsbFlushEp
+ 1767 03d0 0230A0E3 		mov	r3, #2
+ 1768 03d4 FA0FA0E3 		mov	r0, #1000
+ 1769 03d8 1830CDE5 		strb	r3, [sp, #24]
+ 1770 03dc 14408DE5 		str	r4, [sp, #20]
+ 1771 03e0 1F50CDE5 		strb	r5, [sp, #31]
+ 1772 03e4 BA51CDE1 		strh	r5, [sp, #26]	@ movhi
+ 1773 03e8 FEFFFFEB 		bl	_tx_thread_sleep
+ 1774 03ec FEFFFFEB 		bl	CyU3PUsbGetSpeed
+ 1775 03f0 010050E3 		cmp	r0, #1
+ 1776 03f4 0E00000A 		beq	.L490
+ 1777 03f8 020050E3 		cmp	r0, #2
+ 1778 03fc 18139FE5 		ldr	r1, .L513+140
+ 1779 0400 18239FE5 		ldr	r2, .L513+144
+ 1780 0404 18339FE5 		ldr	r3, .L513+148
+ 1781 0408 0E00001A 		bne	.L511
+ 1782 040c 020CA0E3 		mov	r0, #512
+ 1783 0410 BC01CDE1 		strh	r0, [sp, #28]	@ movhi
+ 1784 0414 0100A0E3 		mov	r0, #1
+ 1785 0418 1E00CDE5 		strb	r0, [sp, #30]
+ 1786 041c 030BA0E3 		mov	r0, #3072
+ 1787 0420 B000C1E1 		strh	r0, [r1]	@ movhi
+ 1788 0424 BF1EA0E3 		mov	r1, #3056
+ 1789 0428 B010C2E1 		strh	r1, [r2]	@ movhi
+ 1790 042c 0820A0E3 		mov	r2, #8
+ 1791 0430 0D0000EA 		b	.L512
+ 1792              	.L490:
+ 1793 0434 4030A0E3 		mov	r3, #64
+ 1794 0438 BC31CDE1 		strh	r3, [sp, #28]	@ movhi
+ 1795 043c 0130A0E3 		mov	r3, #1
+ 1796 0440 1E30CDE5 		strb	r3, [sp, #30]
+ 1797 0444 090000EA 		b	.L492
+ 1798              	.L511:
+ 1799 0448 010BA0E3 		mov	r0, #1024
+ 1800 044c BC01CDE1 		strh	r0, [sp, #28]	@ movhi
+ 1801 0450 1000A0E3 		mov	r0, #16
+ 1802 0454 1E00CDE5 		strb	r0, [sp, #30]
+ 1803 0458 060AA0E3 		mov	r0, #24576
+ 1804 045c B000C1E1 		strh	r0, [r1]	@ movhi
+ 1805 0460 C0129FE5 		ldr	r1, .L513+152
+ 1806 0464 B010C2E1 		strh	r1, [r2]	@ movhi
+ 1807 0468 0420A0E3 		mov	r2, #4
+ 1808              	.L512:
+ 1809 046c 0020C3E5 		strb	r2, [r3]
+ 1810              	.L492:
+ 1811 0470 8300A0E3 		mov	r0, #131
+ 1812 0474 14108DE2 		add	r1, sp, #20
+ 1813 0478 FEFFFFEB 		bl	CyU3PSetEpConfig
+ 1814 047c 004050E2 		subs	r4, r0, #0
+ 1815 0480 0600000A 		beq	.L493
+ 1816 0484 0400A0E3 		mov	r0, #4
+ 1817 0488 9C129FE5 		ldr	r1, .L513+156
+ 1818 048c 0420A0E1 		mov	r2, r4
+ 1819 0490 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1820              	.L494:
+ 1821 0494 6400A0E3 		mov	r0, #100
+ 1822 0498 FEFFFFEB 		bl	_tx_thread_sleep
+ 1823 049c FCFFFFEA 		b	.L494
+ 1824              	.L493:
+ 1825 04a0 0110A0E3 		mov	r1, #1
+ 1826 04a4 8300A0E3 		mov	r0, #131
+ 1827 04a8 FEFFFFEB 		bl	CyU3PUsbEPSetBurstMode
+ 1828 04ac 8300A0E3 		mov	r0, #131
+ 1829 04b0 FEFFFFEB 		bl	CyU3PUsbFlushEp
+ 1830 04b4 60329FE5 		ldr	r3, .L513+140
+ 1831 04b8 20208DE2 		add	r2, sp, #32
+ 1832 04bc B030D3E1 		ldrh	r3, [r3]
+ 1833 04c0 0450A0E3 		mov	r5, #4
+ 1834 04c4 B032CDE1 		strh	r3, [sp, #32]	@ movhi
+ 1835 04c8 54329FE5 		ldr	r3, .L513+148
+ 1836 04cc 5C029FE5 		ldr	r0, .L513+160
+ 1837 04d0 0030D3E5 		ldrb	r3, [r3]	@ zero_extendqisi2
+ 1838 04d4 0710A0E3 		mov	r1, #7
+ 1839 04d8 B232CDE1 		strh	r3, [sp, #34]	@ movhi
+ 1840 04dc 0230A0E3 		mov	r3, #2
+ 1841 04e0 B432CDE1 		strh	r3, [sp, #36]	@ movhi
+ 1842 04e4 013CA0E3 		mov	r3, #256
+ 1843 04e8 B632CDE1 		strh	r3, [sp, #38]	@ movhi
+ 1844 04ec 013083E2 		add	r3, r3, #1
+ 1845 04f0 B832CDE1 		strh	r3, [sp, #40]	@ movhi
+ 1846 04f4 38329FE5 		ldr	r3, .L513+164
+ 1847 04f8 3E40CDE5 		strb	r4, [sp, #62]
+ 1848 04fc BE32CDE1 		strh	r3, [sp, #46]	@ movhi
+ 1849 0500 1830A0E3 		mov	r3, #24
+ 1850 0504 40308DE5 		str	r3, [sp, #64]
+ 1851 0508 28329FE5 		ldr	r3, .L513+168
+ 1852 050c BA53CDE1 		strh	r5, [sp, #58]	@ movhi
+ 1853 0510 44308DE5 		str	r3, [sp, #68]
+ 1854 0514 0C30A0E3 		mov	r3, #12
+ 1855 0518 B833CDE1 		strh	r3, [sp, #56]	@ movhi
+ 1856 051c BC43CDE1 		strh	r4, [sp, #60]	@ movhi
+ 1857 0520 B643CDE1 		strh	r4, [sp, #54]	@ movhi
+ 1858 0524 FEFFFFEB 		bl	CyU3PDmaMultiChannelCreate
+ 1859 0528 002050E2 		subs	r2, r0, #0
+ 1860 052c 0200000A 		beq	.L495
+ 1861 0530 0500A0E1 		mov	r0, r5
+ 1862 0534 00129FE5 		ldr	r1, .L513+172
+ 1863 0538 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1864              	.L495:
+ 1865 053c 6400A0E3 		mov	r0, #100
+ 1866 0540 FEFFFFEB 		bl	_tx_thread_sleep
+ 1867 0544 E4019FE5 		ldr	r0, .L513+160
+ 1868 0548 FEFFFFEB 		bl	CyU3PDmaMultiChannelReset
+ 1869 054c 002050E2 		subs	r2, r0, #0
+ 1870 0550 0200000A 		beq	.L496
+ 1871 0554 0400A0E3 		mov	r0, #4
+ 1872 0558 E0119FE5 		ldr	r1, .L513+176
+ 1873 055c FEFFFFEB 		bl	CyU3PDebugPrint
+ 1874              	.L496:
+ 1875 0560 B8319FE5 		ldr	r3, .L513+144
+ 1876 0564 0100A0E3 		mov	r0, #1
+ 1877 0568 B010D3E1 		ldrh	r1, [r3]
+ 1878 056c FEFFFFEB 		bl	CyU3PMipicsiGpifLoad
+ 1879 0570 004050E2 		subs	r4, r0, #0
+ 1880 0574 0600000A 		beq	.L497
+ 1881 0578 0400A0E3 		mov	r0, #4
+ 1882 057c C0119FE5 		ldr	r1, .L513+180
+ 1883 0580 0420A0E1 		mov	r2, r4
+ 1884 0584 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1885              	.L498:
+ 1886 0588 6400A0E3 		mov	r0, #100
+ 1887 058c FEFFFFEB 		bl	_tx_thread_sleep
+ 1888 0590 FCFFFFEA 		b	.L498
+ 1889              	.L497:
+ 1890 0594 3200A0E3 		mov	r0, #50
+ 1891 0598 FEFFFFEB 		bl	_tx_thread_sleep
+ 1892 059c A4019FE5 		ldr	r0, .L513+184
+ 1893 05a0 FEFFFFEB 		bl	CyU3PGpifRegisterCallback
+ 1894 05a4 3200A0E3 		mov	r0, #50
+ 1895 05a8 FEFFFFEB 		bl	_tx_thread_sleep
+ 1896 05ac 0400A0E1 		mov	r0, r4
+ 1897 05b0 0410A0E1 		mov	r1, r4
+ 1898 05b4 FEFFFFEB 		bl	CyU3PGpifSMStart
+ 1899 05b8 002050E2 		subs	r2, r0, #0
+ 1900 05bc 0500000A 		beq	.L499
+ 1901 05c0 0400A0E3 		mov	r0, #4
+ 1902 05c4 80119FE5 		ldr	r1, .L513+188
+ 1903 05c8 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1904              	.L500:
+ 1905 05cc 6400A0E3 		mov	r0, #100
+ 1906 05d0 FEFFFFEB 		bl	_tx_thread_sleep
+ 1907 05d4 FCFFFFEA 		b	.L500
+ 1908              	.L499:
+ 1909 05d8 3200A0E3 		mov	r0, #50
+ 1910 05dc FEFFFFEB 		bl	_tx_thread_sleep
+ 1911 05e0 0100A0E3 		mov	r0, #1
+ 1912 05e4 FEFFFFEB 		bl	CyU3PGpifSMControl
+ 1913 05e8 FEFFFFEB 		bl	CyU3PMipicsiInit
+ 1914 05ec 002050E2 		subs	r2, r0, #0
+ 1915 05f0 0500000A 		beq	.L501
+ 1916 05f4 0400A0E3 		mov	r0, #4
+ 1917 05f8 50119FE5 		ldr	r1, .L513+192
+ 1918 05fc FEFFFFEB 		bl	CyU3PDebugPrint
+ 1919              	.L502:
+ 1920 0600 6400A0E3 		mov	r0, #100
+ 1921 0604 FEFFFFEB 		bl	_tx_thread_sleep
+ 1922 0608 FCFFFFEA 		b	.L502
+ 1923              	.L501:
+ 1924 060c 0210A0E1 		mov	r1, r2
+ 1925 0610 3C019FE5 		ldr	r0, .L513+196
+ 1926 0614 FEFFFFEB 		bl	CyU3PMipicsiSetIntfParams
+ 1927 0618 002050E2 		subs	r2, r0, #0
+ 1928 061c 0500000A 		beq	.L503
+ 1929 0620 0400A0E3 		mov	r0, #4
+ 1930 0624 2C119FE5 		ldr	r1, .L513+200
+ 1931 0628 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1932              	.L504:
+ 1933 062c 6400A0E3 		mov	r0, #100
+ 1934 0630 FEFFFFEB 		bl	_tx_thread_sleep
+ 1935 0634 FCFFFFEA 		b	.L504
+ 1936              	.L503:
+ 1937 0638 7D3FA0E3 		mov	r3, #500
+ 1938 063c 0210A0E1 		mov	r1, r2
+ 1939 0640 00308DE5 		str	r3, [sp]
+ 1940 0644 2C30A0E3 		mov	r3, #44
+ 1941 0648 04208DE5 		str	r2, [sp, #4]
+ 1942 064c 08208DE5 		str	r2, [sp, #8]
+ 1943 0650 0C308DE5 		str	r3, [sp, #12]
+ 1944 0654 00219FE5 		ldr	r2, .L513+204
+ 1945 0658 0130A0E1 		mov	r3, r1
+ 1946 065c FC009FE5 		ldr	r0, .L513+208
+ 1947 0660 FEFFFFEB 		bl	_txe_timer_create
+ 1948 0664 8530A0E3 		mov	r3, #133
+ 1949 0668 00308DE5 		str	r3, [sp]
+ 1950 066c B03083E2 		add	r3, r3, #176
+ 1951 0670 04308DE5 		str	r3, [sp, #4]
+ 1952 0674 E8109FE5 		ldr	r1, .L513+212
+ 1953 0678 0120A0E3 		mov	r2, #1
+ 1954 067c 0330A0E3 		mov	r3, #3
+ 1955 0680 0400A0E3 		mov	r0, #4
+ 1956 0684 FEFFFFEB 		bl	CyU3PDebugPrint
+ 1957 0688 4CD08DE2 		add	sp, sp, #76
+ 1958              		@ sp needed
+ 1959 068c 3080BDE8 		ldmfd	sp!, {r4, r5, pc}
+ 1960              	.L514:
+ 1961              		.align	2
+ 1962              	.L513:
+ 1963 0690 69020000 		.word	.LC17
+ 1964 0694 87020000 		.word	.LC18
+ 1965 0698 A5020000 		.word	.LC19
+ 1966 069c C2020000 		.word	.LC20
+ 1967 06a0 00000000 		.word	esUVCUvcApplnUSBSetupCB
+ 1968 06a4 00000000 		.word	esUVCUvcApplnUSBEventCB
+ 1969 06a8 00000000 		.word	esUVCApplnLPMRqtCB
+ 1970 06ac 00000000 		.word	esUVCUSB30DeviceDscr
+ 1971 06b0 E0020000 		.word	.LC21
+ 1972 06b4 00000000 		.word	esUVCUSB20DeviceDscr
+ 1973 06b8 08030000 		.word	.LC22
+ 1974 06bc 00000000 		.word	esUVCUSBBOSDscr
+ 1975 06c0 30030000 		.word	.LC23
+ 1976 06c4 00000000 		.word	esUVCUSBDeviceQualDscr
+ 1977 06c8 52030000 		.word	.LC24
+ 1978 06cc 00000000 		.word	esUVCUSBSSConfigDscr
+ 1979 06d0 78030000 		.word	.LC25
+ 1980 06d4 00000000 		.word	esUVCUSBHSConfigDscr
+ 1981 06d8 9D030000 		.word	.LC26
+ 1982 06dc 00000000 		.word	esUVCUSBFSConfigDscr
+ 1983 06e0 C2030000 		.word	.LC27
+ 1984 06e4 00000000 		.word	esUVCUSBStringLangIDDscr
+ 1985 06e8 E7030000 		.word	.LC28
+ 1986 06ec 00000000 		.word	esUVCUSBManufactureDscr
+ 1987 06f0 0C040000 		.word	.LC29
+ 1988 06f4 00000000 		.word	esUVCUSBProductDscr
+ 1989 06f8 31040000 		.word	.LC30
+ 1990 06fc 00000000 		.word	esUVCUSBConfigSSDscr
+ 1991 0700 56040000 		.word	.LC31
+ 1992 0704 00000000 		.word	esUVCUSBConfigHSDscr
+ 1993 0708 7B040000 		.word	.LC32
+ 1994 070c 00000000 		.word	esUVCUSBConfigFSDscr
+ 1995 0710 A0040000 		.word	.LC33
+ 1996 0714 C5040000 		.word	.LC34
+ 1997 0718 E7040000 		.word	.LC35
+ 1998 071c 00000000 		.word	.LANCHOR29
+ 1999 0720 00000000 		.word	.LANCHOR2
+ 2000 0724 00000000 		.word	.LANCHOR30
+ 2001 0728 F05F0000 		.word	24560
+ 2002 072c 14050000 		.word	.LC36
+ 2003 0730 00000000 		.word	glChHandleUVCStream
+ 2004 0734 03030000 		.word	771
+ 2005 0738 00000000 		.word	esUVCUvcAppDmaCallback
+ 2006 073c 41050000 		.word	.LC37
+ 2007 0740 6C050000 		.word	.LC38
+ 2008 0744 93050000 		.word	.LC39
+ 2009 0748 00000000 		.word	esUVCGpifCB
+ 2010 074c B8050000 		.word	.LC40
+ 2011 0750 D9050000 		.word	.LC41
+ 2012 0754 00000000 		.word	cfgUvcVgaNoMclk
+ 2013 0758 FA050000 		.word	.LC42
+ 2014 075c 00000000 		.word	UvcAppProgressTimer
+ 2015 0760 00000000 		.word	.LANCHOR1
+ 2016 0764 24060000 		.word	.LC43
+ 2018              		.section	.text.esUVCUvcApplnDebugInit,"ax",%progbits
+ 2019              		.align	2
+ 2020              		.global	esUVCUvcApplnDebugInit
+ 2022              	esUVCUvcApplnDebugInit:
+ 2023              		@ args = 0, pretend = 0, frame = 24
+ 2024              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2025 0000 7F402DE9 		stmfd	sp!, {r0, r1, r2, r3, r4, r5, r6, lr}
+ 2026 0004 FEFFFFEB 		bl	CyU3PUartInit
+ 2027 0008 002050E2 		subs	r2, r0, #0
+ 2028 000c 0200000A 		beq	.L516
+ 2029 0010 0400A0E3 		mov	r0, #4
+ 2030 0014 90109FE5 		ldr	r1, .L532
+ 2031 0018 FEFFFFEB 		bl	CyU3PDebugPrint
+ 2032              	.L516:
+ 2033 001c 8C309FE5 		ldr	r3, .L532+4
+ 2034 0020 0010A0E3 		mov	r1, #0
+ 2035 0024 10308DE5 		str	r3, [sp, #16]
+ 2036 0028 0D00A0E1 		mov	r0, sp
+ 2037 002c 0130A0E3 		mov	r3, #1
+ 2038 0030 1430CDE5 		strb	r3, [sp, #20]
+ 2039 0034 1510CDE5 		strb	r1, [sp, #21]
+ 2040 0038 00308DE5 		str	r3, [sp]
+ 2041 003c 04108DE5 		str	r1, [sp, #4]
+ 2042 0040 08108DE5 		str	r1, [sp, #8]
+ 2043 0044 0C308DE5 		str	r3, [sp, #12]
+ 2044 0048 FEFFFFEB 		bl	CyU3PUartSetConfig
+ 2045 004c 002050E2 		subs	r2, r0, #0
+ 2046 0050 0200000A 		beq	.L517
+ 2047 0054 0400A0E3 		mov	r0, #4
+ 2048 0058 54109FE5 		ldr	r1, .L532+8
+ 2049 005c FEFFFFEB 		bl	CyU3PDebugPrint
+ 2050              	.L517:
+ 2051 0060 0000E0E3 		mvn	r0, #0
+ 2052 0064 FEFFFFEB 		bl	CyU3PUartTxSetBlockXfer
+ 2053 0068 002050E2 		subs	r2, r0, #0
+ 2054 006c 0200000A 		beq	.L518
+ 2055 0070 0400A0E3 		mov	r0, #4
+ 2056 0074 3C109FE5 		ldr	r1, .L532+12
+ 2057 0078 FEFFFFEB 		bl	CyU3PDebugPrint
+ 2058              	.L518:
+ 2059 007c 0300A0E3 		mov	r0, #3
+ 2060 0080 0810A0E3 		mov	r1, #8
+ 2061 0084 FEFFFFEB 		bl	CyU3PDebugInit
+ 2062 0088 002050E2 		subs	r2, r0, #0
+ 2063 008c 0200000A 		beq	.L519
+ 2064 0090 0400A0E3 		mov	r0, #4
+ 2065 0094 20109FE5 		ldr	r1, .L532+16
+ 2066 0098 FEFFFFEB 		bl	CyU3PDebugPrint
+ 2067              	.L519:
+ 2068 009c 0000A0E3 		mov	r0, #0
+ 2069 00a0 FEFFFFEB 		bl	CyU3PDebugPreamble
+ 2070 00a4 1CD08DE2 		add	sp, sp, #28
+ 2071              		@ sp needed
+ 2072 00a8 04F09DE4 		ldr	pc, [sp], #4
+ 2073              	.L533:
+ 2074              		.align	2
+ 2075              	.L532:
+ 2076 00ac 44060000 		.word	.LC44
+ 2077 00b0 00C20100 		.word	115200
+ 2078 00b4 7F060000 		.word	.LC45
+ 2079 00b8 BF060000 		.word	.LC46
+ 2080 00bc 04070000 		.word	.LC47
+ 2082              		.section	.text.esUVCUvcAppThread_Entry,"ax",%progbits
+ 2083              		.align	2
+ 2084              		.global	esUVCUvcAppThread_Entry
+ 2086              	esUVCUvcAppThread_Entry:
+ 2087              		@ args = 0, pretend = 0, frame = 8
+ 2088              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2089 0000 30402DE9 		stmfd	sp!, {r4, r5, lr}
+ 2090 0004 14D04DE2 		sub	sp, sp, #20
+ 2091 0008 FEFFFFEB 		bl	esUVCUvcApplnDebugInit
+ 2092 000c FEFFFFEB 		bl	esUVCUvcApplnInit
+ 2093              	.L542:
+ 2094 0010 B0409FE5 		ldr	r4, .L549
+ 2095              	.L541:
+ 2096 0014 B0509FE5 		ldr	r5, .L549+4
+ 2097              	.L539:
+ 2098 0018 0030E0E3 		mvn	r3, #0
+ 2099 001c 00308DE5 		str	r3, [sp]
+ 2100 0020 A8009FE5 		ldr	r0, .L549+8
+ 2101 0024 0C308DE2 		add	r3, sp, #12
+ 2102 0028 3010A0E3 		mov	r1, #48
+ 2103 002c 0120A0E3 		mov	r2, #1
+ 2104 0030 FEFFFFEB 		bl	_txe_event_flags_get
+ 2105 0034 0C309DE5 		ldr	r3, [sp, #12]
+ 2106 0038 100013E3 		tst	r3, #16
+ 2107 003c 1100000A 		beq	.L535
+ 2108 0040 003094E5 		ldr	r3, [r4]
+ 2109 0044 000053E3 		cmp	r3, #0
+ 2110 0048 0300000A 		beq	.L536
+ 2111 004c 80309FE5 		ldr	r3, .L549+12
+ 2112 0050 0020A0E3 		mov	r2, #0
+ 2113 0054 002083E5 		str	r2, [r3]
+ 2114 0058 FEFFFFEB 		bl	esUVCUvcApplnStop
+ 2115              	.L536:
+ 2116 005c 003095E5 		ldr	r3, [r5]
+ 2117 0060 010053E3 		cmp	r3, #1
+ 2118 0064 0300001A 		bne	.L537
+ 2119 0068 68309FE5 		ldr	r3, .L549+16
+ 2120 006c 0000D3E5 		ldrb	r0, [r3]	@ zero_extendqisi2
+ 2121 0070 FEFFFFEB 		bl	esSetCameraResolution
+ 2122 0074 FEFFFFEB 		bl	esUVCUvcApplnStart
+ 2123              	.L537:
+ 2124 0078 5C009FE5 		ldr	r0, .L549+20
+ 2125 007c 7D1FA0E3 		mov	r1, #500
+ 2126 0080 0020A0E3 		mov	r2, #0
+ 2127 0084 FEFFFFEB 		bl	_txe_timer_change
+ 2128              	.L535:
+ 2129 0088 0C309DE5 		ldr	r3, [sp, #12]
+ 2130 008c 200013E3 		tst	r3, #32
+ 2131 0090 E0FFFF0A 		beq	.L539
+ 2132 0094 FEFFFFEB 		bl	CyU3PMipicsiSleep
+ 2133 0098 FEFFFFEB 		bl	esCamera_Power_Down
+ 2134 009c 0800A0E3 		mov	r0, #8
+ 2135 00a0 0010A0E3 		mov	r1, #0
+ 2136 00a4 0A208DE2 		add	r2, sp, #10
+ 2137 00a8 FEFFFFEB 		bl	CyU3PSysEnterSuspendMode
+ 2138 00ac 2C309FE5 		ldr	r3, .L549+24
+ 2139 00b0 003093E5 		ldr	r3, [r3]
+ 2140 00b4 000053E3 		cmp	r3, #0
+ 2141 00b8 D5FFFF0A 		beq	.L541
+ 2142 00bc FEFFFFEB 		bl	CyU3PMipicsiWakeup
+ 2143 00c0 FEFFFFEB 		bl	esCamera_Power_Up
+ 2144 00c4 D1FFFFEA 		b	.L542
+ 2145              	.L550:
+ 2146              		.align	2
+ 2147              	.L549:
+ 2148 00c8 00000000 		.word	.LANCHOR14
+ 2149 00cc 00000000 		.word	.LANCHOR18
+ 2150 00d0 00000000 		.word	glTimerEvent
+ 2151 00d4 00000000 		.word	.LANCHOR17
+ 2152 00d8 00000000 		.word	.LANCHOR10
+ 2153 00dc 00000000 		.word	.LANCHOR1
+ 2154 00e0 00000000 		.word	.LANCHOR15
+ 2156              		.section	.text.CyFxApplicationDefine,"ax",%progbits
+ 2157              		.align	2
+ 2158              		.global	CyFxApplicationDefine
+ 2160              	CyFxApplicationDefine:
+ 2161              		@ args = 0, pretend = 0, frame = 0
+ 2162              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2163 0000 04E02DE5 		str	lr, [sp, #-4]!
+ 2164 0004 010AA0E3 		mov	r0, #4096
+ 2165 0008 24D04DE2 		sub	sp, sp, #36
+ 2166 000c FEFFFFEB 		bl	CyU3PMemAlloc
+ 2167 0010 013AA0E3 		mov	r3, #4096
+ 2168 0014 04308DE5 		str	r3, [sp, #4]
+ 2169 0018 0120A0E3 		mov	r2, #1
+ 2170 001c 0830A0E3 		mov	r3, #8
+ 2171 0020 08308DE5 		str	r3, [sp, #8]
+ 2172 0024 0C308DE5 		str	r3, [sp, #12]
+ 2173 0028 14208DE5 		str	r2, [sp, #20]
+ 2174 002c 0030A0E3 		mov	r3, #0
+ 2175 0030 A820A0E3 		mov	r2, #168
+ 2176 0034 18208DE5 		str	r2, [sp, #24]
+ 2177 0038 3C109FE5 		ldr	r1, .L556
+ 2178 003c 10308DE5 		str	r3, [sp, #16]
+ 2179 0040 38209FE5 		ldr	r2, .L556+4
+ 2180 0044 00008DE5 		str	r0, [sp]
+ 2181 0048 34009FE5 		ldr	r0, .L556+8
+ 2182 004c FEFFFFEB 		bl	_txe_thread_create
+ 2183 0050 001050E2 		subs	r1, r0, #0
+ 2184 0054 0000000A 		beq	.L552
+ 2185              	.L553:
+ 2186 0058 FEFFFFEA 		b	.L553
+ 2187              	.L552:
+ 2188 005c 24009FE5 		ldr	r0, .L556+12
+ 2189 0060 2820A0E3 		mov	r2, #40
+ 2190 0064 FEFFFFEB 		bl	_txe_event_flags_create
+ 2191 0068 000050E3 		cmp	r0, #0
+ 2192 006c 0000000A 		beq	.L551
+ 2193              	.L555:
+ 2194 0070 FEFFFFEA 		b	.L555
+ 2195              	.L551:
+ 2196 0074 24D08DE2 		add	sp, sp, #36
+ 2197              		@ sp needed
+ 2198 0078 04F09DE4 		ldr	pc, [sp], #4
+ 2199              	.L557:
+ 2200              		.align	2
+ 2201              	.L556:
+ 2202 007c 40070000 		.word	.LC48
+ 2203 0080 00000000 		.word	esUVCUvcAppThread_Entry
+ 2204 0084 00000000 		.word	uvcAppThread
+ 2205 0088 00000000 		.word	glTimerEvent
+ 2207              		.section	.text.startup.main,"ax",%progbits
+ 2208              		.align	2
+ 2209              		.global	main
+ 2211              	main:
+ 2212              		@ args = 0, pretend = 0, frame = 40
+ 2213              		@ frame_needed = 0, uses_anonymous_args = 0
+ 2214 0000 10402DE9 		stmfd	sp!, {r4, lr}
+ 2215 0004 0000A0E3 		mov	r0, #0
+ 2216 0008 28D04DE2 		sub	sp, sp, #40
+ 2217 000c FEFFFFEB 		bl	CyU3PDeviceInit
+ 2218 0010 001050E2 		subs	r1, r0, #0
+ 2219 0014 1300001A 		bne	.L559
+ 2220 0018 0100A0E3 		mov	r0, #1
+ 2221 001c 0120A0E1 		mov	r2, r1
+ 2222 0020 FEFFFFEB 		bl	CyU3PDeviceCacheControl
+ 2223 0024 000050E3 		cmp	r0, #0
+ 2224 0028 0E00001A 		bne	.L559
+ 2225 002c 0130A0E3 		mov	r3, #1
+ 2226 0030 00008DE5 		str	r0, [sp]
+ 2227 0034 0C008DE5 		str	r0, [sp, #12]
+ 2228 0038 10008DE5 		str	r0, [sp, #16]
+ 2229 003c 1600CDE5 		strb	r0, [sp, #22]
+ 2230 0040 18008DE5 		str	r0, [sp, #24]
+ 2231 0044 1C008DE5 		str	r0, [sp, #28]
+ 2232 0048 20008DE5 		str	r0, [sp, #32]
+ 2233 004c 24008DE5 		str	r0, [sp, #36]
+ 2234 0050 0D00A0E1 		mov	r0, sp
+ 2235 0054 04308DE5 		str	r3, [sp, #4]
+ 2236 0058 08308DE5 		str	r3, [sp, #8]
+ 2237 005c FEFFFFEB 		bl	CyU3PDeviceConfigureIOMatrix
+ 2238 0060 004050E2 		subs	r4, r0, #0
+ 2239 0064 0000000A 		beq	.L560
+ 2240              	.L559:
+ 2241              	.L561:
+ 2242 0068 FEFFFFEA 		b	.L561
+ 2243              	.L560:
+ 2244 006c FEFFFFEB 		bl	_tx_initialize_kernel_enter
+ 2245 0070 0400A0E1 		mov	r0, r4
+ 2246 0074 28D08DE2 		add	sp, sp, #40
+ 2247              		@ sp needed
+ 2248 0078 1080BDE8 		ldmfd	sp!, {r4, pc}
+ 2250              		.global	glcheckframe
+ 2251              		.global	glcommitcount
+ 2252              		.global	gl32GetControl
+ 2253              		.global	gl16GetControl
+ 2254              		.global	gl8SetControl
+ 2255              		.global	gl8GetControl
+ 2256              		.global	glGet_Info
+ 2257              		.global	g_IsAutoFocus
+ 2258              		.global	ES_UVC_STREAM_BUF_COUNT
+ 2259              		.global	ES_UVC_DATA_BUF_SIZE
+ 2260              		.global	ES_UVC_STREAM_BUF_SIZE
+ 2261              		.comm	glChHandleUVCStream,232,4
+ 2262              		.global	glIsStreamingStarted
+ 2263              		.global	glIsConfigured
+ 2264              		.global	glIsApplnActive
+ 2265              		.global	glStillSkip
+ 2266              		.global	glStillCaptured
+ 2267              		.global	glStillCaptureStart
+ 2268              		.global	glFrameIndexToSet
+ 2269              		.global	glStillTriggerCtrl
+ 2270              		.global	glCurrentStillFrameIndex
+ 2271              		.comm	glStillCommitCtrl,32,1
+ 2272              		.global	glCurrentFrameIndex
+ 2273              		.comm	glCommitCtrl,32,1
+ 2274              		.global	glUVCHeader
+ 2275              		.global	glPreviewStarted
+ 2276              		.global	glIsClearFeature
+ 2277              		.global	glMipiActive
+ 2278              		.global	glHitFV
+ 2279              		.global	doLpmDisable
+ 2280              		.global	glActiveSocket
+ 2281              		.global	glDmaDone
+ 2282              		.global	glDMATxCount
+ 2283              		.comm	glTimerEvent,40,4
+ 2284              		.comm	uvcAppThread,168,4
+ 2285              		.comm	gl16SetControl,2,2
+ 2286              		.comm	gl32SetControl,4,4
+ 2287              		.section	.data.glcheckframe,"aw",%progbits
+ 2288              		.set	.LANCHOR21,. + 0
+ 2291              	glcheckframe:
+ 2292 0000 01       		.byte	1
+ 2293              		.section	.bss.glActiveSocket,"aw",%nobits
+ 2294              		.set	.LANCHOR7,. + 0
+ 2297              	glActiveSocket:
+ 2298 0000 00       		.space	1
+ 2299              		.section	.bss.glDmaDone,"aw",%nobits
+ 2300              		.align	2
+ 2301              		.set	.LANCHOR6,. + 0
+ 2304              	glDmaDone:
+ 2305 0000 00000000 		.space	4
+ 2306              		.section	.bss.glIsConfigured,"aw",%nobits
+ 2307              		.align	2
+ 2308              		.set	.LANCHOR20,. + 0
+ 2311              	glIsConfigured:
+ 2312 0000 00000000 		.space	4
+ 2313              		.section	.bss.ES_UVC_STREAM_BUF_SIZE,"aw",%nobits
+ 2314              		.align	1
+ 2315              		.set	.LANCHOR29,. + 0
+ 2318              	ES_UVC_STREAM_BUF_SIZE:
+ 2319 0000 0000     		.space	2
+ 2320              		.section	.bss.gl16GetControl,"aw",%nobits
+ 2321              		.align	1
+ 2322              		.set	.LANCHOR25,. + 0
+ 2325              	gl16GetControl:
+ 2326 0000 0000     		.space	2
+ 2327              		.section	.bss.glIsClearFeature,"aw",%nobits
+ 2328              		.align	2
+ 2329              		.set	.LANCHOR17,. + 0
+ 2332              	glIsClearFeature:
+ 2333 0000 00000000 		.space	4
+ 2334              		.section	.bss.gl32GetControl,"aw",%nobits
+ 2335              		.align	2
+ 2336              		.set	.LANCHOR28,. + 0
+ 2339              	gl32GetControl:
+ 2340 0000 00000000 		.space	4
+ 2341              		.section	.bss.glFrameIndexToSet,"aw",%nobits
+ 2342              		.set	.LANCHOR10,. + 0
+ 2345              	glFrameIndexToSet:
+ 2346 0000 00       		.space	1
+ 2347              		.section	.bss.glStillCaptured,"aw",%nobits
+ 2348              		.align	2
+ 2349              		.set	.LANCHOR9,. + 0
+ 2352              	glStillCaptured:
+ 2353 0000 00000000 		.space	4
+ 2354              		.section	.bss.glStillTriggerCtrl,"aw",%nobits
+ 2355              		.set	.LANCHOR23,. + 0
+ 2358              	glStillTriggerCtrl:
+ 2359 0000 00       		.space	1
+ 2360              		.section	.bss.glMipiActive,"aw",%nobits
+ 2361              		.align	2
+ 2362              		.set	.LANCHOR15,. + 0
+ 2365              	glMipiActive:
+ 2366 0000 00000000 		.space	4
+ 2367              		.section	.bss.glStillCaptureStart,"aw",%nobits
+ 2368              		.align	2
+ 2369              		.set	.LANCHOR12,. + 0
+ 2372              	glStillCaptureStart:
+ 2373 0000 00000000 		.space	4
+ 2374              		.section	.bss.glIsStreamingStarted,"aw",%nobits
+ 2375              		.align	2
+ 2376              		.set	.LANCHOR8,. + 0
+ 2379              	glIsStreamingStarted:
+ 2380 0000 00000000 		.space	4
+ 2381              		.section	.bss.ES_UVC_STREAM_BUF_COUNT,"aw",%nobits
+ 2382              		.set	.LANCHOR30,. + 0
+ 2385              	ES_UVC_STREAM_BUF_COUNT:
+ 2386 0000 00       		.space	1
+ 2387              		.section	.bss.glGet_Info,"aw",%nobits
+ 2388              		.set	.LANCHOR24,. + 0
+ 2391              	glGet_Info:
+ 2392 0000 00       		.space	1
+ 2393              		.section	.rodata.str1.1,"aMS",%progbits,1
+ 2394              	.LC0:
+ 2395 0000 0A0D4770 		.ascii	"\012\015GpifCB:WrapUp SCK0 Err = 0x%x\000"
+ 2395      69664342 
+ 2395      3A577261 
+ 2395      70557020 
+ 2395      53434B30 
+ 2396              	.LC1:
+ 2397 0020 0A0D4770 		.ascii	"\012\015GpifCB:WrapUp SCK1 Err = 0x%x\000"
+ 2397      69664342 
+ 2397      3A577261 
+ 2397      70557020 
+ 2397      53434B31 
+ 2398              	.LC2:
+ 2399 0040 0A0D4170 		.ascii	"\012\015AplnStrt:ChannelReset Err = 0x%x\000"
+ 2399      6C6E5374 
+ 2399      72743A43 
+ 2399      68616E6E 
+ 2399      656C5265 
+ 2400              	.LC3:
+ 2401 0063 0A0D4170 		.ascii	"\012\015AplnStrt:SetXfer Err = 0x%x\000"
+ 2401      6C6E5374 
+ 2401      72743A53 
+ 2401      65745866 
+ 2401      65722045 
+ 2402              	.LC4:
+ 2403 0081 0A0D4170 		.ascii	"\012\015AplnStop:ChannelReset Err = 0x%x\000"
+ 2403      6C6E5374 
+ 2403      6F703A43 
+ 2403      68616E6E 
+ 2403      656C5265 
+ 2404              	.LC5:
+ 2405 00a4 0A0D6573 		.ascii	"\012\015esSetCameraResolution\000"
+ 2405      53657443 
+ 2405      616D6572 
+ 2405      61526573 
+ 2405      6F6C7574 
+ 2406              	.LC6:
+ 2407 00bc 0A0D5553 		.ascii	"\012\015USBStpCB:SetIntfParams SS1 Err = 0x%x\000"
+ 2407      42537470 
+ 2407      43423A53 
+ 2407      6574496E 
+ 2407      74665061 
+ 2408              	.LC7:
+ 2409 00e4 0A0D5553 		.ascii	"\012\015USBStpCB:SetIntfParams FS Err = 0x%x\000"
+ 2409      42537470 
+ 2409      43423A53 
+ 2409      6574496E 
+ 2409      74665061 
+ 2410              	.LC8:
+ 2411 010b 0A0D5553 		.ascii	"\012\015USBStpCB:SetIntfParams SS2 Err = 0x%x\000"
+ 2411      42537470 
+ 2411      43423A53 
+ 2411      6574496E 
+ 2411      74665061 
+ 2412              	.LC9:
+ 2413 0133 0A0D5553 		.ascii	"\012\015USBStpCB:SetIntfParams HS Err = 0x%x\000"
+ 2413      42537470 
+ 2413      43423A53 
+ 2413      6574496E 
+ 2413      74665061 
+ 2414              	.LC10:
+ 2415 015a 0A0D6252 		.ascii	"\012\015bRType = 0x%x, bRequest = 0x%x, wValue = 0x"
+ 2415      54797065 
+ 2415      203D2030 
+ 2415      7825782C 
+ 2415      20625265 
+ 2416 0187 25782C20 		.ascii	"%x, wIndex = 0x%x, wLength= 0x%x\000"
+ 2416      77496E64 
+ 2416      6578203D 
+ 2416      20307825 
+ 2416      782C2077 
+ 2417              	.LC11:
+ 2418 01a8 0A0D4675 		.ascii	"\012\015Full Speed Not Supported!\000"
+ 2418      6C6C2053 
+ 2418      70656564 
+ 2418      204E6F74 
+ 2418      20537570 
+ 2419              	.LC12:
+ 2420 01c4 0A0D5553 		.ascii	"\012\015USBStpCB:GET_CUR:SendEP0Data Err = 0x%x\000"
+ 2420      42537470 
+ 2420      43423A47 
+ 2420      45545F43 
+ 2420      55523A53 
+ 2421              	.LC13:
+ 2422 01ee 0A0D5553 		.ascii	"\012\015USBStpCB:SET_CUR:GetEP0Data Err = 0x%x.\000"
+ 2422      42537470 
+ 2422      43423A53 
+ 2422      45545F43 
+ 2422      55523A47 
+ 2423              	.LC14:
+ 2424 0218 0A0D5553 		.ascii	"\012\015USBStpCB:Invalid SET_CUR Rqt Len.\000"
+ 2424      42537470 
+ 2424      43423A49 
+ 2424      6E76616C 
+ 2424      69642053 
+ 2425              	.LC15:
+ 2426 023c 0A0D5553 		.ascii	"\012\015USBStpCB:VCI SendEP0Data = %d\000"
+ 2426      42537470 
+ 2426      43423A56 
+ 2426      43492053 
+ 2426      656E6445 
+ 2427              	.LC16:
+ 2428 025c 0A0D4175 		.ascii	"\012\015Auto Focus\000"
+ 2428      746F2046 
+ 2428      6F637573 
+ 2428      00
+ 2429              	.LC17:
+ 2430 0269 0A0D4170 		.ascii	"\012\015AppInit:I2CInit Err = 0x%x.\000"
+ 2430      70496E69 
+ 2430      743A4932 
+ 2430      43496E69 
+ 2430      74204572 
+ 2431              	.LC18:
+ 2432 0287 0A0D4170 		.ascii	"\012\015AppInit:GPIOInit Err = 0x%x\000"
+ 2432      70496E69 
+ 2432      743A4750 
+ 2432      494F496E 
+ 2432      69742045 
+ 2433              	.LC19:
+ 2434 02a5 0A0D4170 		.ascii	"\012\015AppInit:PIBInit Err = 0x%x\000"
+ 2434      70496E69 
+ 2434      743A5049 
+ 2434      42496E69 
+ 2434      74204572 
+ 2435              	.LC20:
+ 2436 02c2 0A0D4170 		.ascii	"\012\015AppInit:UsbStart Err = 0x%x\000"
+ 2436      70496E69 
+ 2436      743A5573 
+ 2436      62537461 
+ 2436      72742045 
+ 2437              	.LC21:
+ 2438 02e0 0A0D4170 		.ascii	"\012\015AppInit:Set_SS_Device_Dscr Err = 0x%x\000"
+ 2438      70496E69 
+ 2438      743A5365 
+ 2438      745F5353 
+ 2438      5F446576 
+ 2439              	.LC22:
+ 2440 0308 0A0D4170 		.ascii	"\012\015AppInit:Set_HS_Device_Dscr Err = 0x%x\000"
+ 2440      70496E69 
+ 2440      743A5365 
+ 2440      745F4853 
+ 2440      5F446576 
+ 2441              	.LC23:
+ 2442 0330 0A0D4170 		.ascii	"\012\015AppInit:Set_BOS_Dscr Err = 0x%x\000"
+ 2442      70496E69 
+ 2442      743A5365 
+ 2442      745F424F 
+ 2442      535F4473 
+ 2443              	.LC24:
+ 2444 0352 0A0D4170 		.ascii	"\012\015AppInit:Set_DEVQUAL_Dscr Err = 0x%x\000"
+ 2444      70496E69 
+ 2444      743A5365 
+ 2444      745F4445 
+ 2444      56515541 
+ 2445              	.LC25:
+ 2446 0378 0A0D4170 		.ascii	"\012\015AppInit:Set_SS_CFG_Dscr Err = 0x%x\000"
+ 2446      70496E69 
+ 2446      743A5365 
+ 2446      745F5353 
+ 2446      5F434647 
+ 2447              	.LC26:
+ 2448 039d 0A0D4170 		.ascii	"\012\015AppInit:Set_HS_CFG_Dscr Err = 0x%x\000"
+ 2448      70496E69 
+ 2448      743A5365 
+ 2448      745F4853 
+ 2448      5F434647 
+ 2449              	.LC27:
+ 2450 03c2 0A0D4170 		.ascii	"\012\015AppInit:Set_FS_CFG_Dscr Err = 0x%x\000"
+ 2450      70496E69 
+ 2450      743A5365 
+ 2450      745F4653 
+ 2450      5F434647 
+ 2451              	.LC28:
+ 2452 03e7 0A0D4170 		.ascii	"\012\015AppInit:Set_STRNG_Dscr0 Err = 0x%x\000"
+ 2452      70496E69 
+ 2452      743A5365 
+ 2452      745F5354 
+ 2452      524E475F 
+ 2453              	.LC29:
+ 2454 040c 0A0D4170 		.ascii	"\012\015AppInit:Set_STRNG_Dscr1 Err = 0x%x\000"
+ 2454      70496E69 
+ 2454      743A5365 
+ 2454      745F5354 
+ 2454      524E475F 
+ 2455              	.LC30:
+ 2456 0431 0A0D4170 		.ascii	"\012\015AppInit:Set_STRNG_Dscr2 Err = 0x%x\000"
+ 2456      70496E69 
+ 2456      743A5365 
+ 2456      745F5354 
+ 2456      524E475F 
+ 2457              	.LC31:
+ 2458 0456 0A0D4170 		.ascii	"\012\015AppInit:Set_STRNG_Dscr3 Err = 0x%x\000"
+ 2458      70496E69 
+ 2458      743A5365 
+ 2458      745F5354 
+ 2458      524E475F 
+ 2459              	.LC32:
+ 2460 047b 0A0D4170 		.ascii	"\012\015AppInit:Set_STRNG_Dscr4 Err = 0x%x\000"
+ 2460      70496E69 
+ 2460      743A5365 
+ 2460      745F5354 
+ 2460      524E475F 
+ 2461              	.LC33:
+ 2462 04a0 0A0D4170 		.ascii	"\012\015AppInit:Set_STRNG_Dscr5 Err = 0x%x\000"
+ 2462      70496E69 
+ 2462      743A5365 
+ 2462      745F5354 
+ 2462      524E475F 
+ 2463              	.LC34:
+ 2464 04c5 0A0D4170 		.ascii	"\012\015AppInit:ConnectState Err = 0x%x\000"
+ 2464      70496E69 
+ 2464      743A436F 
+ 2464      6E6E6563 
+ 2464      74537461 
+ 2465              	.LC35:
+ 2466 04e7 0A0D4170 		.ascii	"\012\015AppInit:CyU3PSetEpConfig CtrlEp Err = 0x%x\000"
+ 2466      70496E69 
+ 2466      743A4379 
+ 2466      55335053 
+ 2466      65744570 
+ 2467              	.LC36:
+ 2468 0514 0A0D4170 		.ascii	"\012\015AppInit:CyU3PSetEpConfig BulkEp Err = 0x%x\000"
+ 2468      70496E69 
+ 2468      743A4379 
+ 2468      55335053 
+ 2468      65744570 
+ 2469              	.LC37:
+ 2470 0541 0A0D4170 		.ascii	"\012\015AppInit:DmaMultiChannelCreate Err = 0x%x\000"
+ 2470      70496E69 
+ 2470      743A446D 
+ 2470      614D756C 
+ 2470      74694368 
+ 2471              	.LC38:
+ 2472 056c 0A0D4170 		.ascii	"\012\015AppInit:MultiChannelReset Err = 0x%x\000"
+ 2472      70496E69 
+ 2472      743A4D75 
+ 2472      6C746943 
+ 2472      68616E6E 
+ 2473              	.LC39:
+ 2474 0593 0A0D4170 		.ascii	"\012\015AppInit:MipicsiGpifLoad Err = 0x%x\000"
+ 2474      70496E69 
+ 2474      743A4D69 
+ 2474      70696373 
+ 2474      69477069 
+ 2475              	.LC40:
+ 2476 05b8 0A0D4170 		.ascii	"\012\015AppInit:GpifSMStart Err = 0x%x\000"
+ 2476      70496E69 
+ 2476      743A4770 
+ 2476      6966534D 
+ 2476      53746172 
+ 2477              	.LC41:
+ 2478 05d9 0A0D4170 		.ascii	"\012\015AppInit:MipicsiInit Err = 0x%x\000"
+ 2478      70496E69 
+ 2478      743A4D69 
+ 2478      70696373 
+ 2478      69496E69 
+ 2479              	.LC42:
+ 2480 05fa 0A0D4170 		.ascii	"\012\015AppInit:MipicsiSetIntfParams Err = 0x%x\000"
+ 2480      70496E69 
+ 2480      743A4D69 
+ 2480      70696373 
+ 2480      69536574 
+ 2481              	.LC43:
+ 2482 0624 0A0D4669 		.ascii	"\012\015Firmware Version: %d.%d.%d.%d\000"
+ 2482      726D7761 
+ 2482      72652056 
+ 2482      65727369 
+ 2482      6F6E3A20 
+ 2483              	.LC44:
+ 2484 0644 0A0D6573 		.ascii	"\012\015esUVCUvcApplnDebugInit:CyU3PUartInit failed"
+ 2484      55564355 
+ 2484      76634170 
+ 2484      706C6E44 
+ 2484      65627567 
+ 2485 0671 20457272 		.ascii	" Error = 0x%x\000"
+ 2485      6F72203D 
+ 2485      20307825 
+ 2485      7800
+ 2486              	.LC45:
+ 2487 067f 0A0D6573 		.ascii	"\012\015esUVCUvcApplnDebugInit:CyU3PUartSetConfig f"
+ 2487      55564355 
+ 2487      76634170 
+ 2487      706C6E44 
+ 2487      65627567 
+ 2488 06ac 61696C65 		.ascii	"ailed Error = 0x%x\000"
+ 2488      64204572 
+ 2488      726F7220 
+ 2488      3D203078 
+ 2488      257800
+ 2489              	.LC46:
+ 2490 06bf 0A0D6573 		.ascii	"\012\015esUVCUvcApplnDebugInit:CyU3PUartTxSetBlockX"
+ 2490      55564355 
+ 2490      76634170 
+ 2490      706C6E44 
+ 2490      65627567 
+ 2491 06ec 66657220 		.ascii	"fer failed Error = 0x%x\000"
+ 2491      6661696C 
+ 2491      65642045 
+ 2491      72726F72 
+ 2491      203D2030 
+ 2492              	.LC47:
+ 2493 0704 0A0D6573 		.ascii	"\012\015esUVCUvcApplnDebugInit:CyU3PDebugInit faile"
+ 2493      55564355 
+ 2493      76634170 
+ 2493      706C6E44 
+ 2493      65627567 
+ 2494 0731 64204572 		.ascii	"d Error = 0x%x\000"
+ 2494      726F7220 
+ 2494      3D203078 
+ 2494      257800
+ 2495              	.LC48:
+ 2496 0740 33303A55 		.ascii	"30:UVC_app_thread\000"
+ 2496      56435F61 
+ 2496      70705F74 
+ 2496      68726561 
+ 2496      6400
+ 2497              		.section	.bss.glStillSkip,"aw",%nobits
+ 2498              		.set	.LANCHOR13,. + 0
+ 2501              	glStillSkip:
+ 2502 0000 00       		.space	1
+ 2503              		.section	.bss.glcommitcount,"aw",%nobits
+ 2504              		.set	.LANCHOR19,. + 0
+ 2507              	glcommitcount:
+ 2508 0000 00       		.space	1
+ 2509              		.section	.data.glUVCHeader,"aw",%progbits
+ 2510              		.set	.LANCHOR3,. + 0
+ 2513              	glUVCHeader:
+ 2514 0000 0C       		.byte	12
+ 2515 0001 8C       		.byte	-116
+ 2516 0002 00       		.byte	0
+ 2517 0003 00       		.byte	0
+ 2518 0004 00       		.byte	0
+ 2519 0005 00       		.byte	0
+ 2520 0006 00       		.byte	0
+ 2521 0007 00       		.byte	0
+ 2522 0008 00       		.byte	0
+ 2523 0009 00       		.byte	0
+ 2524 000a 00       		.byte	0
+ 2525 000b 00       		.byte	0
+ 2526              		.section	.bss.gl8GetControl,"aw",%nobits
+ 2527              		.align	1
+ 2528              		.set	.LANCHOR26,. + 0
+ 2531              	gl8GetControl:
+ 2532 0000 0000     		.space	2
+ 2533              		.section	.bss.glHitFV,"aw",%nobits
+ 2534              		.align	2
+ 2535              		.set	.LANCHOR4,. + 0
+ 2538              	glHitFV:
+ 2539 0000 00000000 		.space	4
+ 2540              		.section	.data.g_IsAutoFocus,"aw",%progbits
+ 2541              		.set	.LANCHOR16,. + 0
+ 2544              	g_IsAutoFocus:
+ 2545 0000 01       		.byte	1
+ 2546              		.section	.bss.glDMATxCount,"aw",%nobits
+ 2547              		.align	2
+ 2548              		.set	.LANCHOR5,. + 0
+ 2551              	glDMATxCount:
+ 2552 0000 00000000 		.space	4
+ 2553              		.section	.bss.UvcTimer,"aw",%nobits
+ 2554              		.align	2
+ 2555              		.set	.LANCHOR1,. + 0
+ 2558              	UvcTimer:
+ 2559 0000 00000000 		.space	44
+ 2559      00000000 
+ 2559      00000000 
+ 2559      00000000 
+ 2559      00000000 
+ 2560              		.section	.data.glCurrentFrameIndex,"aw",%progbits
+ 2561              		.set	.LANCHOR11,. + 0
+ 2564              	glCurrentFrameIndex:
+ 2565 0000 01       		.byte	1
+ 2566              		.section	.bss.glIsApplnActive,"aw",%nobits
+ 2567              		.align	2
+ 2568              		.set	.LANCHOR14,. + 0
+ 2571              	glIsApplnActive:
+ 2572 0000 00000000 		.space	4
+ 2573              		.section	.data.doLpmDisable,"aw",%progbits
+ 2574              		.align	2
+ 2575              		.set	.LANCHOR0,. + 0
+ 2578              	doLpmDisable:
+ 2579 0000 01000000 		.word	1
+ 2580              		.section	.data.glCurrentStillFrameIndex,"aw",%progbits
+ 2581              		.set	.LANCHOR22,. + 0
+ 2584              	glCurrentStillFrameIndex:
+ 2585 0000 01       		.byte	1
+ 2586              		.section	.bss.gl8SetControl,"aw",%nobits
+ 2587              		.align	1
+ 2588              		.set	.LANCHOR27,. + 0
+ 2591              	gl8SetControl:
+ 2592 0000 0000     		.space	2
+ 2593              		.section	.bss.glPreviewStarted,"aw",%nobits
+ 2594              		.align	2
+ 2595              		.set	.LANCHOR18,. + 0
+ 2598              	glPreviewStarted:
+ 2599 0000 00000000 		.space	4
+ 2600              		.section	.bss.ES_UVC_DATA_BUF_SIZE,"aw",%nobits
+ 2601              		.align	1
+ 2602              		.set	.LANCHOR2,. + 0
+ 2605              	ES_UVC_DATA_BUF_SIZE:
+ 2606 0000 0000     		.space	2
+ 2607              		.ident	"GCC: (Sourcery CodeBench Lite 2013.11-24) 4.8.1"
+DEFINED SYMBOLS
+                            *ABS*:00000000 CX3RDKOV5640.c
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:14     .text.esUVCApplnLPMRqtCB:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:16     .text.esUVCApplnLPMRqtCB:00000000 esUVCApplnLPMRqtCB
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:24     .text.UvcAppProgressTimer:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:26     .text.UvcAppProgressTimer:00000000 UvcAppProgressTimer
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:37     .text.UvcAppProgressTimer:00000010 $d
+                            *COM*:00000028 glTimerEvent
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:40     .text.esUVCGpifCB:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:43     .text.esUVCGpifCB:00000000 esUVCGpifCB
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:76     .text.esUVCGpifCB:00000064 $d
+                            *COM*:000000e8 glChHandleUVCStream
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:81     .text.esUVCUvcAppDmaCallback:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:84     .text.esUVCUvcAppDmaCallback:00000000 esUVCUvcAppDmaCallback
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:264    .text.esUVCUvcAppDmaCallback:00000290 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:282    .text.esUVCAppErrorHandler:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:285    .text.esUVCAppErrorHandler:00000000 esUVCAppErrorHandler
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:296    .text.esUVCUvcApplnStart:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:299    .text.esUVCUvcApplnStart:00000000 esUVCUvcApplnStart
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:384    .text.esUVCUvcApplnStart:00000124 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:400    .text.esUVCUvcApplnStop:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:403    .text.esUVCUvcApplnStop:00000000 esUVCUvcApplnStop
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:461    .text.esUVCUvcApplnStop:000000c8 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:471    .text.esUVCUvcApplnUSBEventCB:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:473    .text.esUVCUvcApplnUSBEventCB:00000000 esUVCUvcApplnUSBEventCB
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:551    .text.esUVCUvcApplnUSBEventCB:00000110 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:560    .text.esSetCameraResolution:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:563    .text.esSetCameraResolution:00000000 esSetCameraResolution
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:659    .text.esSetCameraResolution:00000140 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:670    .text.esUVCUvcApplnUSBSetupCB:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:672    .text.esUVCUvcApplnUSBSetupCB:00000000 esUVCUvcApplnUSBSetupCB
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:1440   .text.esUVCUvcApplnUSBSetupCB:00000a5c $d
+                            *COM*:00000020 glCommitCtrl
+                            *COM*:00000020 glStillCommitCtrl
+                            *COM*:00000002 gl16SetControl
+                            *COM*:00000004 gl32SetControl
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:1479   .text.esUVCUvcApplnInit:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:1482   .text.esUVCUvcApplnInit:00000000 esUVCUvcApplnInit
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:1963   .text.esUVCUvcApplnInit:00000690 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2019   .text.esUVCUvcApplnDebugInit:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2022   .text.esUVCUvcApplnDebugInit:00000000 esUVCUvcApplnDebugInit
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2076   .text.esUVCUvcApplnDebugInit:000000ac $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2083   .text.esUVCUvcAppThread_Entry:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2086   .text.esUVCUvcAppThread_Entry:00000000 esUVCUvcAppThread_Entry
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2148   .text.esUVCUvcAppThread_Entry:000000c8 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2157   .text.CyFxApplicationDefine:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2160   .text.CyFxApplicationDefine:00000000 CyFxApplicationDefine
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2202   .text.CyFxApplicationDefine:0000007c $d
+                            *COM*:000000a8 uvcAppThread
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2208   .text.startup.main:00000000 $a
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2211   .text.startup.main:00000000 main
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2291   .data.glcheckframe:00000000 glcheckframe
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2507   .bss.glcommitcount:00000000 glcommitcount
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2339   .bss.gl32GetControl:00000000 gl32GetControl
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2325   .bss.gl16GetControl:00000000 gl16GetControl
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2591   .bss.gl8SetControl:00000000 gl8SetControl
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2531   .bss.gl8GetControl:00000000 gl8GetControl
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2391   .bss.glGet_Info:00000000 glGet_Info
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2544   .data.g_IsAutoFocus:00000000 g_IsAutoFocus
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2385   .bss.ES_UVC_STREAM_BUF_COUNT:00000000 ES_UVC_STREAM_BUF_COUNT
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2605   .bss.ES_UVC_DATA_BUF_SIZE:00000000 ES_UVC_DATA_BUF_SIZE
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2318   .bss.ES_UVC_STREAM_BUF_SIZE:00000000 ES_UVC_STREAM_BUF_SIZE
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2379   .bss.glIsStreamingStarted:00000000 glIsStreamingStarted
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2311   .bss.glIsConfigured:00000000 glIsConfigured
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2571   .bss.glIsApplnActive:00000000 glIsApplnActive
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2501   .bss.glStillSkip:00000000 glStillSkip
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2352   .bss.glStillCaptured:00000000 glStillCaptured
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2372   .bss.glStillCaptureStart:00000000 glStillCaptureStart
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2345   .bss.glFrameIndexToSet:00000000 glFrameIndexToSet
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2358   .bss.glStillTriggerCtrl:00000000 glStillTriggerCtrl
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2584   .data.glCurrentStillFrameIndex:00000000 glCurrentStillFrameIndex
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2564   .data.glCurrentFrameIndex:00000000 glCurrentFrameIndex
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2513   .data.glUVCHeader:00000000 glUVCHeader
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2598   .bss.glPreviewStarted:00000000 glPreviewStarted
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2332   .bss.glIsClearFeature:00000000 glIsClearFeature
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2365   .bss.glMipiActive:00000000 glMipiActive
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2538   .bss.glHitFV:00000000 glHitFV
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2578   .data.doLpmDisable:00000000 doLpmDisable
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2297   .bss.glActiveSocket:00000000 glActiveSocket
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2304   .bss.glDmaDone:00000000 glDmaDone
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2551   .bss.glDMATxCount:00000000 glDMATxCount
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2298   .bss.glActiveSocket:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2300   .bss.glDmaDone:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2307   .bss.glIsConfigured:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2314   .bss.ES_UVC_STREAM_BUF_SIZE:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2321   .bss.gl16GetControl:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2328   .bss.glIsClearFeature:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2335   .bss.gl32GetControl:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2346   .bss.glFrameIndexToSet:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2348   .bss.glStillCaptured:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2359   .bss.glStillTriggerCtrl:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2361   .bss.glMipiActive:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2368   .bss.glStillCaptureStart:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2375   .bss.glIsStreamingStarted:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2386   .bss.ES_UVC_STREAM_BUF_COUNT:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2392   .bss.glGet_Info:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2502   .bss.glStillSkip:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2508   .bss.glcommitcount:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2527   .bss.gl8GetControl:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2534   .bss.glHitFV:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2547   .bss.glDMATxCount:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2554   .bss.UvcTimer:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2558   .bss.UvcTimer:00000000 UvcTimer
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2567   .bss.glIsApplnActive:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2574   .data.doLpmDisable:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2587   .bss.gl8SetControl:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2594   .bss.glPreviewStarted:00000000 $d
+C:\Users\dragon.fu\AppData\Local\Temp\ccJBBM8k.s:2601   .bss.ES_UVC_DATA_BUF_SIZE:00000000 $d
+
+UNDEFINED SYMBOLS
+_txe_event_flags_set
+CyU3PDmaMultiChannelSetWrapUp
+CyU3PDebugPrint
+CyU3PUsbGetSpeed
+CyU3PUsbLPMDisable
+CyU3PUsbSetLinkPowerState
+CyFx3BusyWait
+_txe_timer_activate
+CyU3PDmaMultiChannelGetBuffer
+CyU3PMemCopy
+CyU3PDmaMultiChannelCommitBuffer
+_txe_timer_deactivate
+CyU3PGpifSMSwitch
+CyU3PUsbLPMEnable
+_txe_timer_change
+_tx_thread_sleep
+CyU3PUsbSetEpNak
+CyU3PUsbFlushEp
+CyU3PDmaMultiChannelReset
+CyU3PDmaMultiChannelSetXfer
+CyU3PGpifSMControl
+CyU3PMipicsiWakeup
+esCamera_Power_Up
+esOV5640_SetAutofocus
+CyU3PMipicsiSleep
+esCamera_Power_Down
+CyU3PUsbStall
+CyU3PMipicsiSetIntfParams
+esOV5640_1080P_config
+esOV5640_VGA_config
+esOV5640_720P_config
+esOV5640_5MP_config
+esOV5640_VGA_HS_config
+cfgUvc1080p30NoMclk
+cfgUvcVga30NoMclk
+cfgUvc720p60NoMclk
+cfgUvc5Mp15NoMclk
+CyU3PUsbAckSetup
+CyU3PUsbSendEP0Data
+CyU3PUsbGetEP0Data
+esOV5640_GetBrightness
+esOV5640_SetBrightness
+esOV5640_GetAutoExposure
+esOV5640_SetAutoExposure
+esOV5640_GetContrast
+esOV5640_SetContrast
+esOV5640_GetExposure
+esOV5640_SetExposure
+esOV5640_GetHue
+esOV5640_SetHue
+esOV5640_GetManualfocus
+esOV5640_SetManualfocus
+esOV5640_GetSaturation
+esOV5640_SetSaturation
+esOV5640_GetSharpness
+esOV5640_SetSharpness
+esOV5640_GetAutofocus
+esOV5640_GetWhiteBalance
+esOV5640_SetWhiteBalance
+esOV5640_GetAutoWhiteBalance
+esOV5640_SetAutoWhiteBalance
+glProbeCtrl
+gl5MpProbeCtrl
+gl720pProbeCtrl
+glVga60ProbeCtrl
+gl1080pProbeCtrl
+glVga30ProbeCtrl
+glStillProbeCtrl
+CyU3PMipicsiInitializeI2c
+CyU3PMipicsiInitializeGPIO
+CyU3PMipicsiInitializePIB
+CyU3PUsbStart
+CyU3PUsbRegisterSetupCallback
+CyU3PUsbRegisterEventCallback
+CyU3PUsbRegisterLPMRequestCallback
+CyU3PUsbSetDesc
+CyU3PUsbVBattEnable
+CyU3PUsbControlVBusDetect
+esOV5640_Base_Config
+esOV5640_Auto_Focus_Config
+CyU3PConnectState
+CyU3PSetEpConfig
+CyU3PUsbEPSetBurstMode
+CyU3PDmaMultiChannelCreate
+CyU3PMipicsiGpifLoad
+CyU3PGpifRegisterCallback
+CyU3PGpifSMStart
+CyU3PMipicsiInit
+_txe_timer_create
+esUVCUSB30DeviceDscr
+esUVCUSB20DeviceDscr
+esUVCUSBBOSDscr
+esUVCUSBDeviceQualDscr
+esUVCUSBSSConfigDscr
+esUVCUSBHSConfigDscr
+esUVCUSBFSConfigDscr
+esUVCUSBStringLangIDDscr
+esUVCUSBManufactureDscr
+esUVCUSBProductDscr
+esUVCUSBConfigSSDscr
+esUVCUSBConfigHSDscr
+esUVCUSBConfigFSDscr
+cfgUvcVgaNoMclk
+CyU3PUartInit
+CyU3PUartSetConfig
+CyU3PUartTxSetBlockXfer
+CyU3PDebugInit
+CyU3PDebugPreamble
+_txe_event_flags_get
+CyU3PSysEnterSuspendMode
+CyU3PMemAlloc
+_txe_thread_create
+_txe_event_flags_create
+CyU3PDeviceInit
+CyU3PDeviceCacheControl
+CyU3PDeviceConfigureIOMatrix
+_tx_initialize_kernel_enter
