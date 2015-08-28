@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
+#include <stdarg.h>
 #include <string.h>
 #include <bsd/string.h>
 #include <assert.h>
@@ -40,23 +41,22 @@ struct buffer {
 	size_t  length;
 };
 
-static char            *dev_name;
-static enum io_method   io = IO_METHOD_MMAP;
-static int              fd = -1;
-struct buffer          *buffers;
-static unsigned int     n_buffers;
-static FILE            *fout = NULL;
-static int              force_format = 0;
-static int              frame_count = 70;
+static const char *program_name;
+static char *dev_name;
+static enum io_method io = IO_METHOD_MMAP;
+static int fd = -1;
+struct buffer *buffers;
+static unsigned int n_buffers;
+static FILE *fout = NULL;
+static int force_format = 0;
+static int frame_count = 70;
 
-static void errno_exit(const char *s)
-{
+static void errno_exit(const char *s) {
 	fprintf(stderr, "%s error %d, %s\n", s, errno, strerror(errno));
 	exit(EXIT_FAILURE);
 }
 
-static int xioctl(int fh, int request, void *arg)
-{
+static int xioctl(int fh, int request, void *arg) {
 	int r;
 
 	do {
@@ -66,8 +66,7 @@ static int xioctl(int fh, int request, void *arg)
 	return r;
 }
 
-static bool process_image(const void *p, int size)
-{
+static bool process_image(const void *p, int size) {
 	bool rc = true;
 	if (NULL != fout && NULL != p && size > 0) {
 		fwrite(p, size, 1, fout);
@@ -81,8 +80,7 @@ static bool process_image(const void *p, int size)
 	return rc;
 }
 
-static bool read_frame(void)
-{
+static bool read_frame(void) {
 	struct v4l2_buffer buf;
 	unsigned int i;
 	bool rc = true;
@@ -178,8 +176,7 @@ static bool read_frame(void)
 	return rc;
 }
 
-static void mainloop(void)
-{
+static void mainloop(void) {
 	unsigned int count;
 
 	count = frame_count;
@@ -219,8 +216,7 @@ static void mainloop(void)
 	}
 }
 
-static void stop_capturing(void)
-{
+static void stop_capturing(void) {
 	enum v4l2_buf_type type;
 
 	switch (io) {
@@ -238,8 +234,7 @@ static void stop_capturing(void)
 	}
 }
 
-static void start_capturing(void)
-{
+static void start_capturing(void) {
 	unsigned int i;
 	enum v4l2_buf_type type;
 
@@ -290,8 +285,7 @@ static void start_capturing(void)
 	}
 }
 
-static void uninit_device(void)
-{
+static void uninit_device(void) {
 	unsigned int i;
 
 	switch (io) {
@@ -317,8 +311,7 @@ static void uninit_device(void)
 	free(buffers);
 }
 
-static void init_read(unsigned int buffer_size)
-{
+static void init_read(unsigned int buffer_size) {
 	buffers = calloc(1, sizeof(*buffers));
 
 	if (!buffers) {
@@ -335,8 +328,7 @@ static void init_read(unsigned int buffer_size)
 	}
 }
 
-static void init_mmap(void)
-{
+static void init_mmap(void) {
 	struct v4l2_requestbuffers req;
 
 	CLEAR(req);
@@ -395,8 +387,7 @@ static void init_mmap(void)
 	}
 }
 
-static void init_userp(unsigned int buffer_size)
-{
+static void init_userp(unsigned int buffer_size) {
 	struct v4l2_requestbuffers req;
 
 	CLEAR(req);
@@ -433,8 +424,7 @@ static void init_userp(unsigned int buffer_size)
 	}
 }
 
-static void init_device(void)
-{
+static void init_device(void) {
 	struct v4l2_capability cap;
 	struct v4l2_cropcap cropcap;
 	struct v4l2_crop crop;
@@ -565,16 +555,14 @@ static void init_device(void)
 	}
 }
 
-static void close_device(void)
-{
+static void close_device(void) {
 	if (-1 == close(fd)) {
 		errno_exit("close");
 	}
 	fd = -1;
 }
 
-static void open_device(void)
-{
+static void open_device(void) {
 	struct stat st;
 
 	if (-1 == stat(dev_name, &st)) {
@@ -597,26 +585,49 @@ static void open_device(void)
 	}
 }
 
-static void usage(FILE *fp, int argc, char **argv)
-{
-	fprintf(fp,
-		 "Usage: %s [options]\n\n"
-		 "Version 1.3\n"
-		 "Options:\n"
-		 "-d | --device name   Video device name [%s]\n"
-		 "-h | --help          Print this message\n"
-		 "-m | --mmap          Use memory mapped buffers [default]\n"
-		 "-r | --read          Use read() calls\n"
-		 "-u | --userp         Use application allocated buffers\n"
-		 "-o | --output        Outputs stream to stdout\n"
-		 "-f | --format        Force format to 640x480 YUYV\n"
-		 "-t | --ten           Force format to 1920x1080 Bayer12\n"
-		 "-c | --count         Number of frames to grab [%i]\n"
-		 "",
-		 argv[0], dev_name, frame_count);
+
+static void set_control(int fd, int parameter, int32_t value) {
+	struct v4l2_control control;
+	memset(&control, 0, sizeof (control));
+	control.id = parameter;
+	control.value = value;
+
+	if (-1 == ioctl(fd, VIDIOC_S_CTRL, &control)) {
+		errno_exit("VIDIOC_S_CTRL");
+	}
 }
 
-static const char short_options[] = "d:hmruo:ftc:";
+static void usage(const char *message, ...) {
+	if (NULL != message) {
+		va_list ap;
+		va_start(ap, message);
+		fprintf(stderr, "error: ");
+		vfprintf(stderr, message, ap);
+		fprintf(stderr, "\n");
+		va_end(ap);
+	}
+	fprintf(stderr,
+		"Usage: %s [options]\n\n"
+		"Version 1.3\n"
+		"Options:\n"
+		"-d | --device name   Video device name [%s]\n"
+		"-h | --help          Print this message\n"
+		"-m | --mmap          Use memory mapped buffers [default]\n"
+		"-r | --read          Use read() calls\n"
+		"-u | --userp         Use application allocated buffers\n"
+		"-o | --output        Outputs stream to stdout\n"
+		"-f | --format        Force format to 640x480 YUYV\n"
+		"-t | --ten           Force format to 1920x1080 Bayer12\n"
+		"-c | --count N       Number of frames to grab [%i]\n"
+		"-b | --brightness N  Brightness value\n"
+		"-s | --sharpness N   Sharpness value\n"
+		"-n | --contrast N    Contrast value\n"
+		 "",
+		program_name, dev_name, frame_count);
+}
+
+
+static const char short_options[] = "d:hmruo:ftc:b:s:n:";
 
 static const struct option
 long_options[] = {
@@ -629,12 +640,20 @@ long_options[] = {
 	{ "format", no_argument,       NULL, 'f' },
 	{ "ten",    no_argument,       NULL, 't' },
 	{ "count",  required_argument, NULL, 'c' },
+	{ "brightness", required_argument, NULL, 'b' },
+	{ "sharpness",  required_argument, NULL, 's' },
+	{ "contrast",   required_argument, NULL, 'n' },
 	{ 0, 0, 0, 0 }
 };
 
-int main(int argc, char **argv)
-{
+
+int main(int argc, char **argv) {
+	program_name = argv[0];
 	dev_name = "/dev/video0";
+
+	int32_t brightness = 168;  // AR0330 defaults
+	int32_t sharpness  = 0x0080;
+	int32_t contrast   = 0;
 
 	for (;;) {
 		int idx;
@@ -655,8 +674,7 @@ int main(int argc, char **argv)
 			break;
 
 		case 'h':
-			usage(stdout, argc, argv);
-			exit(EXIT_SUCCESS);
+			usage(NULL);
 
 		case 'm':
 			io = IO_METHOD_MMAP;
@@ -708,13 +726,38 @@ int main(int argc, char **argv)
 			}
 			break;
 
+		case 'b':
+			errno = 0;
+			brightness = strtol(optarg, NULL, 0);
+			if (errno) {
+				errno_exit(optarg);
+			}
+			break;
+		case 's':
+			errno = 0;
+			sharpness = strtol(optarg, NULL, 0);
+			if (errno) {
+				errno_exit(optarg);
+			}
+			break;
+
+		case 'n':
+			errno = 0;
+			contrast = strtol(optarg, NULL, 0);
+			if (errno) {
+				errno_exit(optarg);
+			}
+			break;
+
 		default:
-			usage(stderr, argc, argv);
-			exit(EXIT_FAILURE);
+			usage("invalid option: '%c'", c);
 		}
 	}
 
 	open_device();
+	set_control(fd, V4L2_CID_BRIGHTNESS, brightness);
+	set_control(fd, V4L2_CID_CONTRAST, contrast);
+	set_control(fd, V4L2_CID_SHARPNESS, sharpness);
 	init_device();
 	start_capturing();
 	mainloop();

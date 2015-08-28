@@ -2,25 +2,44 @@
 
 VIDEO_DEVICE ?= /dev/video1
 FIRMWARE ?= ../bitmark-microscope/bitmark-microscope.img
+DOWNLOAD_FX3 = ../../../../cyusb_linux_1.0.4/src/download_fx3
+
+FRAMES ?= 10
+BRIGHTNESS ?= 200
+SHARPNESS ?= 0x00f0
+CONTRAST ?= 18
+FRAMES_OUT ?= frames.data
+
+CAPTURE_OPTS = -c "${FRAMES}" -t
+CAPTURE_OPTS += -o "${FRAMES_OUT}"
+CAPTURE_OPTS += -d "${VIDEO_DEVICE}"
+CAPTURE_OPTS += --brightness="${BRIGHTNESS}"
+CAPTURE_OPTS += --sharpness="${SHARPNESS}"
+CAPTURE_OPTS += --contrast="${CONTRAST}"
 
 .PHONY: all
-all: capture create-png
+all: capture create-png list-controls
 
 capture: capture.c
-	gcc -std=c99 -Wall -Werror -o capture capture.c -lbsd
+	gcc -std=c99 -Wall -Werror -o "$@" "$<" -lbsd
 
 create-png: create-png.c
-	gcc -std=c99 -Wall -Werror  -o create-png create-png.c $$(pkg-config --cflags --libs libpng12)
+	gcc -std=c99 -Wall -Werror  -o "$@" "$<" $$(pkg-config --cflags --libs libpng12)
+
+list-controls: list-controls.c
+	gcc -std=c99 -Wall -Werror -o "$@" "$<" -lbsd
+
+
+.PHONY: lc
+lc: list-controls
+	-[ ! -e "${VIDEO_DEVICE}" ] && $(MAKE) download
+	[ -e "${VIDEO_DEVICE}" ] && ./list-controls -d "${VIDEO_DEVICE}"
+
 
 .PHONY: cap
 cap: capture
 	-[ ! -e "${VIDEO_DEVICE}" ] && $(MAKE) download
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	[ -e "${VIDEO_DEVICE}" ] && ./capture -c 100 -t -o frames.data -d "${VIDEO_DEVICE}"
+	[ -e "${VIDEO_DEVICE}" ] && ./capture ${CAPTURE_OPTS}
 
 .PHONY: dec
 dec: create-png
@@ -29,13 +48,16 @@ dec: create-png
 .PHONY: download
 download:
 	$(DOWNLOAD_FX3) -t RAM -i "$(FIRMWARE)"
+	@for i in 1 2 3 4 5 6 7 8 9 10; \
+	 do \
+	   [ -e "${VIDEO_DEVICE}" ] && break; \
+	   printf '.'; \
+	   sleep 1; \
+	done; \
+	sleep 1; \
+	printf '.\n'
 
 .PHONY: cheese
 cheese: all
 	-[ ! -e "${VIDEO_DEVICE}" ] && $(MAKE) download
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
-	-[ ! -e "${VIDEO_DEVICE}" ] && sleep 1
 	[ -e "${VIDEO_DEVICE}" ] && cheese -d "${VIDEO_DEVICE}"

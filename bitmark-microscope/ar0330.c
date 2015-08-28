@@ -175,6 +175,8 @@ static const sensor_data_t AR0330_PrimaryInitialisation[] = {
 	{0x3028, 0x0010},               // row_speed
 	{0x3064, 0x1902},               // smia_test
 
+	{0x301E, 0x00a8},               // data_pedestal
+
 	// gains
 	{0x3060, 0x0000},               // analog_gain = 1x
 	{0x30B0, 0x8000},               // digital_test = context A
@@ -182,7 +184,7 @@ static const sensor_data_t AR0330_PrimaryInitialisation[] = {
 	{0x30C4, 0x0080},               // global_gain_cb = 1x
 	{0x30BA, 0x000C},               // digital_ctrl = no dither
 
-	{0x301A, 0x0058},               // reset_register = lock
+	{0x301A, 0x0050},               // reset_register = lock
 	{SENSOR_DELAY, 5},
 };
 
@@ -273,6 +275,39 @@ static const sensor_data_t sensor_5MP_regs[] = {
 };
 
 
+// analog gain table for R0x3060 [5..0]
+static uint8_t analog_gain[] = {
+	(0 << 4) |  0,   //  0.00 dB
+	(0 << 4) |  1,   //  0.26 dB
+	(0 << 4) |  2,   //  0.56 dB
+	(0 << 4) |  3,   //  0.86 dB
+	(0 << 4) |  4,   //  1.16 dB
+	(0 << 4) |  5,   //  1.46 dB
+	(0 << 4) |  6,   //  1.80 dB
+	(0 << 4) |  7,   //  2.14 dB
+	(0 << 4) |  8,   //  2.50 dB
+	(0 << 4) |  9,   //  2.87 dB
+	(0 << 4) | 10,   //  3.25 dB
+	(0 << 4) | 11,   //  3.66 dB
+	(0 << 4) | 12,   //  4.08 dB
+	(0 << 4) | 13,   //  4.53 dB
+	(0 << 4) | 14,   //  5.00 dB
+	(0 << 4) | 15,   //  5.49 dB
+	(1 << 4) |  0,   //  6.00 dB
+	(1 << 4) |  2,   //  6.58 dB
+	(1 << 4) |  4,   //  7.18 dB
+	(1 << 4) |  6,   //  7.82 dB
+	(1 << 4) |  8,   //  8.52 dB
+	(1 << 4) | 10,   //  9.28 dB
+	(1 << 4) | 12,   // 10.10 dB
+	(1 << 4) | 14,   // 11.02 dB
+	(2 << 4) |  0,   // 12.00 dB
+	(2 << 4) |  4,   // 13.20 dB
+	(2 << 4) |  8,   // 14.54 dB
+	(2 << 4) | 12,   // 16.12 dB
+	(3 << 4) |  0    // 18.00 dB
+};
+
 void AR0330_Debug(void)
 {
 #if DEBUG_ENABLE
@@ -351,30 +386,30 @@ void AR0330_Base_Config(void) {
 
 
 void AR0330_VGA_config(void) {
-	CyU3PDebugPrint (4, "AR0330_VGA_config =============\r\n");
+	CyU3PDebugPrint (4, "AR0330_VGA_config\r\n");
 }
 
 
 void AR0330_VGA_HS_config(void) {
-	CyU3PDebugPrint (4, "AR0330_VGA_HS_config =============\r\n");
+	CyU3PDebugPrint (4, "AR0330_VGA_HS_config\r\n");
 
 	AR0330_Debug();
 }
 
 
 void AR0330_720P_config(void) {
-	CyU3PDebugPrint (4, "AR0330_720P_config =============\r\n");
+	CyU3PDebugPrint (4, "AR0330_720P_config\r\n");
 
-	SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
+	//SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
 	SENSOR_WRITE_ARRAY(sensor_720p_regs);
 
 	AR0330_Debug();
 }
 
 void AR0330_1080P_config(void) {
-	CyU3PDebugPrint (4, "AR0330_1080P_config =============\r\n");
+	CyU3PDebugPrint (4, "AR0330_1080P_config\r\n");
 
-	SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
+	//SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
 	SENSOR_WRITE_ARRAY(sensor_1080p_regs);
 
 	AR0330_Debug();
@@ -382,9 +417,9 @@ void AR0330_1080P_config(void) {
 
 
 void AR0330_5MP_config(void) {
-	CyU3PDebugPrint (4, "AR0330_5MP_config =============\r\n");
+	CyU3PDebugPrint (4, "AR0330_5MP_config\r\n");
 
-	SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
+	//SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
 	SENSOR_WRITE_ARRAY(sensor_5MP_regs);
 
 	AR0330_Debug();
@@ -392,14 +427,15 @@ void AR0330_5MP_config(void) {
 
 
 void AR0330_Power_Down(void) {
-	CyU3PDebugPrint (4, "AR0330_Power_Down ================\r\n");
+	CyU3PDebugPrint (4, "AR0330_Power_Down\r\n");
 
-	sensor_write(0x301a, 0x0058);
+	//sensor_write(0x301a, 0x0058);
+	sensor_write(0x301a, 0x0050);
 }
 
 
 void AR0330_Power_Up(void) {
-	CyU3PDebugPrint (4, "AR0330_Power_Up =============\r\n");
+	CyU3PDebugPrint (4, "AR0330_Power_Up\r\n");
 
 	// set test mode
 	sensor_write(0x3070, 0x0000);
@@ -408,8 +444,9 @@ void AR0330_Power_Up(void) {
 	sensor_write(0x3076, 0x0380 + 'b'); // blue
 	sensor_write(0x3078, 0x0480 + 'g'); // green (in blue row)
 
-	// strt streaming
-	sensor_write(0x301a, 0x005c);
+	// start streaming
+	//sensor_write(0x301a, 0x005c);
+	sensor_write(0x301a, 0x0054);
 
 	CyU3PThreadSleep(10);
 
@@ -418,116 +455,167 @@ void AR0330_Power_Up(void) {
 
 
 void AR0330_Auto_Focus_Config(void) {
-	CyU3PDebugPrint (4, "AR0330_Auto_Focus_Config ================\r\n");
+	CyU3PDebugPrint (4, "AR0330_Auto_Focus_Config\r\n");
 }
 
 
-void AR0330_SetBrightness(int8_t Brightness) {
-	CyU3PDebugPrint (4, "AR0330_SetBrightness ================\r\n");
+#define BRIGHTNESS_RESOLUTION   1
+#define BRIGHTNESS_MINIMUM      0
+#define BRIGHTNESS_MAXIMUM 0x0fff
+#define BRIGHTNESS_DEFAULT 0x00a8
+
+static int32_t current_brightness = BRIGHTNESS_DEFAULT;
+
+void AR0330_SetBrightness(int32_t brightness) {
+	CyU3PDebugPrint (4, "AR0330_SetBrightness: %d\r\n", brightness);
+	if (brightness < BRIGHTNESS_MINIMUM && brightness > BRIGHTNESS_MAXIMUM) {
+		return; // ignore invalid values
+	}
+	current_brightness = brightness;
+	sensor_write(0x301e, (uint16_t)(brightness));  // data_pedestal
+}
+
+int32_t AR0330_GetBrightness(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetBrightness\r\n");
+	switch (option) {
+	default:
+		return 0;
+	case 1:  // current value
+		return current_brightness;
+	case 2:  // minimum value
+		return BRIGHTNESS_MINIMUM;
+	case 3:  // maximum value
+		return BRIGHTNESS_MAXIMUM;
+	case 4:  // resolution
+		return BRIGHTNESS_RESOLUTION;
+	case 7:  // default
+		return BRIGHTNESS_DEFAULT;
+	}
 }
 
 
-int8_t AR0330_GetBrightness(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetBrightness ================\r\n");
+#define CONTRAST_RESOLUTION  1
+#define CONTRAST_MINIMUM     0
+#define CONTRAST_MAXIMUM     SIZE_OF_ARRAY(analog_gain) - 1
+#define CONTRAST_DEFAULT     0
+
+static int32_t current_contrast = CONTRAST_DEFAULT;
+
+void AR0330_SetContrast(int32_t contrast) {
+	CyU3PDebugPrint (4, "AR0330_SetContrast %d\r\n", contrast);
+	if (contrast < CONTRAST_MINIMUM && contrast > CONTRAST_MAXIMUM) {
+		return; // ignore invalid values
+	}
+	current_contrast = contrast;
+	uint16_t gain = analog_gain[contrast];
+	sensor_write(0x3060, gain);  // analog_gain
+}
+
+
+int32_t AR0330_GetContrast(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetContrast\r\n");
+
+	switch (option) {
+	default:
+		return 0;
+	case 1:  // current value
+		return current_contrast;
+	case 2:  // minimum value
+		return 0;
+	case 3:  // maximum value
+		return SIZE_OF_ARRAY(analog_gain) - 1;
+	case 4:  // resolution
+		return 1;
+	case 7:  // default
+		return 0;
+	}
+}
+
+
+#define SHARPNESS_RESOLUTION   1
+#define SHARPNESS_MINIMUM      0
+#define SHARPNESS_MAXIMUM 0x07ff
+#define SHARPNESS_DEFAULT 0x0080
+
+static int32_t current_sharpness = SHARPNESS_DEFAULT;
+
+void AR0330_SetSharpness(int32_t sharpness) {
+	CyU3PDebugPrint (4, "AR0330_SetSharpness: %d\r\n", sharpness);
+	if (sharpness < SHARPNESS_MINIMUM && sharpness > SHARPNESS_MAXIMUM) {
+		return; // ignore invalid values
+	}
+	current_sharpness = sharpness;
+	sensor_write(0x305e, (uint16_t)(sharpness));  // global_gain
+}
+
+int32_t AR0330_GetSharpness(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetSharpness\r\n");
+	switch (option) {
+	default:
+		return 0;
+	case 1:  // current value
+		return current_contrast;
+	case 2:  // minimum value
+		return SHARPNESS_MINIMUM;
+	case 3:  // maximum value
+		return SHARPNESS_MAXIMUM;
+	case 4:  // resolution
+		return SHARPNESS_RESOLUTION;
+	case 7:  // default
+		return SHARPNESS_DEFAULT;
+	}
+}
+
+
+void AR0330_SetHue(int32_t hue) {
+	CyU3PDebugPrint (4, "AR0330_SetHue: %d\r\n", hue);
+}
+
+int32_t AR0330_GetHue(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetHue\r\n");
 	return 0;
 }
 
 
-void AR0330_SetContrast(int8_t Contrast) {
-	CyU3PDebugPrint (4, "AR0330_SetContrast ================\r\n");
-}
-
-
-int8_t AR0330_GetContrast(int8_t option) {
-
-	CyU3PDebugPrint (4, "AR0330_GetContrast ================\r\n");
-#if 0
-	CyBool_t clr_error_count = CyFalse;
-	CyU3PMipicsiErrorCounts_t error_count;
-
-	CyU3PMipicsiGetErrors(clr_error_count, &error_count);
-	CyU3PDebugPrint (4, "Error count %d\r\n", clr_error_count);
-
-	CyU3PDebugPrint (4, "frmErrCnt =  %d\r\n", error_count.frmErrCnt);
-	CyU3PDebugPrint (4, "crcErrCnt =  %d\r\n", error_count.crcErrCnt);
-	CyU3PDebugPrint (4, "mdlErrCnt =  %d\r\n", error_count.mdlErrCnt);
-	CyU3PDebugPrint (4, "ctlErrCnt =  %d\r\n", error_count.ctlErrCnt);
-
-	CyU3PDebugPrint (4, "eidErrCnt =  %d\r\n", error_count.eidErrCnt);
-	CyU3PDebugPrint (4, "recrErrCnt =  %d\r\n", error_count.recrErrCnt);
-	CyU3PDebugPrint (4, "unrcErrCnt =  %d\r\n", error_count.unrcErrCnt);
-	CyU3PDebugPrint (4, "recSyncErrCnt =  %d\r\n", error_count.recSyncErrCnt);
-	CyU3PDebugPrint (4, "unrSyncErrCnt =  %d\r\n", error_count.unrSyncErrCnt);
-#endif
-	return 0;
-}
-
-
-void AR0330_SetHue(int32_t Hue) {
-	CyU3PDebugPrint (4, "AR0330_SetHue ================\r\n");
-}
-
-
-int32_t AR0330_GetHue(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_SetHue ================\r\n");
-	return 0;
-}
-
-
-void AR0330_SetSaturation(uint32_t Saturation)
+void AR0330_SetSaturation(int32_t saturation)
 {
-	CyU3PDebugPrint (4, "AR0330_SetSaturation ================\r\n");
+	CyU3PDebugPrint (4, "AR0330_SetSaturation: %d\r\n", saturation);
 }
 
-int8_t AR0330_GetSaturation(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetSaturation ================\r\n");
-
+int32_t AR0330_GetSaturation(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetSaturation\r\n");
 	return 0;
 }
 
 
-void AR0330_SetSharpness(uint8_t Sharp) {
-	CyU3PDebugPrint (4, "AR0330_SetSharpness ================\r\n");
+void AR0330_SetWhiteBalance(int32_t white_balance) {
+	CyU3PDebugPrint (4, "AR0330_SetWhiteBalance: %d\r\n", white_balance);
 }
 
-
-int8_t AR0330_GetSharpness(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetSharpness ================\r\n");
-
+int32_t AR0330_GetWhiteBalance(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetWhiteBalance\r\n");
 	return 0;
 }
 
 
-void AR0330_SetWhiteBalance(uint8_t WhiteBalance) {
-	CyU3PDebugPrint (4, "AR0330_SetWhiteBalance ================\r\n");
+void AR0330_SetAutoWhiteBalance(int32_t AutoWhiteBalance) {
+	CyU3PDebugPrint (4, "AR0330_SetAutoWhiteBalance: %s\r\n", AutoWhiteBalance ? "true" : "false");
 }
 
 
-uint8_t AR0330_GetWhiteBalance(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetWhiteBalance ================\r\n");
-
-	return 0;
-}
-
-
-void AR0330_SetAutoWhiteBalance(uint8_t AutoWhiteBalance) {
-	CyU3PDebugPrint (4, "AR0330_SetAutoWhiteBalance ================\r\n");
-}
-
-
-uint8_t AR0330_GetAutoWhiteBalance(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetAutoWhiteBalance ================\r\n");
+int32_t AR0330_GetAutoWhiteBalance(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetAutoWhiteBalance\r\n");
 	return 0;
 }
 
 
 void AR0330_SetExposure(int32_t Exposure) {
-	CyU3PDebugPrint (4, "AR0330_SetExposure ================\r\n");
+	CyU3PDebugPrint (4, "AR0330_SetExposure\r\n");
 }
 
 
-int32_t AR0330_GetExposure(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetExposure ================\r\n");
+int32_t AR0330_GetExposure(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetExposure\r\n");
 #if 0
 	CyBool_t clr_error_count = CyFalse;
 	CyU3PMipicsiErrorCounts_t error_count;
@@ -550,33 +638,33 @@ int32_t AR0330_GetExposure(uint8_t option) {
 }
 
 
-void AR0330_SetAutofocus(uint8_t Is_Enable) {
-	CyU3PDebugPrint (4, "AR0330_SetAutofocus ================\r\n");
+void AR0330_SetAutofocus(int32_t Is_Enable) {
+	CyU3PDebugPrint (4, "AR0330_SetAutofocus\r\n");
 }
 
 
-uint8_t AR0330_GetAutofocus(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetAutofocus ================\r\n");
+int32_t AR0330_GetAutofocus(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetAutofocus\r\n");
 	return 1;
 }
 
 
-void AR0330_SetManualfocus(uint16_t manualfocus) {
-	CyU3PDebugPrint (4, "AR0330_SetManualfocus ================\r\n");
+void AR0330_SetManualfocus(int32_t manualfocus) {
+	CyU3PDebugPrint (4, "AR0330_SetManualfocus\r\n");
 }
 
 
-uint16_t AR0330_GetManualfocus(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetManualfocus ================\r\n");
+int32_t AR0330_GetManualfocus(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetManualfocus\r\n");
 	return 0;
 }
 
 
-void AR0330_SetAutoExposure(uint8_t AutoExp) {
-	CyU3PDebugPrint (4, "AR0330_SetAutoExposure ================\r\n");
+void AR0330_SetAutoExposure(int32_t AutoExp) {
+	CyU3PDebugPrint (4, "AR0330_SetAutoExposure\r\n");
 }
 
-uint8_t AR0330_GetAutoExposure(uint8_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetAutoExposure ================\r\n");
+int32_t AR0330_GetAutoExposure(int32_t option) {
+	CyU3PDebugPrint (4, "AR0330_GetAutoExposure\r\n");
 	return 0;
 }

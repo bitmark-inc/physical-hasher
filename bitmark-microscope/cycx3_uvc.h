@@ -113,36 +113,6 @@
 #define ES_UVC_GPIF_SWITCH_TIMEOUT              (2)             	// Timeout setting for the switch operation in GPIF clock cycles
 #define ES_UVC_INVALID_GPIF_STATE               (257)           	// Invalid state for use in CyU3PGpifSMSwitch calls
 
-#if 0
-// Extern definitions of the USB Enumeration constant arrays used for the Application
-extern const uint8_t esUVCUSB20DeviceDscr[];
-extern const uint8_t esUVCUSB30DeviceDscr[];
-extern const uint8_t esUVCUSBDeviceQualDscr[];
-extern const uint8_t esUVCUSBFSConfigDscr[];
-extern const uint8_t esUVCUSBHSConfigDscr[];
-extern const uint8_t esUVCUSBBOSDscr[];
-extern const uint8_t esUVCUSBSSConfigDscr[];
-extern const uint8_t esUVCUSBStringLangIDDscr[];
-extern const uint8_t esUVCUSBManufactureDscr[];
-extern const uint8_t esUVCUSBProductDscr[];
-extern const uint8_t esUVCUSBConfigSSDscr[];
-extern const uint8_t esUVCUSBConfigHSDscr[];
-extern const uint8_t esUVCUSBConfigFSDscr[];
-
-// UVC Probe Control Setting
-extern uint8_t glProbeCtrl[ES_UVC_MAX_PROBE_SETTING];
-extern const uint8_t gl720pProbeCtrl[ES_UVC_MAX_PROBE_SETTING];
-extern const uint8_t gl1080pProbeCtrl[ES_UVC_MAX_PROBE_SETTING];
-extern const uint8_t glVga60ProbeCtrl[ES_UVC_MAX_PROBE_SETTING];
-extern const uint8_t glVga30ProbeCtrl[ES_UVC_MAX_PROBE_SETTING];
-extern const uint8_t gl5MpProbeCtrl[ES_UVC_MAX_PROBE_SETTING];
-
-extern uint8_t glStillProbeCtrl[ES_UVC_MAX_STILL_PROBE_SETTING];
-
-// MIPI Configuration parameters
-extern CyU3PMipicsiCfg_t cfgUvc1080p30NoMclk, cfgUvc720p60NoMclk,  cfgUvcVgaNoMclk, cfgUvc5Mp15NoMclk ,cfgUvcVga30NoMclk;
-#endif
-
 
 CyU3PThread uvcAppThread;               	// Primary application thread used for data transfer from the Mipi interface to USB
 CyU3PEvent glTimerEvent;                  	// Application Event Group

@@ -166,7 +166,7 @@ const uint8_t esUVCUSBSSConfigDscr[] = {
 	0x51, 0x00,                         // Total Size of class specific descriptors (till Output terminal)
 	0x00, 0x6C, 0xDC, 0x02,             // Clock frequency: 48MHz(Deprecated)
 	0x01,                               // Number of streaming interfaces
-	0x01,                               //VideoStreaming interface 1 belongs to this VideoControl interface
+	0x01,                               // VideoStreaming interface 1 belongs to this VideoControl interface
 
 	// Input (Camera) Terminal Descriptor
 	0x12,                               // Descriptor size
@@ -181,7 +181,7 @@ const uint8_t esUVCUSBSSConfigDscr[] = {
 	0x00, 0x00,                         // No optical zoom supported
 	0x00, 0x00,                         // No optical zoom supported
 	0x03,                               // Size of controls field for this terminal: 3 bytes
-	0x2A,0x00,0x02,                         // No controls supported
+	0x2A,0x00,0x02,                     // Controls supported
 
 	// Processing Unit Descriptor
 	0x0D,                               // Descriptor size
@@ -191,7 +191,11 @@ const uint8_t esUVCUSBSSConfigDscr[] = {
 	0x01,                               // Source ID: 1: Conencted to input terminal
 	0x00, 0x40,                         // Digital multiplier
 	0x03,                               // Size of controls field for this terminal: 3 bytes
-	0x5F,0x10,0x00,                     // No controls supported
+	0x1F,0x00,0x00,                     // Controls supported: Little endian:
+					    //    0 .. 3:  brightness, contrast, hue, saturation,
+					    //    4 .. 7:  sharpness, gamma, white balance temperature, white balance component
+					    //    8 ..11:  backlight compensation, gain, power line frequency, hue auto
+					    //   12 ..15:  white balance temperature auto, white balance component, digital multiplier, digital multiplier limit
 	0x00,                               // String desc index: Not used
 	0x00,                               // Analog Video Standards Supported: None
 
@@ -449,7 +453,7 @@ const uint8_t esUVCUSBHSConfigDscr[] = {
 	0x00, 0x00,                         // No optical zoom supported
 	0x00, 0x00,                         // No optical zoom supported
 	0x03,                               // Size of controls field for this terminal: 3 bytes
-	0x2A,0x00,0x02,                     // No controls supported
+	0x2A,0x00,0x02,                     // Controls supported
 
 	// Processing Unit Descriptor
 	0x0C,                               // Descriptor size

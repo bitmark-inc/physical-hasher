@@ -104,10 +104,10 @@ uint8_t g_IsAutoFocus = 1;		   // Check the AutoFocus is Enabled or not
 
 // USB control request processing variables
 uint8_t glGet_Info = 0;
-int16_t gl8GetControl = 0;
-int16_t gl8SetControl = 0;
-int16_t gl16GetControl = 0;
-int16_t gl16SetControl = 0;
+//int16_t gl8GetControl = 0;
+//int16_t gl8SetControl = 0;
+//int16_t gl16GetControl = 0;
+//int16_t gl16SetControl = 0;
 int32_t gl32GetControl = 0;
 int32_t gl32SetControl = 0;
 
@@ -215,7 +215,6 @@ CyU3PReturnStatus_t esUVCUvcApplnStart(void) {
 	//
 	// To test different night modes, uncomment the below statement and build the firmware
 
-	//TODO Change this Function to "Sensor Specific" Nightmode Function to enable the nightmode(If supported by the sensor)
 	//esOV5640_Nightmode(CyTrue,3);
 
 	// Resume the Fixed Function GPIF State machine
@@ -230,12 +229,10 @@ CyU3PReturnStatus_t esUVCUvcApplnStart(void) {
 	// Wake Mipi interface and Image Sensor
 	CyU3PMipicsiWakeup();
 
-	//TODO Change this function with "Sensor Specific" PowerUp function to PowerUp the sensor
 	AR0330_Power_Up();
 
 	glMipiActive = CyTrue;
 
-	//TODO Change this Function with "Sensor Specific" AutoFocus Function to Set the AutoFocus of the sensor
 	if (glStillCaptureStart != CyTrue) {
 		if (g_IsAutoFocus) {
 			AR0330_SetAutofocus(g_IsAutoFocus);
@@ -257,7 +254,6 @@ void esUVCUvcApplnStop(void) {
 	// Stop the image sensor and CX3 mipi interface
 	status = CyU3PMipicsiSleep();
 
-	//TODO Change this function with "Sensor Specific" PowerDown function to PowerDown the sensor
 	AR0330_Power_Down();
 
 	glMipiActive = CyFalse;
@@ -302,14 +298,14 @@ void esUVCGpifCB(CyU3PGpifEventType event, uint8_t currentState) {
 	CyU3PReturnStatus_t status = CY_U3P_SUCCESS;
 	// Handle interrupt from the State Machine
 
-	CyU3PDebugPrint(4, "GpifCB callback function\r\n");
+	//CyU3PDebugPrint(4, "GpifCB callback function\r\n");
 
 	if (event == CYU3P_GPIF_EVT_SM_INTERRUPT) {
-		CyU3PDebugPrint(4, "CYU3P_GPIF_EVT_SM_INTERRUPT\r\n");
+		//CyU3PDebugPrint(4, "CYU3P_GPIF_EVT_SM_INTERRUPT\r\n");
 
 		// Wrapup Socket 0
 		if (currentState == CX3_PARTIAL_BUFFER_IN_SCK0) {
-			CyU3PDebugPrint(4, "CX3_PARTIAL_BUFFER_IN_SCK0\r\n");
+			//CyU3PDebugPrint(4, "CX3_PARTIAL_BUFFER_IN_SCK0\r\n");
 
 			status = CyU3PDmaMultiChannelSetWrapUp(&glChHandleUVCStream, 0);
 			if (status != CY_U3P_SUCCESS) {
@@ -318,7 +314,7 @@ void esUVCGpifCB(CyU3PGpifEventType event, uint8_t currentState) {
 		}
 		// Wrapup Socket 1
 		else if (currentState == CX3_PARTIAL_BUFFER_IN_SCK1) {
-			CyU3PDebugPrint(4, "CX3_PARTIAL_BUFFER_IN_SCK1\r\n");
+			//CyU3PDebugPrint(4, "CX3_PARTIAL_BUFFER_IN_SCK1\r\n");
 
 			status = CyU3PDmaMultiChannelSetWrapUp(&glChHandleUVCStream, 1);
 			if (status != CY_U3P_SUCCESS) {
@@ -496,7 +492,6 @@ static CyBool_t esUVCApplnLPMRqtCB(CyU3PUsbLinkPowerMode link_mode	//USB 3.0 lin
 	return CyTrue;
 }
 
-//TODO Change this function with "Sensor Specific" function to write the sensor settings & configure the CX3 for supported resolutions
 void esSetCameraResolution(uint8_t FrameIndex) {
 	CyU3PReturnStatus_t status = CY_U3P_SUCCESS;
 	CyU3PDebugPrint(4, "esSetCameraResolution == 1 ==\r\n");
@@ -639,8 +634,6 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 			    || (bRequest == ES_UVC_USB_GET_MAX_REQ) || (bRequest == ES_UVC_USB_GET_DEF_REQ)) {
 				isHandled = CyTrue;
 				if ((wValue == ES_UVC_VS_PROBE_CONTROL) || (wValue == ES_UVC_VS_COMMIT_CONTROL)) {
-					//TODO Modify this "glProbeCtrl" according to the Supported Preview Resolutions that are supported by the sensor
-
 					// Host requests for probe data of 34 bytes (UVC 1.1) or 26 Bytes (UVC1.0). Send it over EP0.
 					if (CyU3PUsbGetSpeed() == CY_U3P_SUPER_SPEED) {
 						CyU3PDebugPrint(4, "setting frame index = %d\r\n", glCurrentFrameIndex);
@@ -721,9 +714,8 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 								glFrameIndexToSet = glCurrentFrameIndex;
 								glPreviewStarted = CyTrue;
 
-								//TODO Change this function with "Sensor Specific" function to write the sensor settings & configure the CX3 for supported resolutions
-								//      esSetCameraResolution(glCurrentFrameIndex);
-								esSetCameraResolution(glCommitCtrl[3]);
+								esSetCameraResolution(glCurrentFrameIndex);
+								//esSetCameraResolution(glCommitCtrl[3]);
 
 								if (glIsApplnActive) {
 									if (glcommitcount) {
@@ -786,42 +778,8 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 			}
 		} else if ((wIndex & 0x00FF) == ES_UVC_CONTROL_INTERFACE) {	// Video Control Interface
 			isHandled = CyTrue;
-			// Respond to VC_REQUEST_ERROR_CODE_CONTROL and stall every other request as this example does not support
-			// any of the Video Control features
-			if ((wIndex == 0x200) && (wValue == 0x200)) {	//Brightness
-				switch (bRequest) {
-				case ES_UVC_USB_GET_INFO_REQ:
-					glGet_Info = 0x03;
-					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
-						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
-					}
-					break;
-				case ES_UVC_USB_GET_MIN_REQ:
-				case ES_UVC_USB_GET_MAX_REQ:
-				case ES_UVC_USB_GET_RES_REQ:
-				case ES_UVC_USB_GET_CUR_REQ:
-				case ES_UVC_USB_GET_DEF_REQ:
-					RequestOption = (bRequest & 0x0F);
 
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for brightness Control
-					gl16GetControl = AR0330_GetBrightness(RequestOption);
-					status = CyU3PUsbSendEP0Data(2, (uint8_t *) & gl16GetControl);
-					if (status != CY_U3P_SUCCESS) {
-						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
-					}
-					break;
-				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl16SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
-						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
-					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for brightness Control & write the brightness settings into the sensor
-					AR0330_SetBrightness((int8_t) gl16SetControl);
-					break;
-				}
-			} else if ((wIndex == 0x100) && (wValue == 0x200)) {	//Auto Exposure
-				//      CyU3PDebugPrint (4, "Auto Exposure\r\n");
+			if ((wIndex == 0x200) && (wValue == 0x200)) {	// Brightness
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -836,24 +794,21 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for AutoExposure Control
-					gl8GetControl = AR0330_GetAutoExposure(RequestOption);
-					status = CyU3PUsbSendEP0Data(1, (uint8_t *) & gl8GetControl);
+					gl32GetControl = AR0330_GetBrightness(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl8SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for AutoExposure Control & write AutoExposure settings into the sensor
-					//      CyU3PDebugPrint (4, "Auto Exposure= %d\r\n",gl8SetControl);
-					AR0330_SetAutoExposure(gl8SetControl);
+					AR0330_SetBrightness(gl32SetControl);
 					break;
 				}
-			} else if ((wIndex == 0x200) && (wValue == 0x300)) {	//Contrast
+			} else if ((wIndex == 0x100) && (wValue == 0x200)) {	// Auto Exposure
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -868,23 +823,50 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for Contrast Control
-					gl16GetControl = AR0330_GetContrast(RequestOption);
-					status = CyU3PUsbSendEP0Data(2, (uint8_t *) & gl16GetControl);
+					gl32GetControl = AR0330_GetAutoExposure(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl16SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for Contrast Control & write Contrast settings into the sensor
-					AR0330_SetContrast((int8_t) gl16SetControl);
+					AR0330_SetAutoExposure(gl32SetControl);
 					break;
 				}
-			} else if ((wIndex == 0x100) && (wValue == 0x400)) {	//Manual Exposure
+			} else if ((wIndex == 0x200) && (wValue == 0x300)) {	// Contrast
+				switch (bRequest) {
+				case ES_UVC_USB_GET_INFO_REQ:
+					glGet_Info = 0x03;
+					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
+					if (status != CY_U3P_SUCCESS) {
+						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
+					}
+					break;
+				case ES_UVC_USB_GET_MIN_REQ:
+				case ES_UVC_USB_GET_MAX_REQ:
+				case ES_UVC_USB_GET_RES_REQ:
+				case ES_UVC_USB_GET_CUR_REQ:
+				case ES_UVC_USB_GET_DEF_REQ:
+					RequestOption = (bRequest & 0x0F);
+					gl32GetControl = AR0330_GetContrast(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
+					if (status != CY_U3P_SUCCESS) {
+						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
+					}
+					break;
+				case ES_UVC_USB_SET_CUR_REQ:
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
+					if (status != CY_U3P_SUCCESS) {
+						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
+					}
+					AR0330_SetContrast(gl32SetControl);
+					break;
+				}
+			} else if ((wIndex == 0x100) && (wValue == 0x400)) {	// Manual Exposure
 				//CyU3PDebugPrint (4, "Manual Exposure\r\n");
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
@@ -900,24 +882,21 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for ManualExposure Control
 					gl32GetControl = AR0330_GetExposure(RequestOption);
-					status = CyU3PUsbSendEP0Data(4, (uint8_t *) & gl32GetControl);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl32SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for ManualExposure Control & write ManualExposure settings into the sensor
-					//      CyU3PDebugPrint (4, "Manual Exposure = %d\r\n", gl32SetControl);
 					AR0330_SetExposure(gl32SetControl);
 					break;
 				}
-			} else if ((wIndex == 0x200) && (wValue == 0x600)) {	//Hue
+			} else if ((wIndex == 0x200) && (wValue == 0x600)) {	// Hue
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -932,24 +911,21 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for Hue Control
 					gl32GetControl = (int32_t) AR0330_GetHue(RequestOption);
-					status = CyU3PUsbSendEP0Data(4, (uint8_t *) & gl32GetControl);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl32SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for Hue Control & write Hue settings into the sensor
-					AR0330_SetHue((int8_t) gl32SetControl);
+					AR0330_SetHue(gl32SetControl);
 					break;
 				}
-			} else if ((wIndex == 0x100) && (wValue == 0x600)) {	//Manual Focus
-				//CyU3PDebugPrint (4, "Manual Focus\r\n");
+			} else if ((wIndex == 0x100) && (wValue == 0x600)) {	// Manual Focus
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -963,26 +939,23 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_RES_REQ:
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for ManualFocus Control
 					RequestOption = (bRequest & 0x0F);
-					gl16GetControl = AR0330_GetManualfocus(RequestOption);
-					status = CyU3PUsbSendEP0Data(2, (uint8_t *) & gl16GetControl);
+					gl32GetControl = AR0330_GetManualfocus(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl16SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for ManualFocus Control & write ManualFocus settings into the sensor
-					//      CyU3PDebugPrint (4, "Manual Focus= %d\r\n",gl16SetControl);
-					AR0330_SetManualfocus((uint16_t) gl16SetControl);
+					AR0330_SetManualfocus(gl32SetControl);
 					g_IsAutoFocus = 0;
 					break;
 				}
-			} else if ((wIndex == 0x200) && (wValue == 0x700)) {	//Saturation
+			} else if ((wIndex == 0x200) && (wValue == 0x700)) {	// Saturation
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -997,23 +970,21 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for Saturation Control
-					gl16GetControl = AR0330_GetSaturation(RequestOption);
-					status = CyU3PUsbSendEP0Data(2, (uint8_t *) & gl16GetControl);
+					gl32GetControl = AR0330_GetSaturation(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl16SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for Saturation Control & write Saturation settings into the sensor
-					AR0330_SetSaturation((uint32_t) gl16SetControl);
+					AR0330_SetSaturation(gl32SetControl);
 					break;
 				}
-			} else if ((wIndex == 0x200) && (wValue == 0x800)) {	//Sharpness
+			} else if ((wIndex == 0x200) && (wValue == 0x800)) {	// Sharpness
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -1028,24 +999,21 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for Sharpness Control
-					gl16GetControl = AR0330_GetSharpness(RequestOption);
-					status = CyU3PUsbSendEP0Data(2, (uint8_t *) & gl16GetControl);
+					gl32GetControl = AR0330_GetSharpness(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl16SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for Sharpness Control & write Sharpness settings into the sensor
-					AR0330_SetSharpness((uint8_t) gl16SetControl);
+					AR0330_SetSharpness(gl32SetControl);
 					break;
 				}
-			} else if ((wIndex == 0x100) && (wValue == 0x800)) {	//Auto Focus
-				CyU3PDebugPrint(4, "Auto Focus\r\n");
+			} else if ((wIndex == 0x100) && (wValue == 0x800)) {	// Auto Focus
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -1060,25 +1028,22 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for AutoFocus Control
-					gl8GetControl = AR0330_GetAutofocus(RequestOption);
-					status = CyU3PUsbSendEP0Data(2, (uint8_t *) & gl8GetControl);
+					gl32GetControl = AR0330_GetAutofocus(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl8SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for AutoFocus Control & write AutoFocus settings into the sensor
-					//      CyU3PDebugPrint (4, "Auto Focus =%d\r\n",gl8SetControl);
-					AR0330_SetAutofocus((uint8_t) gl8SetControl);
+					AR0330_SetAutofocus(gl32SetControl);
 					g_IsAutoFocus = 1;
 					break;
 				}
-			} else if ((wIndex == 0x200) && (wValue == 0xA00)) {	//White Balance manual
+			} else if ((wIndex == 0x200) && (wValue == 0xA00)) {	// White Balance manual
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -1093,23 +1058,21 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for ManualWhiteBalance Control
-					gl16GetControl = AR0330_GetWhiteBalance(RequestOption);
-					status = CyU3PUsbSendEP0Data(2, (uint8_t *) & gl16GetControl);
+					gl32GetControl = AR0330_GetWhiteBalance(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl16SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for ManualWhiteBalance Control & write ManualWhiteBalance settings into the sensor
-					AR0330_SetWhiteBalance((uint8_t) gl16SetControl);
+					AR0330_SetWhiteBalance(gl32SetControl);
 					break;
 				}
-			} else if ((wIndex == 0x200) && (wValue == 0xB00)) {	//White Balance Auto
+			} else if ((wIndex == 0x200) && (wValue == 0xB00)) {	// White Balance Auto
 				switch (bRequest) {
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
@@ -1124,20 +1087,18 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				case ES_UVC_USB_GET_CUR_REQ:
 				case ES_UVC_USB_GET_DEF_REQ:
 					RequestOption = (bRequest & 0x0F);
-					//TODO Change this function with the "Sensor specific" function to Service all the GET requests for AutoWhiteBalance Control
-					gl16GetControl = AR0330_GetAutoWhiteBalance(RequestOption);
-					status = CyU3PUsbSendEP0Data(2, (uint8_t *) & gl16GetControl);
+					gl32GetControl = AR0330_GetAutoWhiteBalance(RequestOption);
+					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
-					status = CyU3PUsbGetEP0Data(16, (uint8_t *) & gl16SetControl, &readCount);
+					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
 					if (status != CY_U3P_SUCCESS) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
-					//TODO Change this function with the "Sensor specific" function to Service the SET request for AutoWhiteBalance Control & write AutoWhiteBalance settings into the sensor
-					AR0330_SetAutoWhiteBalance((uint8_t) gl16SetControl);
+					AR0330_SetAutoWhiteBalance(gl32SetControl);
 					break;
 				}
 			} else if ((wValue == ES_UVC_VC_REQUEST_ERROR_CODE_CONTROL) && (wIndex == 0x00)) {
@@ -1333,12 +1294,9 @@ void esUVCUvcApplnInit(void) {
 	CyU3PThreadSleep(200);
 //-
 
-	//TODO Change this function with the "Sensor specific" function to Write the Base I2C settings into the sensor
 	// Setup Image Sensor
 	AR0330_Base_Config();
-	//TODO Change this function with the "Sensor specific" function to Write the Base I2C settings for autofocus into the sensor
 	AR0330_Auto_Focus_Config();
-	//TODO Change this function with "Sensor Specific" PowerDown function to PowerDown the sensor
 	//[TBD] esCamera_Power_Down();
 
 	// Connect the USB pins and enable super speed operation
@@ -1555,7 +1513,6 @@ void esUVCUvcAppThread_Entry(uint32_t input) {
 				esUVCUvcApplnStop();
 			}
 			if (glPreviewStarted == CyTrue) {
-				//TODO Change this function with "Sensor Specific" function to write the sensor settings & configure the CX3 for supported resolutions
 				esSetCameraResolution(glFrameIndexToSet);
 				esUVCUvcApplnStart();
 			}
@@ -1567,8 +1524,6 @@ void esUVCUvcAppThread_Entry(uint32_t input) {
 		if (eventFlag & ES_USB_SUSP_EVENT_FLAG) {
 			// Place CX3 in Low Power Suspend mode, with USB bus activity as the wakeup source.
 			CyU3PMipicsiSleep();
-			//TODO Change this function with "Sensor Specific" PowerDown function to PowerDown the sensor
-
 			//[TBD] esCamera_Power_Down();
 
 			status = CyU3PSysEnterSuspendMode(CY_U3P_SYS_USB_BUS_ACTVTY_WAKEUP_SRC, 0, &wakeReason);
@@ -1578,7 +1533,6 @@ void esUVCUvcAppThread_Entry(uint32_t input) {
 
 			if (glMipiActive) {
 				CyU3PMipicsiWakeup();
-				//TODO Change this function with "Sensor Specific" PowerUp function to PowerUp the sensor
 				//[TBD] esCamera_Power_Up();
 			}
 			continue;
