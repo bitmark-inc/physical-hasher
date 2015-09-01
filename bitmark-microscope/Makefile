@@ -29,7 +29,7 @@ cheese: all
 
 include $(FX3FWROOT)/firmware/common/cx3_build_config.mak
 
-USER_CFLAGS += -Werror
+USER_CFLAGS += -Werror -std=c99
 
 
 #SOURCE += $(MODULE).c

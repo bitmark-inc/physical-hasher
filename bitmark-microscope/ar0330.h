@@ -6,6 +6,24 @@
 #include "cyu3types.h"
 
 
+// LED driver GPIO
+#define LED_DRIVER_CLK 19
+#define LED_DRIVER_SDI 20
+#define LED_DRIVER_SDO 21
+#define LED_DRIVER_ED1 25
+#define LED_DRIVER_ED2 22
+
+// GPIO configuration - include all GPIOS here
+// with one of: &anOutputInitiallyLow, &anOutputInitiallyHigh, &anInput
+#define GPIO_SETUP_BLOCK {                                      \
+		{LED_DRIVER_CLK,  &anOutputInitiallyLow},       \
+		{LED_DRIVER_SDI,  &anOutputInitiallyLow},       \
+		{LED_DRIVER_SDO,  &anInput},                    \
+		{LED_DRIVER_ED2,  &anOutputInitiallyHigh},      \
+		{LED_DRIVER_ED1,  &anOutputInitiallyLow},       \
+		{ 0, NULL} /* end of list */                    \
+	}
+
 // Configuration functions
 void AR0330_Base_Config(void);
 void AR0330_VGA_config(void);

@@ -1,12 +1,12 @@
 // Copyright Bitmark Inc. 2015-2015
 
 #include <cyu3system.h>
+#include <cyu3types.h>
 #include <cyu3os.h>
 #include <cyu3dma.h>
 #include <cyu3error.h>
 #include <cyu3uart.h>
 #include <cyu3i2c.h>
-#include <cyu3types.h>
 #include <cyu3gpio.h>
 #include <cyu3utils.h>
 #include <cyu3mipicsi.h>
@@ -359,6 +359,56 @@ void AR0330_Base_Config(void) {
 
 	//SensorReset(); // already done elsewhere
 
+
+	// GPIO configuration
+
+	CyU3PGpioSimpleConfig_t anInput = {
+		.outValue = CyFalse,
+		.driveLowEn = CyFalse,
+		.driveHighEn = CyFalse,
+		.inputEn = CyTrue,
+		.intrMode = CY_U3P_GPIO_NO_INTR
+	};
+
+	CyU3PGpioSimpleConfig_t anOutputInitiallyLow = {
+		.outValue = CyFalse,
+		.driveLowEn = CyTrue,
+		.driveHighEn = CyTrue,
+		.inputEn = CyFalse,
+		.intrMode = CY_U3P_GPIO_NO_INTR
+	};
+
+	CyU3PGpioSimpleConfig_t anOutputInitiallyHigh = {
+		.outValue = CyFalse,
+		.driveLowEn = CyTrue,
+		.driveHighEn = CyTrue,
+		.inputEn = CyFalse,
+		.intrMode = CY_U3P_GPIO_NO_INTR
+	};
+
+	struct {
+		int pin;
+		CyU3PGpioSimpleConfig_t *config;
+	} initialiseIO[] = GPIO_SETUP_BLOCK;
+
+	for (int i = 0; NULL != initialiseIO[i].config; ++i) {
+		CyU3PReturnStatus_t status = CyU3PDeviceGpioOverride(initialiseIO[i].pin, CyTrue);
+		if (status != CY_U3P_SUCCESS) {
+			CyU3PDebugPrint (4, "AR0330_Base_Config: override pin: %d error = %d 0x%x\r\n", initialiseIO[i].pin, status, status);
+			continue;
+		}
+
+		status = CyU3PGpioSetSimpleConfig(initialiseIO[i].pin, initialiseIO[i].config);
+		if (CY_U3P_ERROR_NOT_CONFIGURED == status) {
+			CyU3PDebugPrint (4, "AR0330_Base_Config: pin: %d  not configured as simple IO in matrix\r\n", initialiseIO[i].pin);
+		} else if (status != CY_U3P_SUCCESS) {
+			CyU3PDebugPrint (4, "AR0330_Base_Config: pin: %d error = %d 0x%x\r\n", initialiseIO[i].pin, status, status);
+		}
+	}
+
+
+	// sensor configuration
+
 	SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
 
 	// display versions
@@ -554,7 +604,7 @@ int32_t AR0330_GetSharpness(int32_t option) {
 	default:
 		return 0;
 	case 1:  // current value
-		return current_contrast;
+		return current_sharpness;
 	case 2:  // minimum value
 		return SHARPNESS_MINIMUM;
 	case 3:  // maximum value
@@ -567,13 +617,85 @@ int32_t AR0330_GetSharpness(int32_t option) {
 }
 
 
+#define HUE_RESOLUTION   1
+#define HUE_MINIMUM      0
+#define HUE_MAXIMUM 0x00ff
+#define HUE_DEFAULT 0x0000
+
+static int32_t current_hue = HUE_DEFAULT;
+
+
 void AR0330_SetHue(int32_t hue) {
 	CyU3PDebugPrint (4, "AR0330_SetHue: %d\r\n", hue);
+
+#define SetLow(io) CyU3PGpioSetValue(io, CyFalse)
+#define SetHigh(io) CyU3PGpioSetValue(io, CyTrue)
+#define SetBit(io, value) CyU3PGpioSetValue(io, 0 != (value & 0x80))
+
+#if 0
+	CyU3PReturnStatus_t status;
+	status = CyU3PGpioSetValue(LED_DRIVER_SDI, 0 != (hue & 1));
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
+	}
+	status = CyU3PGpioSetValue(LED_DRIVER_CLK, 0 != (hue & 2));
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
+	}
+	status = CyU3PGpioSetValue(LED_DRIVER_ED1, 0 != (hue & 4));
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
+	}
+	status = CyU3PGpioSetValue(LED_DRIVER_ED2, 0 != (hue & 8));
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
+	}
+
+#else
+	// initialise
+	SetLow(LED_DRIVER_CLK);
+	SetHigh(LED_DRIVER_ED2);
+	SetLow(LED_DRIVER_ED1);
+	CyU3PThreadSleep(1);
+
+	for (int i = 0; i < 8; ++i) {
+		SetBit(LED_DRIVER_SDI, hue);
+		hue <<= 1; // output bit big endian
+		CyU3PBusyWait(10);
+		//CyU3PThreadSleep(10);
+		SetHigh(LED_DRIVER_CLK);
+		CyU3PBusyWait(10);
+		//CyU3PThreadSleep(10);
+		SetLow(LED_DRIVER_CLK);
+	}
+	//CyU3PThreadSleep(1);
+	CyU3PBusyWait(10);
+	SetHigh(LED_DRIVER_ED1);
+	//CyU3PThreadSleep(10);
+	CyU3PBusyWait(10);
+	SetLow(LED_DRIVER_ED1);
+	//CyU3PThreadSleep(1);
+	CyU3PBusyWait(10);
+	SetLow(LED_DRIVER_ED2);
+#endif
 }
 
 int32_t AR0330_GetHue(int32_t option) {
 	CyU3PDebugPrint (4, "AR0330_GetHue\r\n");
-	return 0;
+	switch (option) {
+	default:
+		return 0;
+	case 1:  // current value
+		return current_hue;
+	case 2:  // minimum value
+		return HUE_MINIMUM;
+	case 3:  // maximum value
+		return HUE_MAXIMUM;
+	case 4:  // resolution
+		return HUE_RESOLUTION;
+	case 7:  // default
+		return HUE_DEFAULT;
+	}
 }
 
 
