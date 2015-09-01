@@ -1,11 +1,4 @@
-/*
- *  V4L2 video capture example
- *
- *  This program can be used and distributed without restrictions.
- *
- *      This program is provided with the V4L2 API
- * see http://linuxtv.org/docs.php for more information
- */
+// V4L2 video capture
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,19 +7,22 @@
 #include <string.h>
 #include <bsd/string.h>
 #include <assert.h>
-
-#include <getopt.h>             /* getopt_long() */
-
-#include <fcntl.h>              /* low-level i/o */
+#include <getopt.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/stat.h>
-//#include <sys/types.h>
-//#include <sys/time.h>
 #include <sys/mman.h>
 #include <sys/ioctl.h>
-
 #include <linux/videodev2.h>
+
+
+#define DEFAULT_FRAME_COUNT 70
+
+// AR0330 defaults
+#define DEFAULT_BRIGHTNESS    168
+#define DEFAULT_SHARPNESS  0x0080
+#define DEFAULT_CONTRAST        0
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
@@ -37,19 +33,17 @@ enum io_method {
 };
 
 struct buffer {
-	void   *start;
-	size_t  length;
+	void *start;
+	size_t length;
 };
 
 static const char *program_name;
-static char *dev_name;
+static char *device_name;
 static enum io_method io = IO_METHOD_MMAP;
-static int fd = -1;
 struct buffer *buffers;
 static unsigned int n_buffers;
 static FILE *fout = NULL;
-static int force_format = 0;
-static int frame_count = 70;
+
 
 static void errno_exit(const char *s) {
 	fprintf(stderr, "%s error %d, %s\n", s, errno, strerror(errno));
@@ -80,7 +74,7 @@ static bool process_image(const void *p, int size) {
 	return rc;
 }
 
-static bool read_frame(void) {
+static bool read_frame(int fd) {
 	struct v4l2_buffer buf;
 	unsigned int i;
 	bool rc = true;
@@ -93,9 +87,8 @@ static bool read_frame(void) {
 				return false;
 
 			case EIO:
-				/* Could ignore EIO, see spec. */
-
-				/* fall through */
+				// Could ignore EIO, see spec
+				// fall through
 
 			default:
 				errno_exit("read");
@@ -117,9 +110,8 @@ static bool read_frame(void) {
 				return 0;
 
 			case EIO:
-				/* Could ignore EIO, see spec. */
-
-				/* fall through */
+				// Could ignore EIO, see spec
+				// fall through
 
 			default:
 				errno_exit("VIDIOC_DQBUF");
@@ -147,9 +139,8 @@ static bool read_frame(void) {
 				return 0;
 
 			case EIO:
-				/* Could ignore EIO, see spec. */
-
-				/* fall through */
+				// Could ignore EIO, see spec
+				// fall through
 
 			default:
 				errno_exit("VIDIOC_DQBUF");
@@ -176,12 +167,10 @@ static bool read_frame(void) {
 	return rc;
 }
 
-static void mainloop(void) {
-	unsigned int count;
 
-	count = frame_count;
+static void mainloop(int fd, unsigned int frame_count) {
 
-	while (count-- > 0) {
+	for (unsigned int count = 0; count < frame_count; ++count) {
 		for (;;) {
 			fd_set fds;
 			struct timeval tv;
@@ -190,7 +179,7 @@ static void mainloop(void) {
 			FD_ZERO(&fds);
 			FD_SET(fd, &fds);
 
-			/* Timeout. */
+			// Timeout
 			tv.tv_sec = 2;
 			tv.tv_usec = 0;
 
@@ -208,20 +197,20 @@ static void mainloop(void) {
 				exit(EXIT_FAILURE);
 			}
 
-			if (read_frame()) {
+			if (read_frame(fd)) {
 				break;
 			}
-			/* EAGAIN - continue select loop. */
+			// EAGAIN - continue select loop
 		}
 	}
 }
 
-static void stop_capturing(void) {
+static void stop_capturing(int fd) {
 	enum v4l2_buf_type type;
 
 	switch (io) {
 	case IO_METHOD_READ:
-		/* Nothing to do. */
+		// Nothing to do
 		break;
 
 	case IO_METHOD_MMAP:
@@ -234,13 +223,13 @@ static void stop_capturing(void) {
 	}
 }
 
-static void start_capturing(void) {
+static void start_capturing(int fd) {
 	unsigned int i;
 	enum v4l2_buf_type type;
 
 	switch (io) {
 	case IO_METHOD_READ:
-		/* Nothing to do. */
+		// Nothing to do
 		break;
 
 	case IO_METHOD_MMAP:
@@ -328,7 +317,7 @@ static void init_read(unsigned int buffer_size) {
 	}
 }
 
-static void init_mmap(void) {
+static void init_mmap(int fd) {
 	struct v4l2_requestbuffers req;
 
 	CLEAR(req);
@@ -340,7 +329,7 @@ static void init_mmap(void) {
 	if (-1 == xioctl(fd, VIDIOC_REQBUFS, &req)) {
 		if (EINVAL == errno) {
 			fprintf(stderr, "%s does not support "
-				 "memory mapping\n", dev_name);
+				 "memory mapping\n", device_name);
 			exit(EXIT_FAILURE);
 		} else {
 			errno_exit("VIDIOC_REQBUFS");
@@ -349,7 +338,7 @@ static void init_mmap(void) {
 
 	if (req.count < 2) {
 		fprintf(stderr, "Insufficient buffer memory on %s\n",
-			 dev_name);
+			 device_name);
 		exit(EXIT_FAILURE);
 	}
 
@@ -375,11 +364,11 @@ static void init_mmap(void) {
 
 		buffers[n_buffers].length = buf.length;
 		buffers[n_buffers].start =
-			mmap(NULL /* start anywhere */,
-			      buf.length,
-			      PROT_READ | PROT_WRITE /* required */,
-			      MAP_SHARED /* recommended */,
-			      fd, buf.m.offset);
+			mmap(NULL,                   // start anywhere
+			     buf.length,
+			     PROT_READ | PROT_WRITE, // required
+			     MAP_SHARED,             // recommended
+			     fd, buf.m.offset);
 
 		if (MAP_FAILED == buffers[n_buffers].start) {
 			errno_exit("mmap");
@@ -387,7 +376,7 @@ static void init_mmap(void) {
 	}
 }
 
-static void init_userp(unsigned int buffer_size) {
+static void init_userp(int fd, unsigned int buffer_size) {
 	struct v4l2_requestbuffers req;
 
 	CLEAR(req);
@@ -399,7 +388,7 @@ static void init_userp(unsigned int buffer_size) {
 	if (-1 == xioctl(fd, VIDIOC_REQBUFS, &req)) {
 		if (EINVAL == errno) {
 			fprintf(stderr, "%s does not support "
-				 "user pointer i/o\n", dev_name);
+				 "user pointer i/o\n", device_name);
 			exit(EXIT_FAILURE);
 		} else {
 			errno_exit("VIDIOC_REQBUFS");
@@ -424,7 +413,7 @@ static void init_userp(unsigned int buffer_size) {
 	}
 }
 
-static void init_device(void) {
+static void init_device(int fd, int force_format) {
 	struct v4l2_capability cap;
 	struct v4l2_cropcap cropcap;
 	struct v4l2_crop crop;
@@ -434,7 +423,7 @@ static void init_device(void) {
 	if (-1 == xioctl(fd, VIDIOC_QUERYCAP, &cap)) {
 		if (EINVAL == errno) {
 			fprintf(stderr, "%s is no V4L2 device\n",
-				 dev_name);
+				 device_name);
 			exit(EXIT_FAILURE);
 		} else {
 			errno_exit("VIDIOC_QUERYCAP");
@@ -443,7 +432,7 @@ static void init_device(void) {
 
 	if (!(cap.capabilities & V4L2_CAP_VIDEO_CAPTURE)) {
 		fprintf(stderr, "%s is no video capture device\n",
-			 dev_name);
+			 device_name);
 		exit(EXIT_FAILURE);
 	}
 
@@ -451,7 +440,7 @@ static void init_device(void) {
 	case IO_METHOD_READ:
 		if (!(cap.capabilities & V4L2_CAP_READWRITE)) {
 			fprintf(stderr, "%s does not support read i/o\n",
-				 dev_name);
+				 device_name);
 			exit(EXIT_FAILURE);
 		}
 		break;
@@ -460,14 +449,14 @@ static void init_device(void) {
 	case IO_METHOD_USERPTR:
 		if (!(cap.capabilities & V4L2_CAP_STREAMING)) {
 			fprintf(stderr, "%s does not support streaming i/o\n",
-				 dev_name);
+				 device_name);
 			exit(EXIT_FAILURE);
 		}
 		break;
 	}
 
 
-	/* Select video input, video standard and tune here. */
+	// Select video input, video standard and tune here
 
 
 	CLEAR(cropcap);
@@ -476,20 +465,20 @@ static void init_device(void) {
 
 	if (0 == xioctl(fd, VIDIOC_CROPCAP, &cropcap)) {
 		crop.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
-		crop.c = cropcap.defrect; /* reset to default */
+		crop.c = cropcap.defrect; // reset to default
 
 		if (-1 == xioctl(fd, VIDIOC_S_CROP, &crop)) {
 			switch (errno) {
 			case EINVAL:
-				/* Cropping not supported. */
+				// Cropping not supported
 				break;
 			default:
-				/* Errors ignored. */
+				// Errors ignored
 				break;
 			}
 		}
 	} else {
-		/* Errors ignored. */
+		// Errors ignored
 	}
 
 
@@ -513,24 +502,22 @@ static void init_device(void) {
 		fmt.fmt.pix.width       = 1920;
 		fmt.fmt.pix.height      = 1080;
 		fmt.fmt.pix.field       = V4L2_PIX_FMT_SRGGB12;
-		//fmt.fmt.pix.field       = V4L2_FIELD_TOP;
-		//fmt.fmt.pix.field       = V4L2_FIELD_SEQ_BT;
 		fmt.fmt.pix.field       = V4L2_FIELD_ANY;
 
+		// Note VIDIOC_S_FMT may change width and height
 		if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt)) {
 			errno_exit("VIDIOC_S_FMT 1080");
 		}
 		break;
 
-		/* Note VIDIOC_S_FMT may change width and height. */
 	default:
-		/* Preserve original settings as set by v4l2-ctl for example */
+		// Preserve original settings as set by v4l2-ctl for example
 		if (-1 == xioctl(fd, VIDIOC_G_FMT, &fmt)) {
 			errno_exit("VIDIOC_G_FMT");
 		}
 	}
 
-	/* Buggy driver paranoia. */
+	// Buggy driver paranoia
 	min = fmt.fmt.pix.width * 2;
 	if (fmt.fmt.pix.bytesperline < min) {
 		fmt.fmt.pix.bytesperline = min;
@@ -546,43 +533,44 @@ static void init_device(void) {
 		break;
 
 	case IO_METHOD_MMAP:
-		init_mmap();
+		init_mmap(fd);
 		break;
 
 	case IO_METHOD_USERPTR:
-		init_userp(fmt.fmt.pix.sizeimage);
+		init_userp(fd, fmt.fmt.pix.sizeimage);
 		break;
 	}
 }
 
-static void close_device(void) {
+static void close_device(int fd) {
 	if (-1 == close(fd)) {
 		errno_exit("close");
 	}
 	fd = -1;
 }
 
-static void open_device(void) {
+static int open_device(void) {
 	struct stat st;
 
-	if (-1 == stat(dev_name, &st)) {
+	if (-1 == stat(device_name, &st)) {
 		fprintf(stderr, "Cannot identify '%s': %d, %s\n",
-			 dev_name, errno, strerror(errno));
+			 device_name, errno, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
 
 	if (!S_ISCHR(st.st_mode)) {
-		fprintf(stderr, "%s is no device\n", dev_name);
+		fprintf(stderr, "%s is no device\n", device_name);
 		exit(EXIT_FAILURE);
 	}
 
-	fd = open(dev_name, O_RDWR /* required */ | O_NONBLOCK, 0);
+	int fd = open(device_name, O_RDWR /* required */ | O_NONBLOCK, 0);
 
 	if (-1 == fd) {
 		fprintf(stderr, "Cannot open '%s': %d, %s\n",
-			 dev_name, errno, strerror(errno));
+			 device_name, errno, strerror(errno));
 		exit(EXIT_FAILURE);
 	}
+	return fd;
 }
 
 
@@ -597,6 +585,7 @@ static void set_control(int fd, int parameter, int32_t value) {
 	}
 }
 
+// print usage message and exit
 static void usage(const char *message, ...) {
 	if (NULL != message) {
 		va_list ap;
@@ -623,7 +612,8 @@ static void usage(const char *message, ...) {
 		"-s | --sharpness N   Sharpness value\n"
 		"-n | --contrast N    Contrast value\n"
 		 "",
-		program_name, dev_name, frame_count);
+		program_name, device_name, DEFAULT_FRAME_COUNT);
+	exit(EXIT_FAILURE);
 }
 
 
@@ -649,11 +639,14 @@ long_options[] = {
 
 int main(int argc, char **argv) {
 	program_name = argv[0];
-	dev_name = "/dev/video0";
+	device_name = "/dev/video0";
 
-	int32_t brightness = 168;  // AR0330 defaults
-	int32_t sharpness  = 0x0080;
-	int32_t contrast   = 0;
+	unsigned int frame_count = DEFAULT_FRAME_COUNT;
+	int force_format = 0;
+
+	int32_t brightness = DEFAULT_BRIGHTNESS;
+	int32_t sharpness = DEFAULT_SHARPNESS;
+	int32_t contrast = DEFAULT_CONTRAST;
 
 	for (;;) {
 		int idx;
@@ -666,11 +659,11 @@ int main(int argc, char **argv) {
 		}
 
 		switch (c) {
-		case 0: /* getopt_long() flag */
+		case 0: // getopt_long() flag
 			break;
 
 		case 'd':
-			dev_name = optarg;
+			device_name = optarg;
 			break;
 
 		case 'h':
@@ -690,22 +683,18 @@ int main(int argc, char **argv) {
 
 		case 'o':
 		{
-			fprintf(stderr, "output file name: %s\n", optarg);
 			size_t n = strlen(optarg) + 1;
 			if (n < 2) {
-				fprintf(stderr, "missing output file name\n");
-				return 1;
+				usage("missing output file name");
 			}
 			char *output_name = malloc(n);
 			if (NULL == output_name) {
-				fprintf(stderr, "unable to allocate memory for output file name: %s\n", optarg);
-				return 1;
+				usage("unable to allocate memory for output file name: '%s'", optarg);
 			}
 			strlcpy(output_name, optarg, n);
 			fout = fopen(output_name, "wb");
 			if (NULL == fout) {
-				fprintf(stderr, "unable to create output file name: %s\n", optarg);
-				return 1;
+				usage("unable to create output file name: '%s'\n", optarg);
 			}
 		}
 		break;
@@ -721,31 +710,31 @@ int main(int argc, char **argv) {
 		case 'c':
 			errno = 0;
 			frame_count = strtol(optarg, NULL, 0);
-			if (errno) {
-				errno_exit(optarg);
+			if (0 != errno) {
+				usage("invalid count '%s': %d, %s", optarg, errno, strerror(errno));
 			}
 			break;
 
 		case 'b':
 			errno = 0;
 			brightness = strtol(optarg, NULL, 0);
-			if (errno) {
-				errno_exit(optarg);
+			if (0 != errno) {
+				usage("invalid brightness '%s': %d, %s", optarg, errno, strerror(errno));
 			}
 			break;
 		case 's':
 			errno = 0;
 			sharpness = strtol(optarg, NULL, 0);
-			if (errno) {
-				errno_exit(optarg);
+			if (0 != errno) {
+				usage("invalid sharpness '%s': %d, %s", optarg, errno, strerror(errno));
 			}
 			break;
 
 		case 'n':
 			errno = 0;
 			contrast = strtol(optarg, NULL, 0);
-			if (errno) {
-				errno_exit(optarg);
+			if (0 != errno) {
+				usage("invalid contrast '%s': %d, %s", optarg, errno, strerror(errno));
 			}
 			break;
 
@@ -754,16 +743,16 @@ int main(int argc, char **argv) {
 		}
 	}
 
-	open_device();
+	int fd = open_device();
 	set_control(fd, V4L2_CID_BRIGHTNESS, brightness);
 	set_control(fd, V4L2_CID_CONTRAST, contrast);
 	set_control(fd, V4L2_CID_SHARPNESS, sharpness);
-	init_device();
-	start_capturing();
-	mainloop();
-	stop_capturing();
+	init_device(fd, force_format);
+	start_capturing(fd);
+	mainloop(fd, frame_count);
+	stop_capturing(fd);
 	uninit_device();
-	close_device();
+	close_device(fd);
 	fprintf(stderr, "\n");
 	fclose(fout);
 	fout = NULL;

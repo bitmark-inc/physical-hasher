@@ -17,18 +17,31 @@ CAPTURE_OPTS += --brightness="${BRIGHTNESS}"
 CAPTURE_OPTS += --sharpness="${SHARPNESS}"
 CAPTURE_OPTS += --contrast="${CONTRAST}"
 
+CFLAGS += -std=gnu99 -Wall -Werror
+
+LFLAGS += -lbsd
+
 .PHONY: all
-all: capture create-png list-controls
+all: capture create-png list-controls test-leds
 
 capture: capture.c
-	gcc -std=c99 -Wall -Werror -o "$@" "$<" -lbsd
+	${CC} ${CFLAGS} -o "$@" "$<" ${LFLAGS}
 
 create-png: create-png.c
-	gcc -std=c99 -Wall -Werror  -o "$@" "$<" $$(pkg-config --cflags --libs libpng12)
+	${CC} ${CFLAGS}  -o "$@" "$<" $$(pkg-config --cflags --libs libpng12)
 
 list-controls: list-controls.c
-	gcc -std=c99 -Wall -Werror -o "$@" "$<" -lbsd
+	${CC} ${CFLAGS} -o "$@" "$<" ${LFLAGS}
 
+
+test-leds: test-leds.c
+	${CC} ${CFLAGS} -o "$@" "$<" ${LFLAGS}
+
+
+.PHONY: led
+led: test-leds
+	-[ ! -e "${VIDEO_DEVICE}" ] && $(MAKE) download
+	[ -e "${VIDEO_DEVICE}" ] && ./test-leds -d "${VIDEO_DEVICE}" -c 100
 
 .PHONY: lc
 lc: list-controls
