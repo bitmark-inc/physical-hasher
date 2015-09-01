@@ -7,6 +7,7 @@
 #include <cyu3error.h>
 #include <cyu3uart.h>
 #include <cyu3i2c.h>
+#include <cyu3spi.h>
 #include <cyu3gpio.h>
 #include <cyu3utils.h>
 #include <cyu3mipicsi.h>
@@ -406,6 +407,71 @@ void AR0330_Base_Config(void) {
 		}
 	}
 
+	// SPI configuration
+
+	CyU3PReturnStatus_t status = CyU3PSpiInit();
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "AR0330_Base_Config: SPI init error = %d 0x%x\r\n", status, status);
+	}
+
+	CyU3PSpiConfig_t SPI_config = {
+		.isLsbFirst = CyTrue,   // LSB output first
+		.cpol = CyFalse,        // SCK idles low
+		.cpha = CyFalse,        // Slave samples at idle-active edge (Low→high)
+		.ssnPol = CyFalse,      // SSN is active low
+		.ssnCtrl = CY_U3P_SPI_SSN_CTRL_HW_EACH_WORD,
+		.leadTime = CY_U3P_SPI_SSN_LAG_LEAD_HALF_CLK,  // time between SSN assertion and first SCLK edge
+		.lagTime  = CY_U3P_SPI_SSN_LAG_LEAD_HALF_CLK,  // time between the last SCK edge to SSN de-assertion
+		.clock = 1500000,       // clock frequency in Hz
+		.wordLen = 9            // bits
+	};
+	status = CyU3PSpiSetConfig(&SPI_config, NULL);
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "AR0330_Base_Config: SPI set config error = %d 0x%x\r\n", status, status);
+	}
+
+	// enable the stepper driver chip
+	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyFalse);
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "AR0330_Base_Config: enable motor driver error = %d 0x%x\r\n", status, status);
+	}
+	CyU3PThreadSleep(5);
+
+	// some test data
+	const uint8_t idle[] = {077};
+
+	const uint8_t full_fwd_step[] = {
+		033, 023, 022, 032
+	};
+
+	const uint8_t full_rev_step[] = {
+		032, 022, 023, 033
+	};
+#if 0
+	const uint8_t half_step[] = {
+		037, 037, 037,
+		033, 073, 023, 027,  022, 062, 032, 036,
+		033, 073, 023, 027,  022, 062, 032, 036
+	};
+#endif
+
+#define SPI_Send(b) ({                                                  \
+			for (int i = 0; i < sizeof(b); ++i) {           \
+				CyU3PSpiTransmitWords((uint8_t *)&b[i], 1); \
+				CyU3PThreadSleep(100);                  \
+			}                                               \
+		})
+
+	// just testing
+	SPI_Send(idle);
+	for (int i = 0; i < 10; ++i) {
+		SPI_Send(full_fwd_step);
+	}
+	for (int i = 0; i < 10; ++i) {
+		SPI_Send(full_rev_step);
+	}
+	SPI_Send(idle);
+
 
 	// sensor configuration
 
@@ -413,22 +479,12 @@ void AR0330_Base_Config(void) {
 
 	// display versions
 	tempaddr = 0x3000;
-	sensor_read(0x3000, &tempdata);
+	sensor_read(tempaddr, &tempdata);
 	CyU3PDebugPrint (4, "AR0330_Base_Config: chip version@0x%x = 0x%x\r\n", tempaddr, tempdata);
 
 	tempaddr = 0x300E;
 	sensor_read(tempaddr, &tempdata);
 	CyU3PDebugPrint (4, "AR0330_Base_Config: revision number@0x%x = 0x%x\r\n", tempaddr, tempdata);
-
-#if 0
-	tempaddr = 0x30F0;
-	sensor_read(tempaddr, &tempdata);
-	CyU3PDebugPrint (4, "AR0330_Base_Config: read address = 0x%x data = 0x%x\r\n",tempaddr,tempdata);
-
-	tempaddr = 0x3072;
-	sensor_read(tempaddr, &tempdata);
-	CyU3PDebugPrint (4, "AR0330_Base_Config: read address = 0x%x data = 0x%x\r\n",tempaddr,tempdata);
-#endif
 
 	// report if MIPI is active
 	CyU3PDebugPrint(4, "AR0330_Base_Config: MIPI active = %d\r\n", CyU3PMipicsiCheckBlockActive());
