@@ -127,11 +127,10 @@ void esUVCAppErrorHandler(CyU3PReturnStatus_t status) {
 }
 
 // UVC header addition function
-static void esUVCUvcAddHeader(uint8_t * buffer_p,	// Buffer pointer
-			      uint8_t frameInd	// EOF or normal frame indication
-    ) {
+static void esUVCUvcAddHeader(uint8_t *buffer_p,    // Buffer pointer
+			      uint8_t frameInd) {   // EOF or normal frame indication
 	// Copy header to buffer
-	CyU3PMemCopy(buffer_p, (uint8_t *) glUVCHeader, ES_UVC_HEADER_LENGTH);
+	CyU3PMemCopy(buffer_p, (uint8_t *)glUVCHeader, ES_UVC_HEADER_LENGTH);
 
 	// Check if last packet of the frame.
 	if (frameInd == ES_UVC_HEADER_EOF) {
@@ -303,17 +302,16 @@ void esUVCGpifCB(CyU3PGpifEventType event, uint8_t currentState) {
 	if (event == CYU3P_GPIF_EVT_SM_INTERRUPT) {
 		//CyU3PDebugPrint(4, "CYU3P_GPIF_EVT_SM_INTERRUPT\r\n");
 
-		// Wrapup Socket 0
 		if (currentState == CX3_PARTIAL_BUFFER_IN_SCK0) {
+			// Wrapup Socket 0
 			//CyU3PDebugPrint(4, "CX3_PARTIAL_BUFFER_IN_SCK0\r\n");
 
 			status = CyU3PDmaMultiChannelSetWrapUp(&glChHandleUVCStream, 0);
 			if (status != CY_U3P_SUCCESS) {
 				CyU3PDebugPrint(4, "GpifCB:WrapUp SCK0 Err = 0x%x\r\n", status);
 			}
-		}
-		// Wrapup Socket 1
-		else if (currentState == CX3_PARTIAL_BUFFER_IN_SCK1) {
+		} else if (currentState == CX3_PARTIAL_BUFFER_IN_SCK1) {
+			// Wrapup Socket 1
 			//CyU3PDebugPrint(4, "CX3_PARTIAL_BUFFER_IN_SCK1\r\n");
 
 			status = CyU3PDmaMultiChannelSetWrapUp(&glChHandleUVCStream, 1);
@@ -325,7 +323,7 @@ void esUVCGpifCB(CyU3PGpifEventType event, uint8_t currentState) {
 }
 
 // DMA callback function to handle the produce and consume events.
-void esUVCUvcAppDmaCallback(CyU3PDmaMultiChannel * chHandle, CyU3PDmaCbType_t type, CyU3PDmaCBInput_t * input) {
+void esUVCUvcAppDmaCallback(CyU3PDmaMultiChannel *chHandle, CyU3PDmaCbType_t type, CyU3PDmaCBInput_t *input) {
 	CyU3PDmaBuffer_t DmaBuffer;
 	CyU3PReturnStatus_t status = CY_U3P_SUCCESS;
 
@@ -423,9 +421,7 @@ void esUVCUvcAppDmaCallback(CyU3PDmaMultiChannel * chHandle, CyU3PDmaCbType_t ty
 }
 
 // This is the Callback function to handle the USB Events
-static void esUVCUvcApplnUSBEventCB(CyU3PUsbEventType_t evtype,	// Event type
-				    uint16_t evdata	// Event data
-    ) {
+static void esUVCUvcApplnUSBEventCB(CyU3PUsbEventType_t evtype,	uint16_t evdata) {
 	uint8_t interface = 0, altSetting = 0;
 
 	switch (evtype) {
@@ -487,19 +483,18 @@ static void esUVCUvcApplnUSBEventCB(CyU3PUsbEventType_t evtype,	// Event type
 // Callback for LPM requests. Always return true to allow host to transition device
 // into required LPM state U1/U2/U3. When data transmission is active LPM management
 // is explicitly disabled to prevent data transmission errors.
-static CyBool_t esUVCApplnLPMRqtCB(CyU3PUsbLinkPowerMode link_mode	//USB 3.0 linkmode requested by Host
-    ) {
+static CyBool_t esUVCApplnLPMRqtCB(CyU3PUsbLinkPowerMode link_mode) {	//USB 3.0 linkmode requested by Host
 	return CyTrue;
 }
 
 void esSetCameraResolution(uint8_t FrameIndex) {
 	CyU3PReturnStatus_t status = CY_U3P_SUCCESS;
 	CyU3PDebugPrint(4, "esSetCameraResolution == 1 ==\r\n");
-	// Super Speed USB Streams
+
 	if (CyU3PUsbGetSpeed() == CY_U3P_SUPER_SPEED) {
 		if (FrameIndex == 0x01) {
 			// Write 1080pSettings
-			CyU3PDebugPrint(4, "Write 1080pSettings -1-\r\n");
+			CyU3PDebugPrint(4, "Write 1080p Settings -1-\r\n");
 			status = CyU3PMipicsiSetIntfParams(&cfgUvc1080p30NoMclk, CyFalse);
 			if (status != CY_U3P_SUCCESS) {
 				CyU3PDebugPrint(4, "USBStpCB:SetIntfParams SS1 Err = 0x%x\r\n", status);
@@ -529,9 +524,7 @@ void esSetCameraResolution(uint8_t FrameIndex) {
 			}
 			AR0330_5MP_config();
 		}
-	}
-	// High Speed USB Streams
-	else if (CyU3PUsbGetSpeed() == CY_U3P_HIGH_SPEED) {
+	} else if (CyU3PUsbGetSpeed() == CY_U3P_HIGH_SPEED) {
 		// Write VGA Settings
 		CyU3PDebugPrint(4, "Write VGA Setting -5-\r\n");
 		status = CyU3PMipicsiSetIntfParams(&cfgUvcVga30NoMclk, CyFalse);
@@ -540,9 +533,7 @@ void esSetCameraResolution(uint8_t FrameIndex) {
 		}
 		AR0330_VGA_config();
 		AR0330_VGA_HS_config();
-	}
-	// Full Speed USB Streams
-	else {
+	} else { // Full Speed USB Streams
 		// Write VGA Settings
 		CyU3PDebugPrint(4, "Write VGA Setting -6-\r\n");
 		AR0330_VGA_config();
@@ -554,9 +545,7 @@ void esSetCameraResolution(uint8_t FrameIndex) {
 }
 
 // Callback to handle the USB Setup Requests and UVC Class events
-static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
-					uint32_t setupdat1	// SETUP Data 1
-    ) {
+static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) {
 	uint8_t bRequest, bType, bRType, bTarget;
 	uint16_t wValue, wIndex, wLength;
 	uint16_t readCount = 0;
@@ -1112,8 +1101,6 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 				CyU3PDebugPrint(4, "***** Stall HERE *****\r\n");
 			}
 		}
-	} else {
-		CyU3PDebugPrint(4, "***** HERE *****\r\n");
 	}
 
 	return isHandled;
@@ -1123,8 +1110,6 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0,	// SETUP Data 0
 // sets the enumeration descriptors, configures the Endpoints and
 // configures the DMA module for the UVC Application
 void esUVCUvcApplnInit(void) {
-	CyU3PEpConfig_t endPointConfig;
-	CyU3PDmaMultiChannelConfig_t dmaCfg;
 	CyU3PReturnStatus_t status = CY_U3P_SUCCESS;
 
 	CyU3PDebugPrint(4, "\r\n\n\n\n\n\n\n\n\n\n\n");
@@ -1309,12 +1294,13 @@ void esUVCUvcApplnInit(void) {
 	// Since the status interrupt endpoint is not used in this application,
 	// just enable the EP in the beginning.
 	// Control status interrupt endpoint configuration
-	endPointConfig.enable = 1;
-	endPointConfig.epType = CY_U3P_USB_EP_INTR;
-	endPointConfig.pcktSize = 64;
-	endPointConfig.isoPkts = 1;
-	endPointConfig.burstLen = 1;
-
+	CyU3PEpConfig_t endPointConfig = {
+		.enable   = 1,
+		.epType   = CY_U3P_USB_EP_INTR,
+		.pcktSize = 64,
+		.isoPkts  = 1,
+		.burstLen = 1
+	};
 	status = CyU3PSetEpConfig(ES_UVC_EP_CONTROL_STATUS, &endPointConfig);
 	if (status != CY_U3P_SUCCESS) {
 		CyU3PDebugPrint(4, "AppInit:CyU3PSetEpConfig CtrlEp Err = 0x%x\r\n", status);
@@ -1369,22 +1355,24 @@ void esUVCUvcApplnInit(void) {
 
 	// Create a DMA Manual OUT channel for streaming data
 	// Video streaming Channel is not active till a stream request is received
-	dmaCfg.size = ES_UVC_STREAM_BUF_SIZE;
-	dmaCfg.count = ES_UVC_STREAM_BUF_COUNT;
-	dmaCfg.validSckCount = 2;
+	CyU3PDmaMultiChannelConfig_t dmaCfg = {
+		.size           = ES_UVC_STREAM_BUF_SIZE,
+		.count          = ES_UVC_STREAM_BUF_COUNT,
+		.validSckCount  = 2,
 
-	dmaCfg.prodSckId[0] = ES_UVC_PRODUCER_PPORT_SOCKET_0;
-	dmaCfg.prodSckId[1] = ES_UVC_PRODUCER_PPORT_SOCKET_1;
+		.prodSckId[0]   = ES_UVC_PRODUCER_PPORT_SOCKET_0,
+		.prodSckId[1]   = ES_UVC_PRODUCER_PPORT_SOCKET_1,
+		.consSckId[0]   = ES_UVC_EP_VIDEO_CONS_SOCKET,
 
-	dmaCfg.consSckId[0] = ES_UVC_EP_VIDEO_CONS_SOCKET;
-	dmaCfg.dmaMode = CY_U3P_DMA_MODE_BYTE;
-	dmaCfg.notification = CY_U3P_DMA_CB_PROD_EVENT | CY_U3P_DMA_CB_CONS_EVENT;
-	dmaCfg.cb = esUVCUvcAppDmaCallback;
-	dmaCfg.prodHeader = ES_UVC_PROD_HEADER;
-	dmaCfg.prodFooter = ES_UVC_PROD_FOOTER;
-	dmaCfg.consHeader = 0;
-	dmaCfg.prodAvailCount = 0;
+		.dmaMode        = CY_U3P_DMA_MODE_BYTE,
+		.notification   = CY_U3P_DMA_CB_PROD_EVENT | CY_U3P_DMA_CB_CONS_EVENT,
+		.cb             = esUVCUvcAppDmaCallback,
 
+		.prodHeader     = ES_UVC_PROD_HEADER,
+		.prodFooter     = ES_UVC_PROD_FOOTER,
+		.consHeader     = 0,
+		.prodAvailCount = 0
+	};
 	status = CyU3PDmaMultiChannelCreate(&glChHandleUVCStream, CY_U3P_DMA_TYPE_MANUAL_MANY_TO_ONE, &dmaCfg);
 	if (status != CY_U3P_SUCCESS) {
 		CyU3PDebugPrint(4, "AppInit:DmaMultiChannelCreate Err = 0x%x\r\n", status);
@@ -1421,6 +1409,7 @@ void esUVCUvcApplnInit(void) {
 	// Pause the GPIF
 	CyU3PGpifSMControl(CyTrue);
 #if 0
+	// *** this code moved up to allow hard reset of image sensor using XRESET MIPI GPIO pin
 	// Initialize the MIPI block
 	status = CyU3PMipicsiInit();
 	if (status != CY_U3P_SUCCESS) {
@@ -1450,7 +1439,6 @@ void esUVCUvcApplnInit(void) {
 
 // This function initializes the debug module for the UVC application
 void esUVCUvcApplnDebugInit(void) {
-	CyU3PUartConfig_t uartConfig;
 	CyU3PReturnStatus_t status = CY_U3P_SUCCESS;
 
 	// Initialize the UART for printing debug messages
@@ -1460,14 +1448,15 @@ void esUVCUvcApplnDebugInit(void) {
 	}
 
 	// Set UART Configuration
-	uartConfig.baudRate = CY_U3P_UART_BAUDRATE_115200;
-	uartConfig.stopBit = CY_U3P_UART_ONE_STOP_BIT;
-	uartConfig.parity = CY_U3P_UART_NO_PARITY;
-	uartConfig.txEnable = CyTrue;
-	uartConfig.rxEnable = CyFalse;
-	uartConfig.flowCtrl = CyFalse;
-	uartConfig.isDma = CyTrue;
-
+	CyU3PUartConfig_t uartConfig = {
+		.baudRate = CY_U3P_UART_BAUDRATE_115200,
+		.stopBit  = CY_U3P_UART_ONE_STOP_BIT,
+		.parity   = CY_U3P_UART_NO_PARITY,
+		.txEnable = CyTrue,
+		.rxEnable = CyFalse,
+		.flowCtrl = CyFalse,
+		.isDma    = CyTrue
+	};
 	// Set the UART configuration
 	status = CyU3PUartSetConfig(&uartConfig, NULL);
 	if (status != CY_U3P_SUCCESS) {
@@ -1547,16 +1536,16 @@ void CyFxApplicationDefine(void) {
 
 	// Allocate the memory for the thread and create the thread
 	ptr = CyU3PMemAlloc(UVC_APP_THREAD_STACK);
-	retThrdCreate = CyU3PThreadCreate(&uvcAppThread,	// UVC Thread structure
-					  "30:UVC_app_thread",	// Thread Id and name
-					  esUVCUvcAppThread_Entry,	// UVC Application Thread Entry function
-					  0,	// No input parameter to thread
-					  ptr,	// Pointer to the allocated thread stack
-					  UVC_APP_THREAD_STACK,	// UVC Application Thread stack size
-					  UVC_APP_THREAD_PRIORITY,	// UVC Application Thread priority
-					  UVC_APP_THREAD_PRIORITY,	// Pre-emption threshold
-					  CYU3P_NO_TIME_SLICE,	// No time slice for the application thread
-					  CYU3P_AUTO_START	// Start the Thread immediately
+	retThrdCreate = CyU3PThreadCreate(&uvcAppThread,           // UVC Thread structure
+					  "30:UVC_app_thread",     // Thread Id and name
+					  esUVCUvcAppThread_Entry, // UVC Application Thread Entry function
+					  0,                       // No input parameter to thread
+					  ptr,                     // Pointer to the allocated thread stack
+					  UVC_APP_THREAD_STACK,    // UVC Application Thread stack size
+					  UVC_APP_THREAD_PRIORITY, // UVC Application Thread priority
+					  UVC_APP_THREAD_PRIORITY, // Pre-emption threshold
+					  CYU3P_NO_TIME_SLICE,     // No time slice for the application thread
+					  CYU3P_AUTO_START         // Start the Thread immediately
 	    );
 
 	// Check the return code
@@ -1585,7 +1574,6 @@ void CyFxApplicationDefine(void) {
 
 
 int main(void) {
-	CyU3PIoMatrixConfig_t io_cfg;
 	CyU3PReturnStatus_t status = CY_U3P_SUCCESS;
 
 	// Initialize the device
@@ -1605,20 +1593,22 @@ int main(void) {
 	}
 
 	// Configure the IO matrix for the device.
-	io_cfg.isDQ32Bit = CyFalse;
+	CyU3PIoMatrixConfig_t io_cfg = {
+		.isDQ32Bit = CyFalse,
 
-	io_cfg.useUart = CyTrue;
-	io_cfg.useI2C = CyTrue;
-	io_cfg.useI2S = CyFalse;
-	io_cfg.useSpi = CyTrue;
-	io_cfg.lppMode = CY_U3P_IO_MATRIX_LPP_DEFAULT;
-	io_cfg.s0Mode = CY_U3P_SPORT_INACTIVE;
-	io_cfg.s1Mode = CY_U3P_SPORT_INACTIVE;
+		.useUart = CyTrue,
+		.useI2C  = CyTrue,
+		.useI2S  = CyFalse,
+		.useSpi  = CyTrue,
+		.lppMode = CY_U3P_IO_MATRIX_LPP_DEFAULT,
+		.s0Mode  = CY_U3P_SPORT_INACTIVE,
+		.s1Mode  = CY_U3P_SPORT_INACTIVE,
 
-	io_cfg.gpioSimpleEn[0] = 0;
-	io_cfg.gpioSimpleEn[1] = 0;
-	io_cfg.gpioComplexEn[0] = 0;
-	io_cfg.gpioComplexEn[1] = 0;
+		.gpioSimpleEn[0]  = 0,
+		.gpioSimpleEn[1]  = 0,
+		.gpioComplexEn[0] = 0,
+		.gpioComplexEn[1] = 0
+	};
 	status = CyU3PDeviceConfigureIOMatrix(&io_cfg);
 	if (status != CY_U3P_SUCCESS) {
 		goto handle_fatal_error;
