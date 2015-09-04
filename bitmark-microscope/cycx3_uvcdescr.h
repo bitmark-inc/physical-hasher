@@ -21,13 +21,13 @@
 #if !defined(_CYCX3_UVCDESCR_H_)
 #define _CYCX3_UVCDESCR_H_ 1
 
-#include "cyu3types.h"
-#include "cyu3usbconst.h"
-#include "cyu3os.h"
-#include "cyu3utils.h"
-#include "cyu3mipicsi.h"
+#include <cyu3types.h>
+#include <cyu3usbconst.h>
+#include <cyu3os.h>
+#include <cyu3utils.h>
+#include <cyu3mipicsi.h>
 
-#include "cyu3externcstart.h"
+#include <cyu3externcstart.h>
 
 // Extern definitions of the USB Enumeration constant arrays used for the Application
 extern const uint8_t esUVCUSB20DeviceDscr[];
@@ -58,7 +58,7 @@ extern uint8_t glStillProbeCtrl[ES_UVC_MAX_STILL_PROBE_SETTING];
 extern CyU3PMipicsiCfg_t cfgUvc1080p30NoMclk, cfgUvc720p60NoMclk,  cfgUvcVgaNoMclk, cfgUvc5Mp15NoMclk ,cfgUvcVga30NoMclk;
 
 
-#include "cyu3externcend.h"
+#include <cyu3externcend.h>
 
 
 #endif

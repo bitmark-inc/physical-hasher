@@ -13,6 +13,7 @@
 #include <cyu3mipicsi.h>
 
 #include "ar0330.h"
+#include "gpio.h"
 #include "sensor_i2c.h"
 
 #define DEBUG_ENABLE 0

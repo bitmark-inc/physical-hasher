@@ -21,13 +21,13 @@
 #if !defined(_CYCX3_UVC_H_)
 #define _CYCX3_UVC_H_ 1
 
-#include "cyu3types.h"
-#include "cyu3usbconst.h"
-#include "cyu3os.h"
-#include "cyu3utils.h"
-#include "cyu3mipicsi.h"
+#include <cyu3types.h>
+#include <cyu3usbconst.h>
+#include <cyu3os.h>
+#include <cyu3utils.h>
+#include <cyu3mipicsi.h>
 
-#include "cyu3externcstart.h"
+#include <cyu3externcstart.h>
 
 // This header file comprises of the UVC application constants and
 // the video frame configurations
@@ -118,7 +118,7 @@ CyU3PThread uvcAppThread;                       // Primary application thread us
 CyU3PEvent glTimerEvent;                        // Application Event Group
 
 
-#include "cyu3externcend.h"
+#include <cyu3externcend.h>
 
 
 #endif

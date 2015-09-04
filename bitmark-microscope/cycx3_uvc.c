@@ -35,6 +35,7 @@
 #include "cycx3_uvc.h"
 #include "cycx3_uvcdescr.h"
 #include "ar0330.h"
+#include "focus.h"
 
 // Event generated on Timer overflow
 #define ES_TIMER_RESET_EVENT		(1<<4)
@@ -168,13 +169,13 @@ CyU3PReturnStatus_t esUVCUvcApplnStart(void) {
 	// Reset USB EP and DMA
 	CyU3PUsbFlushEp(ES_UVC_EP_BULK_VIDEO);
 	status = CyU3PDmaMultiChannelReset(&glChHandleUVCStream);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AplnStrt:ChannelReset Err = 0x%x\r\n", status);
 		return status;
 	}
 
 	status = CyU3PDmaMultiChannelSetXfer(&glChHandleUVCStream, 0, 0);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AplnStrt:SetXfer Err = 0x%x\r\n", status);
 		return status;
 	}
@@ -189,13 +190,13 @@ CyU3PReturnStatus_t esUVCUvcApplnStart(void) {
 //    // Reset USB EP and DMA
 //    CyU3PUsbFlushEp(ES_UVC_EP_BULK_VIDEO);
 //    status = CyU3PDmaMultiChannelReset (&glChHandleUVCStream);
-//    if (status != CY_U3P_SUCCESS)
+//    if (CY_U3P_SUCCESS != status)
 //    {
 //        CyU3PDebugPrint (4,"AplnStrt:ChannelReset Err = 0x%x\r\n", status);
 //        return status;
 //    }
 //    status = CyU3PDmaMultiChannelSetXfer (&glChHandleUVCStream, 0, 0);
-//    if (status != CY_U3P_SUCCESS)
+//    if (CY_U3P_SUCCESS != status)
 //    {
 //        CyU3PDebugPrint (4, "AplnStrt:SetXfer Err = 0x%x\r\n", status);
 //        return status;
@@ -270,7 +271,7 @@ void esUVCUvcApplnStop(void) {
 	// Abort and destroy the video streaming channel
 	// Reset the channel: Set to DSCR chain starting point in PORD/CONS SCKT; set DSCR_SIZE field in DSCR memory
 	status = CyU3PDmaMultiChannelReset(&glChHandleUVCStream);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AplnStop:ChannelReset Err = 0x%x\r\n", status);
 	}
 	CyU3PThreadSleep(25);
@@ -307,7 +308,7 @@ void esUVCGpifCB(CyU3PGpifEventType event, uint8_t currentState) {
 			//CyU3PDebugPrint(4, "CX3_PARTIAL_BUFFER_IN_SCK0\r\n");
 
 			status = CyU3PDmaMultiChannelSetWrapUp(&glChHandleUVCStream, 0);
-			if (status != CY_U3P_SUCCESS) {
+			if (CY_U3P_SUCCESS != status) {
 				CyU3PDebugPrint(4, "GpifCB:WrapUp SCK0 Err = 0x%x\r\n", status);
 			}
 		} else if (currentState == CX3_PARTIAL_BUFFER_IN_SCK1) {
@@ -315,7 +316,7 @@ void esUVCGpifCB(CyU3PGpifEventType event, uint8_t currentState) {
 			//CyU3PDebugPrint(4, "CX3_PARTIAL_BUFFER_IN_SCK1\r\n");
 
 			status = CyU3PDmaMultiChannelSetWrapUp(&glChHandleUVCStream, 1);
-			if (status != CY_U3P_SUCCESS) {
+			if (CY_U3P_SUCCESS != status) {
 				CyU3PDebugPrint(4, "GpifCB:WrapUp SCK1 Err = 0x%x\r\n", status);
 			}
 		}
@@ -356,11 +357,13 @@ void esUVCUvcAppDmaCallback(CyU3PDmaMultiChannel *chHandle, CyU3PDmaCbType_t typ
 			}
 
 			// Commit Buffer to USB
-			status = CyU3PDmaMultiChannelCommitBuffer(chHandle, (DmaBuffer.count + 12), 0);
-			if (status != CY_U3P_SUCCESS) {
+			//status = CyU3PDmaMultiChannelCommitBuffer(chHandle, (DmaBuffer.count + 12), 0);
+			status = CyU3PDmaMultiChannelCommitBuffer(chHandle, (DmaBuffer.count + ES_UVC_PROD_HEADER), 0);
+			if (CY_U3P_SUCCESS != status) {
 				CyU3PEventSet(&glTimerEvent, ES_TIMER_RESET_EVENT, CYU3P_EVENT_OR);
 				break;
 			} else {
+				Focus_SetLine(glDMATxCount, DmaBuffer.buffer, DmaBuffer.count); // maybe capture some pixels
 				glDMATxCount++;
 				glDmaDone++;
 			}
@@ -376,6 +379,7 @@ void esUVCUvcAppDmaCallback(CyU3PDmaMultiChannel *chHandle, CyU3PDmaCbType_t typ
 
 		if ((glHitFV == CyTrue) && (glDmaDone == 0)) {
 			glHitFV = CyFalse;
+			Focus_EndFrame(glDMATxCount);  // mark end of frame
 			glDMATxCount = 0;
 #ifdef RESET_TIMER_ENABLE
 			CyU3PTimerStop(&UvcTimer);
@@ -496,7 +500,7 @@ void esSetCameraResolution(uint8_t FrameIndex) {
 			// Write 1080pSettings
 			CyU3PDebugPrint(4, "Write 1080p Settings -1-\r\n");
 			status = CyU3PMipicsiSetIntfParams(&cfgUvc1080p30NoMclk, CyFalse);
-			if (status != CY_U3P_SUCCESS) {
+			if (CY_U3P_SUCCESS != status) {
 				CyU3PDebugPrint(4, "USBStpCB:SetIntfParams SS1 Err = 0x%x\r\n", status);
 			}
 			AR0330_1080P_config();
@@ -504,7 +508,7 @@ void esSetCameraResolution(uint8_t FrameIndex) {
 			// Write VGA Settings
 			CyU3PDebugPrint(4, "Write VGA Settings -2-\r\n");
 			status = CyU3PMipicsiSetIntfParams(&cfgUvcVga30NoMclk, CyFalse);
-			if (status != CY_U3P_SUCCESS) {
+			if (CY_U3P_SUCCESS != status) {
 				CyU3PDebugPrint(4, "USBStpCB:SetIntfParams FS Err = 0x%x\r\n", status);
 			}
 			AR0330_VGA_config();
@@ -512,14 +516,14 @@ void esSetCameraResolution(uint8_t FrameIndex) {
 			// Write 720pSettings
 			CyU3PDebugPrint(4, "Write 720p Settings -3-\r\n");
 			status = CyU3PMipicsiSetIntfParams(&cfgUvc720p60NoMclk, CyFalse);
-			if (status != CY_U3P_SUCCESS) {
+			if (CY_U3P_SUCCESS != status) {
 				CyU3PDebugPrint(4, "USBStpCB:SetIntfParams SS2 Err = 0x%x\r\n", status);
 			}
 			AR0330_720P_config();
 		} else if (FrameIndex == 0x04) {
 			CyU3PDebugPrint(4, "Write 5M Settings -4-\r\n");
 			status = CyU3PMipicsiSetIntfParams(&cfgUvc5Mp15NoMclk, CyFalse);
-			if (status != CY_U3P_SUCCESS) {
+			if (CY_U3P_SUCCESS != status) {
 				CyU3PDebugPrint(4, "USBStpCB:SetIntfParams SS2 Err = 0x%x\r\n", status);
 			}
 			AR0330_5MP_config();
@@ -528,7 +532,7 @@ void esSetCameraResolution(uint8_t FrameIndex) {
 		// Write VGA Settings
 		CyU3PDebugPrint(4, "Write VGA Setting -5-\r\n");
 		status = CyU3PMipicsiSetIntfParams(&cfgUvcVga30NoMclk, CyFalse);
-		if (status != CY_U3P_SUCCESS) {
+		if (CY_U3P_SUCCESS != status) {
 			CyU3PDebugPrint(4, "USBStpCB:SetIntfParams HS Err = 0x%x\r\n", status);
 		}
 		AR0330_VGA_config();
@@ -538,7 +542,7 @@ void esSetCameraResolution(uint8_t FrameIndex) {
 		CyU3PDebugPrint(4, "Write VGA Setting -6-\r\n");
 		AR0330_VGA_config();
 		status = CyU3PMipicsiSetIntfParams(&cfgUvcVga30NoMclk, CyFalse);
-		if (status != CY_U3P_SUCCESS) {
+		if (CY_U3P_SUCCESS != status) {
 			CyU3PDebugPrint(4, "USBStpCB:SetIntfParams FS Err = 0x%x\r\n", status);
 		}
 	}
@@ -656,7 +660,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					}
 
 					status = CyU3PUsbSendEP0Data(ES_UVC_MAX_PROBE_SETTING, glProbeCtrl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:GET_CUR:SendEP0Data Err = 0x%x\r\n",
 								status);
 					}
@@ -666,7 +670,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 						status =
 						    CyU3PUsbSendEP0Data(ES_UVC_MAX_STILL_PROBE_SETTING,
 									glStillProbeCtrl);
-						if (status != CY_U3P_SUCCESS) {
+						if (CY_U3P_SUCCESS != status) {
 							CyU3PDebugPrint(4,
 									"USBStpCB:GET_CUR:SendEP0Data Err = 0x%x\r\n",
 									status);
@@ -681,7 +685,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					// Get the UVC probe/commit control data from EP0
 					status = CyU3PUsbGetEP0Data(ES_UVC_MAX_PROBE_SETTING_ALIGNED,
 								    glCommitCtrl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:SET_CUR:GetEP0Data Err = 0x%x.\r\n",
 								status);
 					}
@@ -724,7 +728,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					status =
 					    CyU3PUsbGetEP0Data(ES_UVC_MAX_STILL_PROBE_SETTING_ALIGNED,
 							       glStillCommitCtrl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:SET_CUR:GetEP0Data Err = 0x%x.\r\n",
 								status);
 					}
@@ -746,7 +750,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					status =
 					    CyU3PUsbGetEP0Data(ES_UVC_STILL_TRIGGER_ALIGNED, &glStillTriggerCtrl,
 							       &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:SET_CUR:GetEP0Data Err = 0x%x.\r\n",
 								status);
 					}
@@ -773,7 +777,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -785,13 +789,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetBrightness(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetBrightness(gl32SetControl);
@@ -802,7 +806,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -814,13 +818,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetAutoExposure(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetAutoExposure(gl32SetControl);
@@ -831,7 +835,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -843,13 +847,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetContrast(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetContrast(gl32SetControl);
@@ -861,7 +865,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -873,13 +877,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetExposure(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetExposure(gl32SetControl);
@@ -890,7 +894,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -902,13 +906,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = (int32_t) AR0330_GetHue(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetHue(gl32SetControl);
@@ -919,7 +923,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -931,13 +935,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetManualfocus(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetManualfocus(gl32SetControl);
@@ -949,7 +953,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -961,13 +965,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetSaturation(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetSaturation(gl32SetControl);
@@ -978,7 +982,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -990,13 +994,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetSharpness(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetSharpness(gl32SetControl);
@@ -1007,7 +1011,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -1019,13 +1023,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetAutofocus(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetAutofocus(gl32SetControl);
@@ -1037,7 +1041,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -1049,13 +1053,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetWhiteBalance(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetWhiteBalance(gl32SetControl);
@@ -1066,7 +1070,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 				case ES_UVC_USB_GET_INFO_REQ:
 					glGet_Info = 0x03;
 					status = CyU3PUsbSendEP0Data(1, &glGet_Info);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
@@ -1078,13 +1082,13 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 					RequestOption = (bRequest & 0x0F);
 					gl32GetControl = AR0330_GetAutoWhiteBalance(RequestOption);
 					status = CyU3PUsbSendEP0Data(4, (uint8_t *)&gl32GetControl);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					break;
 				case ES_UVC_USB_SET_CUR_REQ:
 					status = CyU3PUsbGetEP0Data(32, (uint8_t *)&gl32SetControl, &readCount);
-					if (status != CY_U3P_SUCCESS) {
+					if (CY_U3P_SUCCESS != status) {
 						CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 					}
 					AR0330_SetAutoWhiteBalance(gl32SetControl);
@@ -1093,7 +1097,7 @@ static CyBool_t esUVCUvcApplnUSBSetupCB(uint32_t setupdat0, uint32_t setupdat1) 
 			} else if ((wValue == ES_UVC_VC_REQUEST_ERROR_CODE_CONTROL) && (wIndex == 0x00)) {
 				temp = ES_UVC_ERROR_INVALID_CONTROL;
 				status = CyU3PUsbSendEP0Data(0x01, &temp);
-				if (status != CY_U3P_SUCCESS) {
+				if (CY_U3P_SUCCESS != status) {
 					CyU3PDebugPrint(4, "USBStpCB:VCI SendEP0Data = %d\r\n", status);
 				}
 			} else {
@@ -1117,28 +1121,28 @@ void esUVCUvcApplnInit(void) {
 
 	// Initialize the I2C interface for Mipi Block Usage and Camera.
 	status = CyU3PMipicsiInitializeI2c(CY_U3P_MIPICSI_I2C_400KHZ);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:I2CInit Err = 0x%x.\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// Initialize GPIO module.
 	status = CyU3PMipicsiInitializeGPIO();
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:GPIOInit Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// Initialize the PIB block
 	status = CyU3PMipicsiInitializePIB();
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:PIBInit Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// Start the USB functionality
 	status = CyU3PUsbStart();
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:UsbStart Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1157,89 +1161,89 @@ void esUVCUvcApplnInit(void) {
 
 	// Super speed device descriptor.
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_SS_DEVICE_DESCR, 0, (uint8_t *) esUVCUSB30DeviceDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_SS_Device_Dscr Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// High speed device descriptor.
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_HS_DEVICE_DESCR, 0, (uint8_t *) esUVCUSB20DeviceDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_HS_Device_Dscr Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// BOS descriptor
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_SS_BOS_DESCR, 0, (uint8_t *) esUVCUSBBOSDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_BOS_Dscr Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// Device qualifier descriptor
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_DEVQUAL_DESCR, 0, (uint8_t *) esUVCUSBDeviceQualDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_DEVQUAL_Dscr Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// Super speed configuration descriptor
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_SS_CONFIG_DESCR, 0, (uint8_t *) esUVCUSBSSConfigDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_SS_CFG_Dscr Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// High speed configuration descriptor
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_HS_CONFIG_DESCR, 0, (uint8_t *) esUVCUSBHSConfigDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_HS_CFG_Dscr Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// Full speed configuration descriptor
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_FS_CONFIG_DESCR, 0, (uint8_t *) esUVCUSBFSConfigDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_FS_CFG_Dscr Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// String descriptor 0
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 0, (uint8_t *) esUVCUSBStringLangIDDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_STRNG_Dscr0 Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// String descriptor 1
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 1, (uint8_t *) esUVCUSBManufactureDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_STRNG_Dscr1 Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// String descriptor 2
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 2, (uint8_t *) esUVCUSBProductDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_STRNG_Dscr2 Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 	// String descriptor 3
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 3, (uint8_t *) esUVCUSBConfigSSDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_STRNG_Dscr3 Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	// String descriptor 4
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 4, (uint8_t *) esUVCUSBConfigHSDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_STRNG_Dscr4 Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 	// String descriptor 2
 	status = CyU3PUsbSetDesc(CY_U3P_USB_SET_STRING_DESCR, 5, (uint8_t *) esUVCUSBConfigFSDscr);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:Set_STRNG_Dscr5 Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1250,7 +1254,7 @@ void esUVCUvcApplnInit(void) {
 //+
 	// Send XRESET pulse to reset Image sensor
 	status = CyU3PMipicsiInit();
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MipicsiInit Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1258,21 +1262,21 @@ void esUVCUvcApplnInit(void) {
 
 	// Send Xreset pulse to rease Image sensor
 	status = CyU3PMipicsiSetSensorControl(CY_U3P_CSI_IO_XRES, CyTrue);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MipicsiSetSensorControl Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 	CyU3PThreadSleep(200);
 	// Send Xreset pulse to rease Image sensor
 	status = CyU3PMipicsiSetSensorControl(CY_U3P_CSI_IO_XRES, CyFalse);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MipicsiSetSensorControl Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 	CyU3PThreadSleep(200);
 	// Send Xreset pulse to rease Image sensor
 	status = CyU3PMipicsiSetSensorControl(CY_U3P_CSI_IO_XRES, CyTrue);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MipicsiSetSensorControl Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1286,7 +1290,7 @@ void esUVCUvcApplnInit(void) {
 
 	// Connect the USB pins and enable super speed operation
 	status = CyU3PConnectState(CyTrue, CyTrue);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:ConnectState Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1302,7 +1306,7 @@ void esUVCUvcApplnInit(void) {
 		.burstLen = 1
 	};
 	status = CyU3PSetEpConfig(ES_UVC_EP_CONTROL_STATUS, &endPointConfig);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:CyU3PSetEpConfig CtrlEp Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1343,7 +1347,7 @@ void esUVCUvcApplnInit(void) {
 	}
 
 	status = CyU3PSetEpConfig(ES_UVC_EP_BULK_VIDEO, &endPointConfig);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:CyU3PSetEpConfig BulkEp Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1374,7 +1378,7 @@ void esUVCUvcApplnInit(void) {
 		.prodAvailCount = 0
 	};
 	status = CyU3PDmaMultiChannelCreate(&glChHandleUVCStream, CY_U3P_DMA_TYPE_MANUAL_MANY_TO_ONE, &dmaCfg);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:DmaMultiChannelCreate Err = 0x%x\r\n", status);
 	}
 	CyU3PThreadSleep(100);
@@ -1382,14 +1386,14 @@ void esUVCUvcApplnInit(void) {
 	// Reset the channel: Set to DSCR chain starting point in PORD/CONS SCKT; set
 	// DSCR_SIZE field in DSCR memory
 	status = CyU3PDmaMultiChannelReset(&glChHandleUVCStream);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MultiChannelReset Err = 0x%x\r\n", status);
 	}
 
 	// Configure the Fixed Function GPIF on the CX3 to use a 16 bit bus, and
 	// a DMA Buffer of size CX3_UVC_DATA_BUF_SIZE
 	status = CyU3PMipicsiGpifLoad(CY_U3P_MIPICSI_BUS_16, ES_UVC_DATA_BUF_SIZE);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MipicsiGpifLoad Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1400,7 +1404,7 @@ void esUVCUvcApplnInit(void) {
 
 	// Start the state machine.
 	status = CyU3PGpifSMStart(CX3_START_SCK0, ALPHA_CX3_START_SCK0);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:GpifSMStart Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1412,19 +1416,19 @@ void esUVCUvcApplnInit(void) {
 	// *** this code moved up to allow hard reset of image sensor using XRESET MIPI GPIO pin
 	// Initialize the MIPI block
 	status = CyU3PMipicsiInit();
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MipicsiInit Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 
 	status = CyU3PMipicsiSetIntfParams(&cfgUvcVgaNoMclk, CyFalse);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MipicsiSetIntfParams Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
 #else
 	status = CyU3PMipicsiSetIntfParams(&cfgUvc1080p30NoMclk, CyFalse);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "AppInit:MipicsiSetIntfParams Err = 0x%x\r\n", status);
 		esUVCAppErrorHandler(status);
 	}
@@ -1443,7 +1447,7 @@ void esUVCUvcApplnDebugInit(void) {
 
 	// Initialize the UART for printing debug messages
 	status = CyU3PUartInit();
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "esUVCUvcApplnDebugInit:CyU3PUartInit failed Error = 0x%x\r\n", status);
 	}
 
@@ -1459,19 +1463,19 @@ void esUVCUvcApplnDebugInit(void) {
 	};
 	// Set the UART configuration
 	status = CyU3PUartSetConfig(&uartConfig, NULL);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "esUVCUvcApplnDebugInit:CyU3PUartSetConfig failed Error = 0x%x\r\n", status);
 	}
 
 	// Set the UART transfer
 	status = CyU3PUartTxSetBlockXfer(0xFFFFFFFF);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "esUVCUvcApplnDebugInit:CyU3PUartTxSetBlockXfer failed Error = 0x%x\r\n", status);
 	}
 
 	// Initialize the debug application
 	status = CyU3PDebugInit(CY_U3P_LPP_SOCKET_UART_CONS, 8);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint(4, "esUVCUvcApplnDebugInit:CyU3PDebugInit failed Error = 0x%x\r\n", status);
 	}
 
@@ -1516,7 +1520,7 @@ void esUVCUvcAppThread_Entry(uint32_t input) {
 			//[TBD] esCamera_Power_Down();
 
 			status = CyU3PSysEnterSuspendMode(CY_U3P_SYS_USB_BUS_ACTVTY_WAKEUP_SRC, 0, &wakeReason);
-			if (status != CY_U3P_SUCCESS) {
+			if (CY_U3P_SUCCESS != status) {
 				CyU3PDebugPrint(4, "CyU3PSysEnterSuspendMode returnd status = 0x%x\r\n", status);
 			}
 
@@ -1531,25 +1535,23 @@ void esUVCUvcAppThread_Entry(uint32_t input) {
 
 // Application define function which creates the threads.
 void CyFxApplicationDefine(void) {
-	void *ptr = NULL;
-	uint32_t retThrdCreate = CY_U3P_SUCCESS;
 
 	// Allocate the memory for the thread and create the thread
-	ptr = CyU3PMemAlloc(UVC_APP_THREAD_STACK);
-	retThrdCreate = CyU3PThreadCreate(&uvcAppThread,           // UVC Thread structure
-					  "30:UVC_app_thread",     // Thread Id and name
-					  esUVCUvcAppThread_Entry, // UVC Application Thread Entry function
-					  0,                       // No input parameter to thread
-					  ptr,                     // Pointer to the allocated thread stack
-					  UVC_APP_THREAD_STACK,    // UVC Application Thread stack size
-					  UVC_APP_THREAD_PRIORITY, // UVC Application Thread priority
-					  UVC_APP_THREAD_PRIORITY, // Pre-emption threshold
-					  CYU3P_NO_TIME_SLICE,     // No time slice for the application thread
-					  CYU3P_AUTO_START         // Start the Thread immediately
+	void *stack = CyU3PMemAlloc(UVC_APP_THREAD_STACK);
+	uint32_t rc = CyU3PThreadCreate(&uvcAppThread,           // UVC Thread structure
+					"30:UVC_app_thread",     // Thread Id and name
+					esUVCUvcAppThread_Entry, // UVC Application Thread Entry function
+					0,                       // No input parameter to thread
+					stack,                   // Pointer to the allocated thread stack
+					UVC_APP_THREAD_STACK,    // UVC Application Thread stack size
+					UVC_APP_THREAD_PRIORITY, // UVC Application Thread priority
+					UVC_APP_THREAD_PRIORITY, // Pre-emption threshold
+					CYU3P_NO_TIME_SLICE,     // No time slice for the application thread
+					CYU3P_AUTO_START         // Start the Thread immediately
 	    );
 
 	// Check the return code
-	if (retThrdCreate != 0) {
+	if (CY_U3P_SUCCESS != rc) {
 		// Thread Creation failed with the error code retThrdCreate
 
 		// Add custom recovery or debug actions here
@@ -1560,8 +1562,8 @@ void CyFxApplicationDefine(void) {
 	}
 
 	// Create GPIO application event group
-	retThrdCreate = CyU3PEventCreate(&glTimerEvent);
-	if (retThrdCreate != 0) {
+	rc = CyU3PEventCreate(&glTimerEvent);
+	if (CY_U3P_SUCCESS != rc) {
 		// Event group creation failed with the error code retThrdCreate
 
 		// Add custom recovery or debug actions here
@@ -1578,7 +1580,7 @@ int main(void) {
 
 	// Initialize the device
 	status = CyU3PDeviceInit(NULL);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		goto handle_fatal_error;
 	}
 
@@ -1588,7 +1590,7 @@ int main(void) {
 	// number of cache flushes and cleans and also it adds to the complexity of the
 	// code.
 	status = CyU3PDeviceCacheControl(CyTrue, CyFalse, CyFalse);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		goto handle_fatal_error;
 	}
 
@@ -1610,7 +1612,7 @@ int main(void) {
 		.gpioComplexEn[1] = 0
 	};
 	status = CyU3PDeviceConfigureIOMatrix(&io_cfg);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		goto handle_fatal_error;
 	}
 

@@ -34,6 +34,7 @@ USER_CFLAGS += -Werror -std=c99
 
 #SOURCE += $(MODULE).c
 SOURCE += ar0330.c
+SOURCE += focus.c
 SOURCE += cycx3_uvc.c
 SOURCE += cycx3_uvcdescr.c
 SOURCE += sensor_i2c.c
@@ -53,7 +54,7 @@ $(MODULE).img: compile
 $(MODULE).$(EXEEXT): $(A_OBJECT) $(C_OBJECT)
 	$(LINK)
 
-$(C_OBJECT) : %.o : %.c ar0330.h cycx3_uvc.h cycx3_uvcdescr.h
+$(C_OBJECT) : %.o : %.c ar0330.h focus.h gpio.h cycx3_uvc.h cycx3_uvcdescr.h
 	$(COMPILE)
 
 $(A_OBJECT) : %.o : %.S
