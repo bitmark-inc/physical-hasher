@@ -1,0 +1,32 @@
+#!/bin/sh
+# set environment and run make
+
+THE_ROOT="${HOME}/Cypress"
+
+export FX3_INSTALL_PATH="${THE_ROOT}/cyfx3sdk"
+export ARMGCC_INSTALL_PATH="${THE_ROOT}/arm-2013.11"
+export ARMGCC_VERSION='4.8.1'
+export CYUSB_ROOT="${THE_ROOT}/cyusb_linux_1.0.4"
+
+# path for cross compiler
+export PATH="${PATH}:${ARMGCC_INSTALL_PATH}/bin"
+
+# rebuild the elf2img utility for current OS
+if [ X"$1" = X"-r" ]
+then
+  cd "${FX3_INSTALL_PATH}/util/elf2img" && cc -o elf2img elf2img.c
+  exit 0
+fi
+
+# find GNU make
+case $(uname -s) in
+  (Linux)
+    make "$@"
+    ;;
+  (*BSD|*bsd)
+    gmake "$@"
+    ;;
+  (*)
+    echo unrecognised operating system
+    ;;
+esac
