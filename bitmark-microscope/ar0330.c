@@ -14,6 +14,7 @@
 
 #include "ar0330.h"
 #include "gpio.h"
+#include "focus.h"
 #include "sensor_i2c.h"
 
 #define DEBUG_ENABLE 0
@@ -316,18 +317,18 @@ void AR0330_Debug(void)
 	uint16_t tempaddr = 0x3000;
 	int i;
 	for (i = 0; i < 256; i += 4) {
-		CyU3PDebugPrint (4, "DEBUG: 0x%x:  ", tempaddr);
+		CyU3PDebugPrint(4, "DEBUG: 0x%x:  ", tempaddr);
 		int j;
 		for (j = 0; j < 4; ++j, tempaddr += 2) {
 			uint16_t d;
 			sensor_read(tempaddr, &d);
-			CyU3PDebugPrint (4, "0x%x%x%x%x ",
+			CyU3PDebugPrint(4, "0x%x%x%x%x ",
 					 (d >> 12) & 0x0f,
 					 (d >>  8) & 0x0f,
 					 (d >>  4) & 0x0f,
 					 (d >>  0) & 0x0f);
 		}
-		CyU3PDebugPrint (4, "\r\n");
+		CyU3PDebugPrint(4, "\r\n");
 	}
 
 	static const uint16_t addresses[] = {
@@ -344,7 +345,7 @@ void AR0330_Debug(void)
 		tempaddr = addresses[i];
 		uint16_t tempdata;
 		sensor_read(tempaddr, &tempdata);
-		CyU3PDebugPrint (4, "DEBUG: read address = 0x%x data = 0x%x\r\n", tempaddr, tempdata);
+		CyU3PDebugPrint(4, "DEBUG: read address = 0x%x data = 0x%x\r\n", tempaddr, tempdata);
 	}
 
 	// report if MIPI is active
@@ -352,12 +353,48 @@ void AR0330_Debug(void)
 #endif
 }
 
+#if 0
+static CyBool_t p_switch = CyFalse;
+static int p_n = 0;
+static int p_i = 1;
+static CyBool_t check_photo_switch(void) {
+	p_n += p_i;
+	CyBool_t value = CyFalse;
+	CyU3PReturnStatus_t rc = CyU3PGpioSimpleGetValue(FOCUS_POSITION, &value);
+	CyBool_t state = (CY_U3P_SUCCESS == rc) && (CyTrue == value);
+	if (state != p_switch) {
+		p_switch = state;
+		CyU3PDebugPrint(4, "ps = %x @ %d\r\n", state, p_n);
+	}
+	return state;
+}
+
+static int s_index = 0;
+static void step(int direction) {
+
+	const uint8_t full_fwd_step[] = {
+		//0355, 0345, 0344, 0354 // low
+		0333, 0332, 0322, 0323 // medium
+		//0311, 0301, 0300, 0310, // high
+	};
+
+
+	s_index += direction;
+	if (s_index < 0) {
+		s_index = sizeof(full_fwd_step) - 1;
+	} else if (s_index >= sizeof(full_fwd_step)) {
+		s_index = 0;
+	}
+	CyU3PSpiTransmitWords((uint8_t *)&full_fwd_step[s_index], 1);
+	CyU3PThreadSleep(10);
+}
+#endif
 
 void AR0330_Base_Config(void) {
 	uint16_t tempdata;
 	uint16_t tempaddr;
 
-	CyU3PDebugPrint (4, "AR0330_Base_Config: starting...\r\n");
+	CyU3PDebugPrint(4, "AR0330_Base_Config: starting...\r\n");
 
 	//SensorReset(); // already done elsewhere
 
@@ -395,83 +432,169 @@ void AR0330_Base_Config(void) {
 
 	for (int i = 0; NULL != initialiseIO[i].config; ++i) {
 		CyU3PReturnStatus_t status = CyU3PDeviceGpioOverride(initialiseIO[i].pin, CyTrue);
-		if (status != CY_U3P_SUCCESS) {
-			CyU3PDebugPrint (4, "AR0330_Base_Config: override pin: %d error = %d 0x%x\r\n", initialiseIO[i].pin, status, status);
+		if (CY_U3P_SUCCESS != status) {
+			CyU3PDebugPrint(4, "AR0330_Base_Config: override pin: %d error = %d 0x%x\r\n", initialiseIO[i].pin, status, status);
 			continue;
 		}
 
 		status = CyU3PGpioSetSimpleConfig(initialiseIO[i].pin, initialiseIO[i].config);
 		if (CY_U3P_ERROR_NOT_CONFIGURED == status) {
-			CyU3PDebugPrint (4, "AR0330_Base_Config: pin: %d  not configured as simple IO in matrix\r\n", initialiseIO[i].pin);
-		} else if (status != CY_U3P_SUCCESS) {
-			CyU3PDebugPrint (4, "AR0330_Base_Config: pin: %d error = %d 0x%x\r\n", initialiseIO[i].pin, status, status);
+			CyU3PDebugPrint(4, "AR0330_Base_Config: pin: %d  not configured as simple IO in matrix\r\n", initialiseIO[i].pin);
+		} else if (CY_U3P_SUCCESS != status) {
+			CyU3PDebugPrint(4, "AR0330_Base_Config: pin: %d error = %d 0x%x\r\n", initialiseIO[i].pin, status, status);
 		}
 	}
 
-	// SPI configuration
+	// set up focus system
+	Focus_Initialise();
 
+	// SPI configuration
+#define SPI_ENABLE 0
+#if SPI_ENABLE
 	CyU3PReturnStatus_t status = CyU3PSpiInit();
-	if (status != CY_U3P_SUCCESS) {
-		CyU3PDebugPrint (4, "AR0330_Base_Config: SPI init error = %d 0x%x\r\n", status, status);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_Base_Config: SPI init error = %d 0x%x\r\n", status, status);
 	}
 
+	// cpha:cpol  0:0=mode0 .. 1:1=mode3
 	CyU3PSpiConfig_t SPI_config = {
-		.isLsbFirst = CyTrue,   // LSB output first
-		.cpol = CyFalse,        // SCK idles low
-		.cpha = CyFalse,        // Slave samples at idle-active edge (Low→high)
+		.isLsbFirst = CyFalse,
+		.cpha = CyTrue,         // Slave samples: Low→high
+		.cpol = CyTrue,         // SCK idle: high
 		.ssnPol = CyFalse,      // SSN is active low
 		.ssnCtrl = CY_U3P_SPI_SSN_CTRL_HW_EACH_WORD,
 		.leadTime = CY_U3P_SPI_SSN_LAG_LEAD_HALF_CLK,  // time between SSN assertion and first SCLK edge
 		.lagTime  = CY_U3P_SPI_SSN_LAG_LEAD_HALF_CLK,  // time between the last SCK edge to SSN de-assertion
 		.clock = 1500000,       // clock frequency in Hz
-		.wordLen = 9            // bits
+		.wordLen = 8            // bits
 	};
 	status = CyU3PSpiSetConfig(&SPI_config, NULL);
-	if (status != CY_U3P_SUCCESS) {
-		CyU3PDebugPrint (4, "AR0330_Base_Config: SPI set config error = %d 0x%x\r\n", status, status);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_Base_Config: SPI set config error = %d 0x%x\r\n", status, status);
 	}
 
 	// enable the stepper driver chip
-	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyFalse);
-	if (status != CY_U3P_SUCCESS) {
-		CyU3PDebugPrint (4, "AR0330_Base_Config: enable motor driver error = %d 0x%x\r\n", status, status);
+	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyTrue);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_Base_Config: enable motor driver error = %d 0x%x\r\n", status, status);
 	}
+	CyU3PThreadSleep(50);
+	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyFalse);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_Base_Config: enable motor driver error = %d 0x%x\r\n", status, status);
+	}
+	CyU3PSpiDisableBlockXfer(CyTrue, CyTrue);
 	CyU3PThreadSleep(5);
 
+#if 1
 	// some test data
-	const uint8_t idle[] = {077};
-
-	const uint8_t full_fwd_step[] = {
-		033, 023, 022, 032
-	};
-
-	const uint8_t full_rev_step[] = {
-		032, 022, 023, 033
-	};
-#if 0
-	const uint8_t half_step[] = {
-		037, 037, 037,
-		033, 073, 023, 027,  022, 062, 032, 036,
-		033, 073, 023, 027,  022, 062, 032, 036
-	};
-#endif
+	const uint8_t idle[] = {0xff, 0xff, 0xff, 0xff};
 
 #define SPI_Send(b) ({                                                  \
 			for (int i = 0; i < sizeof(b); ++i) {           \
 				CyU3PSpiTransmitWords((uint8_t *)&b[i], 1); \
-				CyU3PThreadSleep(100);                  \
+				CyU3PThreadSleep(10);                   \
+			}                                               \
+		})
+
+	for (int k = 0; k < 10; ++k) {
+		CyU3PDebugPrint(4, "Try: %d\r\n", k);
+
+		// just testing
+		SPI_Send(idle);
+		CyU3PThreadSleep(500);
+
+		int n = 0;
+		while (!check_photo_switch()) {
+			step(1);
+			++n;
+			if (n > 100) {
+				CyU3PDebugPrint(4, "under focus\r\n");
+				return;
+			}
+		}
+
+		for (int i = 0; i < 10; ++i) {
+			step(1);
+		}
+
+		n = 0;
+		while (check_photo_switch()) {
+			step(-1);
+			++n;
+			if (n > 200) {
+				CyU3PDebugPrint(4, "over focus\r\n");
+				return;
+			}
+		}
+
+		CyU3PDebugPrint(4, "***HOME achieved\007\r\n");
+		CyU3PThreadSleep(1000);
+
+		for (int j = 0; j < 5; ++j) {
+			for (int i = 0; i < 50; ++i) {
+				step(-1);
+			}
+			for (int i = 0; i < 50; ++i) {
+				step(1);
+			}
+		}
+		for (int i = 0; i < 70; ++i) {
+			step(-1);
+		}
+
+		SPI_Send(idle);
+		CyU3PThreadSleep(3500);
+	}
+#else
+	// some test data
+	const uint8_t idle[] = {0xff, 0xff, 0xff, 0xff};
+
+	const uint8_t full_fwd_step[] = {
+		//0355, 0345, 0344, 0354 // low
+		0333, 0332, 0322, 0323 // medium
+		//0311, 0301, 0300, 0310, // high
+	};
+
+	const uint8_t full_rev_step[] = {
+		//0354, 0344, 0345, 0355  // low
+		0323, 0322, 0332, 0333  // medium
+		//0310, 0300, 0301, 0311  // high
+	};
+
+#define SPI_Send(b) ({                                                 \
+			for (int i = 0; i < sizeof(b); ++i) {           \
+				CyU3PSpiTransmitWords((uint8_t *)&b[i], 1); \
+				CyU3PThreadSleep(10);                   \
+				check_photo_switch();                   \
 			}                                               \
 		})
 
 	// just testing
 	SPI_Send(idle);
-	for (int i = 0; i < 10; ++i) {
-		SPI_Send(full_fwd_step);
-	}
-	for (int i = 0; i < 10; ++i) {
-		SPI_Send(full_rev_step);
+	CyU3PThreadSleep(500);
+	for (int j = 0; j < 20; ++j) {
+		p_n = 0;
+		p_i = 1;
+		CyU3PDebugPrint(4, "AR0330_Base_Config: Fwd: %d\r\n", j);
+		for (int i = 0; i < 36; ++i) {
+			SPI_Send(full_fwd_step);
+		}
+		p_n = 0;
+		p_i = -1;
+		CyU3PDebugPrint(4, "AR0330_Base_Config: Rev: %d\r\n", j);
+		for (int i = 0; i < 36; ++i) {
+			SPI_Send(full_rev_step);
+		}
 	}
 	SPI_Send(idle);
+#endif
+	// disable the stepper driver chip
+	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyTrue);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_Base_Config: enable motor driver error = %d 0x%x\r\n", status, status);
+	}
+#endif
 
 
 	// sensor configuration
@@ -481,11 +604,11 @@ void AR0330_Base_Config(void) {
 	// display versions
 	tempaddr = 0x3000;
 	sensor_read(tempaddr, &tempdata);
-	CyU3PDebugPrint (4, "AR0330_Base_Config: chip version@0x%x = 0x%x\r\n", tempaddr, tempdata);
+	CyU3PDebugPrint(4, "AR0330_Base_Config: chip version@0x%x = 0x%x\r\n", tempaddr, tempdata);
 
 	tempaddr = 0x300E;
 	sensor_read(tempaddr, &tempdata);
-	CyU3PDebugPrint (4, "AR0330_Base_Config: revision number@0x%x = 0x%x\r\n", tempaddr, tempdata);
+	CyU3PDebugPrint(4, "AR0330_Base_Config: revision number@0x%x = 0x%x\r\n", tempaddr, tempdata);
 
 	// report if MIPI is active
 	CyU3PDebugPrint(4, "AR0330_Base_Config: MIPI active = %d\r\n", CyU3PMipicsiCheckBlockActive());
@@ -493,19 +616,19 @@ void AR0330_Base_Config(void) {
 
 
 void AR0330_VGA_config(void) {
-	CyU3PDebugPrint (4, "AR0330_VGA_config\r\n");
+	CyU3PDebugPrint(4, "AR0330_VGA_config\r\n");
 }
 
 
 void AR0330_VGA_HS_config(void) {
-	CyU3PDebugPrint (4, "AR0330_VGA_HS_config\r\n");
+	CyU3PDebugPrint(4, "AR0330_VGA_HS_config\r\n");
 
 	AR0330_Debug();
 }
 
 
 void AR0330_720P_config(void) {
-	CyU3PDebugPrint (4, "AR0330_720P_config\r\n");
+	CyU3PDebugPrint(4, "AR0330_720P_config\r\n");
 
 	//SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
 	SENSOR_WRITE_ARRAY(sensor_720p_regs);
@@ -514,7 +637,7 @@ void AR0330_720P_config(void) {
 }
 
 void AR0330_1080P_config(void) {
-	CyU3PDebugPrint (4, "AR0330_1080P_config\r\n");
+	CyU3PDebugPrint(4, "AR0330_1080P_config\r\n");
 
 	//SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
 	SENSOR_WRITE_ARRAY(sensor_1080p_regs);
@@ -524,7 +647,7 @@ void AR0330_1080P_config(void) {
 
 
 void AR0330_5MP_config(void) {
-	CyU3PDebugPrint (4, "AR0330_5MP_config\r\n");
+	CyU3PDebugPrint(4, "AR0330_5MP_config\r\n");
 
 	//SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
 	SENSOR_WRITE_ARRAY(sensor_5MP_regs);
@@ -534,7 +657,7 @@ void AR0330_5MP_config(void) {
 
 
 void AR0330_Power_Down(void) {
-	CyU3PDebugPrint (4, "AR0330_Power_Down\r\n");
+	CyU3PDebugPrint(4, "AR0330_Power_Down\r\n");
 
 	//sensor_write(0x301a, 0x0058);
 	sensor_write(0x301a, 0x0050);
@@ -542,7 +665,7 @@ void AR0330_Power_Down(void) {
 
 
 void AR0330_Power_Up(void) {
-	CyU3PDebugPrint (4, "AR0330_Power_Up\r\n");
+	CyU3PDebugPrint(4, "AR0330_Power_Up\r\n");
 
 	// set test mode
 	sensor_write(0x3070, 0x0000);
@@ -562,7 +685,7 @@ void AR0330_Power_Up(void) {
 
 
 void AR0330_Auto_Focus_Config(void) {
-	CyU3PDebugPrint (4, "AR0330_Auto_Focus_Config\r\n");
+	CyU3PDebugPrint(4, "AR0330_Auto_Focus_Config\r\n");
 }
 
 
@@ -574,7 +697,7 @@ void AR0330_Auto_Focus_Config(void) {
 static int32_t current_brightness = BRIGHTNESS_DEFAULT;
 
 void AR0330_SetBrightness(int32_t brightness) {
-	CyU3PDebugPrint (4, "AR0330_SetBrightness: %d\r\n", brightness);
+	CyU3PDebugPrint(4, "AR0330_SetBrightness: %d\r\n", brightness);
 	if (brightness < BRIGHTNESS_MINIMUM && brightness > BRIGHTNESS_MAXIMUM) {
 		return; // ignore invalid values
 	}
@@ -583,7 +706,7 @@ void AR0330_SetBrightness(int32_t brightness) {
 }
 
 int32_t AR0330_GetBrightness(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetBrightness\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetBrightness\r\n");
 	switch (option) {
 	default:
 		return 0;
@@ -609,7 +732,7 @@ int32_t AR0330_GetBrightness(int32_t option) {
 static int32_t current_contrast = CONTRAST_DEFAULT;
 
 void AR0330_SetContrast(int32_t contrast) {
-	CyU3PDebugPrint (4, "AR0330_SetContrast %d\r\n", contrast);
+	CyU3PDebugPrint(4, "AR0330_SetContrast %d\r\n", contrast);
 	if (contrast < CONTRAST_MINIMUM && contrast > CONTRAST_MAXIMUM) {
 		return; // ignore invalid values
 	}
@@ -620,7 +743,7 @@ void AR0330_SetContrast(int32_t contrast) {
 
 
 int32_t AR0330_GetContrast(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetContrast\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetContrast\r\n");
 
 	switch (option) {
 	default:
@@ -647,7 +770,7 @@ int32_t AR0330_GetContrast(int32_t option) {
 static int32_t current_sharpness = SHARPNESS_DEFAULT;
 
 void AR0330_SetSharpness(int32_t sharpness) {
-	CyU3PDebugPrint (4, "AR0330_SetSharpness: %d\r\n", sharpness);
+	CyU3PDebugPrint(4, "AR0330_SetSharpness: %d\r\n", sharpness);
 	if (sharpness < SHARPNESS_MINIMUM && sharpness > SHARPNESS_MAXIMUM) {
 		return; // ignore invalid values
 	}
@@ -656,7 +779,7 @@ void AR0330_SetSharpness(int32_t sharpness) {
 }
 
 int32_t AR0330_GetSharpness(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetSharpness\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetSharpness\r\n");
 	switch (option) {
 	default:
 		return 0;
@@ -683,7 +806,7 @@ static int32_t current_hue = HUE_DEFAULT;
 
 
 void AR0330_SetHue(int32_t hue) {
-	CyU3PDebugPrint (4, "AR0330_SetHue: %d\r\n", hue);
+	CyU3PDebugPrint(4, "AR0330_SetHue: %d\r\n", hue);
 
 #define SetLow(io) CyU3PGpioSetValue(io, CyFalse)
 #define SetHigh(io) CyU3PGpioSetValue(io, CyTrue)
@@ -692,20 +815,20 @@ void AR0330_SetHue(int32_t hue) {
 #if 0
 	CyU3PReturnStatus_t status;
 	status = CyU3PGpioSetValue(LED_DRIVER_SDI, 0 != (hue & 1));
-	if (status != CY_U3P_SUCCESS) {
-		CyU3PDebugPrint (4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
 	}
 	status = CyU3PGpioSetValue(LED_DRIVER_CLK, 0 != (hue & 2));
-	if (status != CY_U3P_SUCCESS) {
-		CyU3PDebugPrint (4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
 	}
 	status = CyU3PGpioSetValue(LED_DRIVER_ED1, 0 != (hue & 4));
-	if (status != CY_U3P_SUCCESS) {
-		CyU3PDebugPrint (4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
 	}
 	status = CyU3PGpioSetValue(LED_DRIVER_ED2, 0 != (hue & 8));
-	if (status != CY_U3P_SUCCESS) {
-		CyU3PDebugPrint (4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "AR0330_SetHue: error = %d 0x%x\r\n", status, status);
 	}
 
 #else
@@ -738,7 +861,7 @@ void AR0330_SetHue(int32_t hue) {
 }
 
 int32_t AR0330_GetHue(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetHue\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetHue\r\n");
 	switch (option) {
 	default:
 		return 0;
@@ -758,92 +881,92 @@ int32_t AR0330_GetHue(int32_t option) {
 
 void AR0330_SetSaturation(int32_t saturation)
 {
-	CyU3PDebugPrint (4, "AR0330_SetSaturation: %d\r\n", saturation);
+	CyU3PDebugPrint(4, "AR0330_SetSaturation: %d\r\n", saturation);
 }
 
 int32_t AR0330_GetSaturation(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetSaturation\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetSaturation\r\n");
 	return 0;
 }
 
 
 void AR0330_SetWhiteBalance(int32_t white_balance) {
-	CyU3PDebugPrint (4, "AR0330_SetWhiteBalance: %d\r\n", white_balance);
+	CyU3PDebugPrint(4, "AR0330_SetWhiteBalance: %d\r\n", white_balance);
 }
 
 int32_t AR0330_GetWhiteBalance(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetWhiteBalance\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetWhiteBalance\r\n");
 	return 0;
 }
 
 
 void AR0330_SetAutoWhiteBalance(int32_t AutoWhiteBalance) {
-	CyU3PDebugPrint (4, "AR0330_SetAutoWhiteBalance: %s\r\n", AutoWhiteBalance ? "true" : "false");
+	CyU3PDebugPrint(4, "AR0330_SetAutoWhiteBalance: %s\r\n", AutoWhiteBalance ? "true" : "false");
 }
 
 
 int32_t AR0330_GetAutoWhiteBalance(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetAutoWhiteBalance\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetAutoWhiteBalance\r\n");
 	return 0;
 }
 
 
 void AR0330_SetExposure(int32_t Exposure) {
-	CyU3PDebugPrint (4, "AR0330_SetExposure\r\n");
+	CyU3PDebugPrint(4, "AR0330_SetExposure\r\n");
 }
 
 
 int32_t AR0330_GetExposure(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetExposure\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetExposure\r\n");
 #if 0
 	CyBool_t clr_error_count = CyFalse;
 	CyU3PMipicsiErrorCounts_t error_count;
 
 	CyU3PMipicsiGetErrors(clr_error_count, &error_count);
-	CyU3PDebugPrint (4, "Error count %d\r\n", clr_error_count);
+	CyU3PDebugPrint(4, "Error count %d\r\n", clr_error_count);
 
-	CyU3PDebugPrint (4, "frmErrCnt =  %d\r\n", error_count.frmErrCnt);
-	CyU3PDebugPrint (4, "crcErrCnt =  %d\r\n", error_count.crcErrCnt);
-	CyU3PDebugPrint (4, "mdlErrCnt =  %d\r\n", error_count.mdlErrCnt);
-	CyU3PDebugPrint (4, "ctlErrCnt =  %d\r\n", error_count.ctlErrCnt);
+	CyU3PDebugPrint(4, "frmErrCnt =  %d\r\n", error_count.frmErrCnt);
+	CyU3PDebugPrint(4, "crcErrCnt =  %d\r\n", error_count.crcErrCnt);
+	CyU3PDebugPrint(4, "mdlErrCnt =  %d\r\n", error_count.mdlErrCnt);
+	CyU3PDebugPrint(4, "ctlErrCnt =  %d\r\n", error_count.ctlErrCnt);
 
-	CyU3PDebugPrint (4, "eidErrCnt =  %d\r\n", error_count.eidErrCnt);
-	CyU3PDebugPrint (4, "recrErrCnt =  %d\r\n", error_count.recrErrCnt);
-	CyU3PDebugPrint (4, "unrcErrCnt =  %d\r\n", error_count.unrcErrCnt);
-	CyU3PDebugPrint (4, "recSyncErrCnt =  %d\r\n", error_count.recSyncErrCnt);
-	CyU3PDebugPrint (4, "unrSyncErrCnt =  %d\r\n", error_count.unrSyncErrCnt);
+	CyU3PDebugPrint(4, "eidErrCnt =  %d\r\n", error_count.eidErrCnt);
+	CyU3PDebugPrint(4, "recrErrCnt =  %d\r\n", error_count.recrErrCnt);
+	CyU3PDebugPrint(4, "unrcErrCnt =  %d\r\n", error_count.unrcErrCnt);
+	CyU3PDebugPrint(4, "recSyncErrCnt =  %d\r\n", error_count.recSyncErrCnt);
+	CyU3PDebugPrint(4, "unrSyncErrCnt =  %d\r\n", error_count.unrSyncErrCnt);
 #endif
 	return 0;
 }
 
 
 void AR0330_SetAutofocus(int32_t Is_Enable) {
-	CyU3PDebugPrint (4, "AR0330_SetAutofocus\r\n");
+	CyU3PDebugPrint(4, "AR0330_SetAutofocus\r\n");
 }
 
 
 int32_t AR0330_GetAutofocus(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetAutofocus\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetAutofocus\r\n");
 	return 1;
 }
 
 
 void AR0330_SetManualfocus(int32_t manualfocus) {
-	CyU3PDebugPrint (4, "AR0330_SetManualfocus\r\n");
+	CyU3PDebugPrint(4, "AR0330_SetManualfocus\r\n");
 }
 
 
 int32_t AR0330_GetManualfocus(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetManualfocus\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetManualfocus\r\n");
 	return 0;
 }
 
 
 void AR0330_SetAutoExposure(int32_t AutoExp) {
-	CyU3PDebugPrint (4, "AR0330_SetAutoExposure\r\n");
+	CyU3PDebugPrint(4, "AR0330_SetAutoExposure\r\n");
 }
 
 int32_t AR0330_GetAutoExposure(int32_t option) {
-	CyU3PDebugPrint (4, "AR0330_GetAutoExposure\r\n");
+	CyU3PDebugPrint(4, "AR0330_GetAutoExposure\r\n");
 	return 0;
 }

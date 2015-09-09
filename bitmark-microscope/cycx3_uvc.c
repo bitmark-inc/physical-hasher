@@ -1438,6 +1438,7 @@ void esUVCUvcApplnInit(void) {
 	CyU3PTimerCreate(&UvcTimer, UvcAppProgressTimer, 0x00, TIMER_PERIOD, 0, CYU3P_NO_ACTIVATE);
 #endif
 
+	CyU3PThreadSleep(999000);
 	CyU3PDebugPrint(4, "Firmware Version: %d.%d.%d.%d\r\n", MajorVersion, MinorVersion, SubVersion, SubVersion1);
 }
 
