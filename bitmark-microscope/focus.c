@@ -29,9 +29,8 @@
 #define EVENT_HOME    (1 << 1)
 #define EVENT_PIXELS  (1 << 2)
 #define EVENT_FRAME   (1 << 3)
-#define EVENT_TIMER   (1 << 4)
 
-#define EVENT_MASK (EVENT_ABORT | EVENT_HOME | EVENT_PIXELS | EVENT_FRAME | EVENT_TIMER)
+#define EVENT_MASK (EVENT_ABORT | EVENT_HOME | EVENT_PIXELS | EVENT_FRAME)
 
 
 // focus motor calibration parameters
@@ -43,16 +42,11 @@
 #define STEP_MINIMUM   0
 #define STEP_MAXIMUM  60
 
-// timer values
-//#define INITIAL_TICKS    250
-//#define RESCHEDULE_TICKS  25
-
 // process control
 #define THREAD_STACK     0x2000
 #define THREAD_PRIORITY  8
 static CyU3PThread focus_thread;
 static CyU3PEvent focus_event;
-//static CyU3PTimer focus_timer;
 
 // motor state
 static int current_position = 0;
@@ -107,7 +101,6 @@ static FocusState_t focus_state;
 
 // prototypes
 static void focus_process(uint32_t input);
-//static void timer_callback(uint32_t input);
 static void pixel_compensation(void);
 static uint32_t pixel_contrast(void);
 static HomeState_t seek_home(void);
@@ -115,8 +108,6 @@ static bool focus_step(void);
 static bool photo_switch(void);
 static void motor_on(void);
 static void motor_off(void);
-//static void timer_start(void);
-//static void timer_stop(void);
 
 
 // API
@@ -227,12 +218,6 @@ bool Focus_Initialise(void) {
 		return false;
 	}
 
-	/* rc = CyU3PTimerCreate(&focus_timer, timer_callback, 0, INITIAL_TICKS, RESCHEDULE_TICKS, CYU3P_NO_ACTIVATE); */
-	/* if (CY_U3P_SUCCESS != rc) { */
-	/* 	CyU3PDebugPrint(4, "Focus_Initialise: create time error: %d 0x%x\r\n", rc, rc); */
-	/* 	return false; */
-	/* } */
-
 	return true;
 }
 
@@ -263,7 +248,6 @@ static void focus_process(uint32_t input) {
 			focus_state = FOCUS_IDLE;
 			home_state = HOME_IDLE;
 			motor_off();
-			//timer_stop();
 
 		} else if (0 != (event & EVENT_HOME)) {
 			if (FOCUS_HOME != focus_state) {
@@ -273,7 +257,6 @@ static void focus_process(uint32_t input) {
 				required_position = 0;
 				focus_state = FOCUS_HOME;
 				home_state = HOME_START;
-				//timer_start();
 			}
 
 		} else if (event & EVENT_PIXELS) {
@@ -283,9 +266,6 @@ static void focus_process(uint32_t input) {
 				CyU3PDebugPrint(4, "focus contrast = %d\r\n", current_contrast);
 			}
 
-			//} else if (event & EVENT_FRAME) {
-
-			//} else if (event & EVENT_TIMER) {
 		} else if (event & EVENT_FRAME) {
 			focus_step();
 
@@ -299,13 +279,14 @@ static void focus_process(uint32_t input) {
 					CyU3PDebugPrint(4, "focus_home failed\r\n");
 					focus_state = FOCUS_IDLE;
 					motor_off();
-					//timer_stop();
 					break;
+
 				case HOME_SUCCESS:
 					CyU3PDebugPrint(4, "focus_home success\r\n");
 					focus_state = FOCUS_OUT;
 					nnn = 0;
 					break;
+
 				default:
 					break;
 				}
@@ -509,29 +490,3 @@ static void motor_off(void) {
 	}
 	CyU3PThreadSleep(1);
 }
-
-
-#if 0
-static void timer_callback(uint32_t input) {
-	//CyU3PDebugPrint(4, "timer_callback: input: %x\r\n", input);
-	uint32_t rc = CyU3PEventSet(&focus_event, EVENT_TIMER, CYU3P_EVENT_OR);
-	if (CY_U3P_SUCCESS != rc) {
-		CyU3PDebugPrint(4, "timer_callback: EventSet  error: %d 0x%x\r\n", rc, rc);
-	}
-}
-
-
-static void timer_start(void) {
-	uint32_t rc = CyU3PTimerStart(&focus_timer);
-	if (CY_U3P_SUCCESS != rc) {
-		CyU3PDebugPrint(4, "focus_process: start timer error: %d 0x%x\r\n", rc, rc);
-	}
-}
-
-static void timer_stop(void) {
-	uint32_t rc = CyU3PTimerStop(&focus_timer);
-	if (CY_U3P_SUCCESS != rc) {
-		CyU3PDebugPrint(4, "focus_process: stop timer error: %d 0x%x\r\n", rc, rc);
-	}
-}
-#endif
