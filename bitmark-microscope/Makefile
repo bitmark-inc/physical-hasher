@@ -54,7 +54,7 @@ $(MODULE).img: compile
 $(MODULE).$(EXEEXT): $(A_OBJECT) $(C_OBJECT)
 	$(LINK)
 
-$(C_OBJECT) : %.o : %.c ar0330.h focus.h gpio.h cycx3_uvc.h cycx3_uvcdescr.h
+$(C_OBJECT) : %.o : %.c ar0330.h focus.h gpio.h macros.h cycx3_uvc.h cycx3_uvcdescr.h
 	$(COMPILE)
 
 $(A_OBJECT) : %.o : %.S

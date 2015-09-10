@@ -15,12 +15,7 @@
 
 #include "focus.h"
 #include "gpio.h"
-
-#define DEBUG_ENABLE 0
-
-#if !defined(SIZE_OF_ARRAY)
-#define SIZE_OF_ARRAY(a) (sizeof(a)/sizeof((a)[0]))
-#endif
+#include "macros.h"
 
 
 #define FOCUS_LINE_LENGTH 100
@@ -30,12 +25,13 @@
 #define MAXIMUM_PIXEL_BYTES ((FOCUS_LINE_LENGTH + 2) * 2)
 
 // Event flags
-#define EVENT_HOME    (1 << 0)
-#define EVENT_PIXELS  (1 << 1)
-#define EVENT_FRAME   (1 << 2)
-#define EVENT_TIMER   (1 << 3)
+#define EVENT_ABORT   (1 << 0)
+#define EVENT_HOME    (1 << 1)
+#define EVENT_PIXELS  (1 << 2)
+#define EVENT_FRAME   (1 << 3)
+#define EVENT_TIMER   (1 << 4)
 
-#define EVENT_MASK (EVENT_HOME | EVENT_PIXELS | EVENT_FRAME | EVENT_TIMER)
+#define EVENT_MASK (EVENT_ABORT | EVENT_HOME | EVENT_PIXELS | EVENT_FRAME | EVENT_TIMER)
 
 
 // focus motor calibration parameters
@@ -48,15 +44,15 @@
 #define STEP_MAXIMUM  60
 
 // timer values
-#define INITIAL_TICKS    2500
-#define RESCHEDULE_TICKS   15
+//#define INITIAL_TICKS    250
+//#define RESCHEDULE_TICKS  25
 
 // process control
 #define THREAD_STACK     0x2000
 #define THREAD_PRIORITY  8
 static CyU3PThread focus_thread;
 static CyU3PEvent focus_event;
-static CyU3PTimer focus_timer;
+//static CyU3PTimer focus_timer;
 
 // motor state
 static int current_position = 0;
@@ -87,6 +83,7 @@ static const StartPoint_t *current_start = &start_1080;
 
 // home position
 typedef enum {
+	HOME_IDLE,
 	HOME_START,
 	HOME_WAIT_HIGH,
 	HOME_WAIT_N,
@@ -110,16 +107,39 @@ static FocusState_t focus_state;
 
 // prototypes
 static void focus_process(uint32_t input);
-static void timer_callback(uint32_t input);
+//static void timer_callback(uint32_t input);
 static void pixel_compensation(void);
 static uint32_t pixel_contrast(void);
-static HomeState_t focus_home(void);
+static HomeState_t seek_home(void);
 static bool focus_step(void);
 static bool photo_switch(void);
+static void motor_on(void);
+static void motor_off(void);
+//static void timer_start(void);
+//static void timer_stop(void);
 
 
 // API
 // ---
+
+
+// stop the focusing process immediately
+void Focus_Stop(void) {
+	uint32_t rc = CyU3PEventSet(&focus_event, EVENT_ABORT, CYU3P_EVENT_OR);
+	if (CY_U3P_SUCCESS != rc) {
+		CyU3PDebugPrint(4, "Focus_Stop: EventSet error: %d 0x%x\r\n", rc, rc);
+	}
+}
+
+
+// start an autofocus cycle
+void Focus_Start(void) {
+	uint32_t rc = CyU3PEventSet(&focus_event, EVENT_HOME, CYU3P_EVENT_OR);
+	if (CY_U3P_SUCCESS != rc) {
+		CyU3PDebugPrint(4, "Focus_Home: EventSet error: %d 0x%x\r\n", rc, rc);
+	}
+}
+
 
 void Focus_SetLine(const int32_t line, const uint8_t *buffer, const size_t buffer_length) {
 
@@ -133,7 +153,7 @@ void Focus_SetLine(const int32_t line, const uint8_t *buffer, const size_t buffe
 		// signal capture complete
 		uint32_t rc = CyU3PEventSet(&focus_event, EVENT_PIXELS, CYU3P_EVENT_OR);
 		if (CY_U3P_SUCCESS != rc) {
-			CyU3PDebugPrint(4, "Focus_Setline: EventSet error = %d 0x%x\r\n", rc, rc);
+			CyU3PDebugPrint(4, "Focus_Setline: EventSet error: %d 0x%x\r\n", rc, rc);
 		}
 	}
 }
@@ -142,7 +162,7 @@ void Focus_SetLine(const int32_t line, const uint8_t *buffer, const size_t buffe
 void Focus_EndFrame(const int32_t line) {
 	uint32_t rc = CyU3PEventSet(&focus_event, EVENT_FRAME, CYU3P_EVENT_OR);
 	if (CY_U3P_SUCCESS != rc) {
-		CyU3PDebugPrint(4, "Focus_EndFrame: EventSet error = %d 0x%x\r\n", rc, rc);
+		CyU3PDebugPrint(4, "Focus_EndFrame: EventSet error: %d 0x%x\r\n", rc, rc);
 	}
 }
 
@@ -155,7 +175,7 @@ bool Focus_Initialise(void) {
 
 	CyU3PReturnStatus_t status = CyU3PSpiInit();
 	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "Focus_Initialise: SPI init error = %d 0x%x\r\n", status, status);
+		CyU3PDebugPrint(4, "Focus_Initialise: SPI init error: %d 0x%x\r\n", status, status);
 		return false;
 	}
 
@@ -173,30 +193,20 @@ bool Focus_Initialise(void) {
 	};
 	status = CyU3PSpiSetConfig(&SPI_config, NULL);
 	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "Focus_Initialise: SPI set config error = %d 0x%x\r\n", status, status);
+		CyU3PDebugPrint(4, "Focus_Initialise: SPI set config error: %d 0x%x\r\n", status, status);
 		return false;
 	}
 
-	// enable the stepper driver chip
-	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyTrue);
-	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "Focus_Initialise: enable motor driver error = %d 0x%x\r\n", status, status);
-		return false;
-	}
-	CyU3PThreadSleep(50);
-	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyFalse);
-	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "Focus_Initialise: enable motor driver error = %d 0x%x\r\n", status, status);
-		return false;
-	}
 	CyU3PSpiDisableBlockXfer(CyTrue, CyTrue);
-	CyU3PThreadSleep(5);
-
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint(4, "Focus_Initialise: disable block transfer error: %d 0x%x\r\n", status, status);
+		return false;
+	}
 
 	// Allocate the memory for the thread and create the thread
 	uint8_t *stack = CyU3PMemAlloc(THREAD_STACK);
 	uint32_t rc = CyU3PThreadCreate(&focus_thread,        // UVC Thread structure
-					"thread_30:focus",    // Thread Id and name
+					"40:focus",           // Thread Id and name
 					focus_process,        // UVC Application Thread Entry function
 					0,                    // No input parameter to thread
 					stack,                // Pointer to the allocated thread stack
@@ -206,23 +216,22 @@ bool Focus_Initialise(void) {
 					CYU3P_NO_TIME_SLICE,  // No time slice for the application thread
 					CYU3P_AUTO_START      // Start the Thread immediately
 		);
-
 	if (CY_U3P_SUCCESS != rc) {
-		CyU3PDebugPrint(4, "Focus_Initialise: create thread error = %d 0x%x\r\n", rc, rc);
+		CyU3PDebugPrint(4, "Focus_Initialise: create thread error: %d 0x%x\r\n", rc, rc);
 		return false;
 	}
 
 	rc = CyU3PEventCreate(&focus_event);
 	if (CY_U3P_SUCCESS != rc) {
-		CyU3PDebugPrint(4, "Focus_Initialise: create event error = %d 0x%x\r\n", rc, rc);
+		CyU3PDebugPrint(4, "Focus_Initialise: create event error: %d 0x%x\r\n", rc, rc);
 		return false;
 	}
 
-	rc = CyU3PTimerCreate(&focus_timer, timer_callback, 0, INITIAL_TICKS, RESCHEDULE_TICKS, CYU3P_AUTO_ACTIVATE);
-	if (CY_U3P_SUCCESS != rc) {
-		CyU3PDebugPrint(4, "Focus_Initialise: create time error = %d 0x%x\r\n", rc, rc);
-		return false;
-	}
+	/* rc = CyU3PTimerCreate(&focus_timer, timer_callback, 0, INITIAL_TICKS, RESCHEDULE_TICKS, CYU3P_NO_ACTIVATE); */
+	/* if (CY_U3P_SUCCESS != rc) { */
+	/* 	CyU3PDebugPrint(4, "Focus_Initialise: create time error: %d 0x%x\r\n", rc, rc); */
+	/* 	return false; */
+	/* } */
 
 	return true;
 }
@@ -236,9 +245,8 @@ bool Focus_Initialise(void) {
 static void focus_process(uint32_t input) {
 
 	CyU3PDebugPrint(4, "focus_process\r\n");
-	//focus_state = FOCUS_IDLE;
-	focus_state = FOCUS_HOME;
-	home_state = HOME_START;
+	focus_state = FOCUS_IDLE;
+	home_state = HOME_IDLE;
 	//uint32_t maximum_contrast = 0;
 	uint32_t current_contrast = 0;
 	//uint32_t focus_position = 0;
@@ -249,12 +257,23 @@ static void focus_process(uint32_t input) {
 		uint32_t event = 0;
 		CyU3PEventGet(&focus_event, EVENT_MASK, CYU3P_EVENT_OR_CLEAR, &event, CYU3P_WAIT_FOREVER);
 
-		if (0 != (event & EVENT_HOME)) {
+		if (0 != (event & EVENT_ABORT)) {
+			//maximum_contrast = 0;
+			//current_contrast = 0;
+			focus_state = FOCUS_IDLE;
+			home_state = HOME_IDLE;
+			motor_off();
+			//timer_stop();
+
+		} else if (0 != (event & EVENT_HOME)) {
 			if (FOCUS_HOME != focus_state) {
 				//maximum_contrast = 0;
 				//current_contrast = 0;
+				current_position = 0;
+				required_position = 0;
 				focus_state = FOCUS_HOME;
 				home_state = HOME_START;
+				//timer_start();
 			}
 
 		} else if (event & EVENT_PIXELS) {
@@ -264,9 +283,10 @@ static void focus_process(uint32_t input) {
 				CyU3PDebugPrint(4, "focus contrast = %d\r\n", current_contrast);
 			}
 
-		} else if (event & EVENT_FRAME) {
+			//} else if (event & EVENT_FRAME) {
 
-		} else if (event & EVENT_TIMER) {
+			//} else if (event & EVENT_TIMER) {
+		} else if (event & EVENT_FRAME) {
 			focus_step();
 
 			switch (focus_state) {
@@ -274,10 +294,12 @@ static void focus_process(uint32_t input) {
 				break;
 
 			case FOCUS_HOME:
-				switch (focus_home()) {
+				switch (seek_home()) {
 				case HOME_FAILED:
 					CyU3PDebugPrint(4, "focus_home failed\r\n");
 					focus_state = FOCUS_IDLE;
+					motor_off();
+					//timer_stop();
 					break;
 				case HOME_SUCCESS:
 					CyU3PDebugPrint(4, "focus_home success\r\n");
@@ -291,7 +313,7 @@ static void focus_process(uint32_t input) {
 
 			case FOCUS_OUT:
 				++nnn;
-				if (nnn > 250) {
+				if (nnn > 30) {
 					CyU3PDebugPrint(4, "focus_hold\r\n");
 					focus_state = FOCUS_HOLD;
 				}
@@ -316,6 +338,8 @@ static void focus_process(uint32_t input) {
 					} else {
 						required_position = 0;
 					}
+					CyU3PDebugPrint(4, "focus_hold: %d\r\n", required_position);
+
 				}
 				break;
 			}
@@ -323,15 +347,6 @@ static void focus_process(uint32_t input) {
 	}
 }
 
-
-// Entry function for the UVC application thread.
-static void timer_callback(uint32_t input) {
-	//CyU3PDebugPrint(4, "timer_callback: input: %x\r\n", input);
-	uint32_t rc = CyU3PEventSet(&focus_event, EVENT_TIMER, CYU3P_EVENT_OR);
-	if (CY_U3P_SUCCESS != rc) {
-		CyU3PDebugPrint(4, "timer_callback: EventSet  error = %d 0x%x\r\n", rc, rc);
-	}
-}
 
 static void pixel_compensation(void) {
 
@@ -377,24 +392,22 @@ static uint32_t pixel_contrast(void) {
 
 
 // process to locate the home position
-static HomeState_t focus_home(void) {
+static HomeState_t seek_home(void) {
 
-	static HomeState_t olds = -1;
+	static HomeState_t olds = HOME_IDLE;
 	if (olds != home_state) {
 		CyU3PDebugPrint(4, "focus_home: new state: %d\r\n", home_state);
 		olds = home_state;
 	}
 	switch (home_state) {
+	case HOME_IDLE:
+		break;
+
 	case HOME_START:
 		current_position = BOTTOM_LIMIT;
 		required_position = 0;
 		home_state = HOME_WAIT_HIGH;
-		// enable the stepper driver chip
-		CyU3PReturnStatus_t status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyFalse);
-		if (status != CY_U3P_SUCCESS) {
-			CyU3PDebugPrint (4, "focus_home: enable motor driver error = %d 0x%x\r\n", status, status);
-		}
-		CyU3PThreadSleep(5);
+		motor_on();
 		break;
 
 	case HOME_WAIT_HIGH:
@@ -480,3 +493,45 @@ static bool photo_switch(void) {
 	CyU3PReturnStatus_t rc = CyU3PGpioSimpleGetValue(FOCUS_POSITION, &value);
 	return (CY_U3P_SUCCESS == rc) && (CyTrue == value);
 }
+
+static void motor_on(void) {
+	CyU3PReturnStatus_t status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyFalse);
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "motor_on: error: %d 0x%x\r\n", status, status);
+	}
+	CyU3PThreadSleep(5);
+}
+
+static void motor_off(void) {
+	CyU3PReturnStatus_t status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyTrue);
+	if (status != CY_U3P_SUCCESS) {
+		CyU3PDebugPrint (4, "motor_off: error: %d 0x%x\r\n", status, status);
+	}
+	CyU3PThreadSleep(1);
+}
+
+
+#if 0
+static void timer_callback(uint32_t input) {
+	//CyU3PDebugPrint(4, "timer_callback: input: %x\r\n", input);
+	uint32_t rc = CyU3PEventSet(&focus_event, EVENT_TIMER, CYU3P_EVENT_OR);
+	if (CY_U3P_SUCCESS != rc) {
+		CyU3PDebugPrint(4, "timer_callback: EventSet  error: %d 0x%x\r\n", rc, rc);
+	}
+}
+
+
+static void timer_start(void) {
+	uint32_t rc = CyU3PTimerStart(&focus_timer);
+	if (CY_U3P_SUCCESS != rc) {
+		CyU3PDebugPrint(4, "focus_process: start timer error: %d 0x%x\r\n", rc, rc);
+	}
+}
+
+static void timer_stop(void) {
+	uint32_t rc = CyU3PTimerStop(&focus_timer);
+	if (CY_U3P_SUCCESS != rc) {
+		CyU3PDebugPrint(4, "focus_process: stop timer error: %d 0x%x\r\n", rc, rc);
+	}
+}
+#endif

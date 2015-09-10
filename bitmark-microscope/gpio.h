@@ -17,6 +17,7 @@
 
 // GPIO configuration - include all GPIOS here
 // with one of: &anOutputInitiallyLow, &anOutputInitiallyHigh, &anInput
+// ensuring the initial state is the inactive one (for outputs)
 #define GPIO_SETUP_BLOCK {                                      \
 		{LED_DRIVER_CLK,  &anOutputInitiallyLow},       \
 		{LED_DRIVER_SDI,  &anOutputInitiallyLow},       \

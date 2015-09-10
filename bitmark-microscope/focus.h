@@ -9,8 +9,7 @@
 bool Focus_Initialise(void);
 void Focus_SetLine(const int32_t line, const uint8_t *buffer, const size_t buffer_length);
 void Focus_EndFrame(const int32_t line);
-
-//void Focus_Power_Down(void);
-//void Focus_Power_Up(void);
+void Focus_Start(void);
+void Focus_Stop(void);
 
 #endif

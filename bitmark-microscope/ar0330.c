@@ -940,8 +940,12 @@ int32_t AR0330_GetExposure(int32_t option) {
 }
 
 
-void AR0330_SetAutofocus(int32_t Is_Enable) {
+void AR0330_SetAutofocus(int32_t enable) {
 	CyU3PDebugPrint(4, "AR0330_SetAutofocus\r\n");
+	if (0 != enable) {
+		// trigger a new focus cycle
+		Focus_Start();
+	}
 }
 
 
@@ -951,8 +955,12 @@ int32_t AR0330_GetAutofocus(int32_t option) {
 }
 
 
-void AR0330_SetManualfocus(int32_t manualfocus) {
+void AR0330_SetManualfocus(int32_t enable) {
 	CyU3PDebugPrint(4, "AR0330_SetManualfocus\r\n");
+	if (0 != enable) {
+		// stop auto focus process
+		Focus_Stop();
+	}
 }
 
 

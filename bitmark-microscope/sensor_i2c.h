@@ -22,10 +22,8 @@
 #define _SENSOR_I2C_H_ 1
 
 #include <cyu3types.h>
+#include "macros.h"
 
-#if !defined(SIZE_OF_ARRAY)
-#define SIZE_OF_ARRAY(a) (sizeof(a)/sizeof((a)[0]))
-#endif
 
 // dummy register address for delay during array operation
 #define SENSOR_DELAY 0xffff
