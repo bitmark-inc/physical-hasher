@@ -23,15 +23,13 @@ typedef struct {
 
 // Given "bitmap", this returns the pixel of bitmap at the point ("x", "y")
 
-static pixel_t *pixel_at(bitmap_t *bitmap, int x, int y)
-{
+static pixel_t *pixel_at(bitmap_t *bitmap, int x, int y) {
 	return bitmap->pixels + bitmap->width * y + x;
 }
 
 // Write "bitmap" to a PNG file specified by "path"; returns 0 on success, non-zero on error
 
-static int save_png_to_file(bitmap_t *bitmap, const char *path)
-{
+static int save_png_to_file(bitmap_t *bitmap, const char *path) {
 	FILE *fp;
 	png_structp png_ptr = NULL;
 	png_infop info_ptr = NULL;
@@ -202,12 +200,68 @@ static uint8_t average_blue(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
 	return sum / count;
 }
 
+static void fill(bitmap_t *frame, int start_x, int start_y, int width, int height, uint8_t red, uint8_t green, uint8_t blue) {
 
-int main()
-{
+	int end_x = start_x + width;
+	int end_y = start_y + height;
+
+	for (int y = start_y; y < end_y; ++y) {
+		for (int x = start_x; x < end_x; ++x) {
+			pixel_t *pixel = pixel_at(frame, x, y);
+			pixel->red = red;
+			pixel->green = green;
+			pixel->blue = blue;
+		}
+	}
+}
+
+static void number(int value, bitmap_t *frame, int start_x, int start_y, int width, int height) {
+	static const uint16_t bitmaps[] = {
+		075557, // 0
+		026227, // 1
+		025127, // 2
+		071717, // 3
+		013571, // 4
+		074616, // 5
+		034652, // 6
+		071122, // 7
+		075757, // 8
+		035311  // 9
+	};
+
+	int divisor = 1000;
+	for (int i = 0; i < 4; ++i, divisor /= 10) {
+		int d = value / divisor;
+		uint16_t bm = bitmaps[d % 10];
+		int x_begin = start_x + 4 * width * i;
+		for (int y = 0, ys = start_y; y < 5; ++y, ys += height) {
+			for (int x = 0, xs = x_begin; x < 3; ++x, xs += width) {
+				if (0 != (040000 & bm)) {
+					fill(frame, xs, ys, width, height, 0xff, 0xff, 0xff);
+				} else {
+					fill(frame, xs, ys, width, height, 0, 0, 0);
+				}
+				bm <<= 1;
+			}
+		}
+	}
+}
+
+
+int main(int argc, char *argv[]) {
 	FILE *fp = fopen("frames.data", "rb");
-	if (!fp) {
+	if (NULL == fp) {
 		fprintf(stderr, "failed to open input file\n");
+		return 1;
+	}
+
+	bitmap_t frame;
+	frame.width = 1920;
+	frame.height = 1080;
+
+	frame.pixels = calloc(sizeof(pixel_t), frame.width * frame.height);
+	if (NULL == frame.pixels) {
+		fprintf(stderr, "failed to allocate pixels\n");
 		return 1;
 	}
 
@@ -225,12 +279,6 @@ int main()
 			break;
 		}
 
-		bitmap_t frame;
-		frame.width = 1920;
-		frame.height = 1080;
-
-		frame.pixels = calloc(sizeof(pixel_t), frame.width * frame.height);
-
 		// rows are GR...,bg...
 		typedef enum {
 			MODE_GRBG = 0,
@@ -239,12 +287,13 @@ int main()
 
 		mode_t mode  = MODE_GRBG;
 
-		int p = 0;
+		pixel_t *pixel = frame.pixels;
+		uint8_t *in = pixels;
 		for (int y = 0; y < frame.height; ++y) {
 			if (mode == (y & 1)) {
 				for (int x = 0; x < frame.width; ++x) {
-					pixel_t *pixel = pixel_at(&frame, x, y);
-					uint16_t px = (uint16_t)(pixels[p]) | ((uint16_t)(pixels[p + 1]) << 8);
+					uint16_t px = (uint16_t)(*in++);
+					px |= (uint16_t)(*in++) << 8;
 					px >>= 4;
 					if (px > 255) {
 						px = 255;
@@ -254,12 +303,12 @@ int main()
 					} else {
 						pixel->red = px;
 					}
-					p += 2;
+					++pixel;
 				}
 			} else {
 				for (int x = 0; x < frame.width; ++x) {
-					pixel_t *pixel = pixel_at(&frame, x, y);
-					uint16_t px = (uint16_t)(pixels[p]) | ((uint16_t)(pixels[p + 1]) << 8);
+					uint16_t px = (uint16_t)(*in++);
+					px |= (uint16_t)(*in++) << 8;
 					px >>= 4;
 					if (px > 255) {
 						px = 255;
@@ -269,7 +318,7 @@ int main()
 					} else {
 						pixel->green = px;
 					}
-					p += 2;
+					++pixel;
 				}
 			}
 		}
@@ -310,9 +359,13 @@ int main()
 		}
 
 		printf("creating: %s\n", output_name);
+		fill(&frame, count + 0, 10, 20, 10, 0x00, 0x00, 0x00);
+		fill(&frame, count + 5, 10, 10, 10, 0xff, 0xff, 0xff);
+		number(count, &frame, 10, 30, 4, 4);
 		save_png_to_file(&frame, output_name);
 	}
 
+	frame.pixels = calloc(sizeof(pixel_t), frame.width * frame.height);
 	fclose(fp);
 	return 0;
 }

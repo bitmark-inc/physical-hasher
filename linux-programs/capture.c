@@ -23,6 +23,7 @@
 #define DEFAULT_BRIGHTNESS    168
 #define DEFAULT_SHARPNESS  0x0080
 #define DEFAULT_CONTRAST        0
+#define DEFAULT_LEDS         0x0f
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
@@ -59,6 +60,7 @@ static int xioctl(int fh, int request, void *arg) {
 
 	return r;
 }
+
 
 static bool process_image(const void *p, int size) {
 	bool rc = true;
@@ -611,28 +613,30 @@ static void usage(const char *message, ...) {
 		"-b | --brightness N  Brightness value\n"
 		"-s | --sharpness N   Sharpness value\n"
 		"-n | --contrast N    Contrast value\n"
-		 "",
+		"-l | --leds N        LEDs bitmask value\n"
+		"",
 		program_name, device_name, DEFAULT_FRAME_COUNT);
 	exit(EXIT_FAILURE);
 }
 
 
-static const char short_options[] = "d:hmruo:ftc:b:s:n:";
+static const char short_options[] = "d:hmruo:ftc:b:s:n:l:";
 
 static const struct option
 long_options[] = {
-	{ "device", required_argument, NULL, 'd' },
-	{ "help",   no_argument,       NULL, 'h' },
-	{ "mmap",   no_argument,       NULL, 'm' },
-	{ "read",   no_argument,       NULL, 'r' },
-	{ "userp",  no_argument,       NULL, 'u' },
-	{ "output", required_argument, NULL, 'o' },
-	{ "format", no_argument,       NULL, 'f' },
-	{ "ten",    no_argument,       NULL, 't' },
-	{ "count",  required_argument, NULL, 'c' },
+	{ "device",     required_argument, NULL, 'd' },
+	{ "help",       no_argument,       NULL, 'h' },
+	{ "mmap",       no_argument,       NULL, 'm' },
+	{ "read",       no_argument,       NULL, 'r' },
+	{ "userp",      no_argument,       NULL, 'u' },
+	{ "output",     required_argument, NULL, 'o' },
+	{ "format",     no_argument,       NULL, 'f' },
+	{ "ten",        no_argument,       NULL, 't' },
+	{ "count",      required_argument, NULL, 'c' },
 	{ "brightness", required_argument, NULL, 'b' },
 	{ "sharpness",  required_argument, NULL, 's' },
 	{ "contrast",   required_argument, NULL, 'n' },
+	{ "leds",       required_argument, NULL, 'l' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -647,6 +651,7 @@ int main(int argc, char **argv) {
 	int32_t brightness = DEFAULT_BRIGHTNESS;
 	int32_t sharpness = DEFAULT_SHARPNESS;
 	int32_t contrast = DEFAULT_CONTRAST;
+	int32_t led_value = DEFAULT_LEDS;
 
 	for (;;) {
 		int idx;
@@ -738,6 +743,14 @@ int main(int argc, char **argv) {
 			}
 			break;
 
+		case 'l':
+			errno = 0;
+			led_value = strtol(optarg, NULL, 0);
+			if (0 != errno) {
+				usage("invalid LEDs value  '%s': %d, %s", optarg, errno, strerror(errno));
+			}
+			break;
+
 		default:
 			usage("invalid option: '%c'", c);
 		}
@@ -747,10 +760,12 @@ int main(int argc, char **argv) {
 	set_control(fd, V4L2_CID_BRIGHTNESS, brightness);
 	set_control(fd, V4L2_CID_CONTRAST, contrast);
 	set_control(fd, V4L2_CID_SHARPNESS, sharpness);
+	set_control(fd, V4L2_CID_HUE, led_value);
 	init_device(fd, force_format);
 	start_capturing(fd);
 	mainloop(fd, frame_count);
 	stop_capturing(fd);
+	set_control(fd, V4L2_CID_HUE, 0); // LEDs off
 	uninit_device();
 	close_device(fd);
 	fprintf(stderr, "\n");
