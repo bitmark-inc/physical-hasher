@@ -27,6 +27,7 @@
 //#define TEST_MODE TEST_MODE_BLUE
 //#define TEST_MODE TEST_MODE_GREEN_BLUE
 //#define TEST_MODE TEST_MODE_GREEN_ALL
+//#define TEST_MODE TEST_MODE_COLOUR_BARS
 
 
 // set pixel resolution: 8, 10 or 12
@@ -555,6 +556,7 @@ void AR0330_Power_Down(void) {
 #define TEST_MODE_BLUE         4
 #define TEST_MODE_GREEN_BLUE   5
 #define TEST_MODE_GREEN_ALL    6
+#define TEST_MODE_COLOUR_BARS  7
 
 void AR0330_Power_Up(void) {
 	CyU3PDebugPrint(4, "AR0330_Power_Up\r\n");
@@ -603,6 +605,9 @@ void AR0330_Power_Up(void) {
 	sensor_write(0x3074, full);              // green (in red row)
 	sensor_write(0x3076, low);               // blue
 	sensor_write(0x3078, full);              // green (in blue row)
+
+#elif TEST_MODE == TEST_MODE_COLOUR_BARS
+	sensor_write(0x3070, 0x0002);            // set test mode
 
 #else
 #error "undefined test mode"

@@ -5,9 +5,9 @@ FIRMWARE ?= ../bitmark-microscope/bitmark-microscope.img
 DOWNLOAD_FX3 = ../../../../cyusb_linux_1.0.4/src/download_fx3
 
 FRAMES ?= 300
-BRIGHTNESS ?= 300
-SHARPNESS ?= 0x03f0
-CONTRAST ?= 21
+BRIGHTNESS ?= 0
+SHARPNESS ?= 0x0080
+CONTRAST ?= 10
 LEDS ?= 0x0f
 FRAMES_OUT ?= frames.data
 
@@ -68,6 +68,7 @@ lc: list-controls
 
 .PHONY: cap
 cap: capture
+	${RM} '${FRAMES_OUT}'
 	-[ ! -e '${VIDEO_DEVICE}' ] && $(MAKE) download
 	[ -e '${VIDEO_DEVICE}' ] && ./capture ${CAPTURE_OPTS}
 
