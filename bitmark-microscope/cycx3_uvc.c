@@ -358,16 +358,15 @@ void esUVCUvcAppDmaCallback(CyU3PDmaMultiChannel *chHandle, CyU3PDmaCbType_t typ
 			}
 
 			// Commit Buffer to USB
-			//status = CyU3PDmaMultiChannelCommitBuffer(chHandle, (DmaBuffer.count + 12), 0);
 			status = CyU3PDmaMultiChannelCommitBuffer(chHandle, (DmaBuffer.count + ES_UVC_PROD_HEADER), 0);
 			if (CY_U3P_SUCCESS != status) {
 				CyU3PEventSet(&glTimerEvent, ES_TIMER_RESET_EVENT, CYU3P_EVENT_OR);
 				break;
-			} else {
-				Focus_SetLine(glDMATxCount, DmaBuffer.buffer, DmaBuffer.count); // maybe capture some pixels
-				glDMATxCount++;
-				glDmaDone++;
 			}
+
+			Focus_SetLine(glDMATxCount, DmaBuffer.buffer, DmaBuffer.count); // maybe capture some pixels
+			glDMATxCount++;
+			glDmaDone++;
 
 			glActiveSocket ^= 1;	// Toggle the Active Socket
 			status = CyU3PDmaMultiChannelGetBuffer(chHandle, &DmaBuffer, CYU3P_NO_WAIT);

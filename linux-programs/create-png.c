@@ -4,22 +4,174 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdbool.h>
+#include <string.h>
+#include <errno.h>
+#include <bsd/string.h>
+#include <getopt.h>
 
-// A coloured pixel
 
+// coloured pixel
 typedef struct {
-	uint8_t red;
-	uint8_t green;
-	uint8_t blue;
+	uint16_t red;
+	uint16_t green;
+	uint16_t blue;
 } pixel_t;
 
-// A picture
-
+// image
 typedef struct {
 	pixel_t *pixels;
 	size_t width;
 	size_t height;
 } bitmap_t;
+
+// image processing oprions
+typedef struct {
+	bool slider;
+	bool number;
+	bool compensation;
+} image_options_t;
+
+// global variables
+static const char *program_name;
+static const char *prefix = "frame";
+static int verbose = 0; // incremented by --verbose / -v
+
+// prototypes
+static pixel_t *pixel_at(bitmap_t *bitmap, int x, int y);
+static int save_png_to_file(bitmap_t *bitmap, const char *path);
+static uint16_t average_red(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d);
+static uint16_t average_green(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d);
+static uint16_t average_blue(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d);
+static void fill(bitmap_t *frame, int start_x, int start_y, int width, int height, uint16_t red, uint16_t green, uint16_t blue);
+static void number(int value, bitmap_t *frame, int start_x, int start_y, int width, int height);
+static int make_frames(int start, int limit, image_options_t options, const char *output_prefix, const char *input_file);
+
+
+// print usage message and exit
+static void usage(const char *message, ...) {
+	if (NULL != message) {
+		va_list ap;
+		va_start(ap, message);
+		fprintf(stderr, "error: ");
+		vfprintf(stderr, message, ap);
+		fprintf(stderr, "\n");
+		va_end(ap);
+	}
+	fprintf(stderr,
+		"Usage: %s [options]\n\n"
+		"Version 1.3\n"
+		"Options:\n"
+		"-h | --help          Print this message\n"
+		"-v | --verbose       Output messages\n"
+		"-d | --no-comp       Disable compensation\n"
+		"-s | --slider        Add slider\n"
+		"-n | --number        Add frame number\n"
+		"-p | --prefix T      Prefix [%s]\n"
+		"-c | --count N       Limit number of frames [no-limit]\n"
+		"",
+		program_name, prefix);
+	exit(EXIT_FAILURE);
+}
+
+
+static const char short_options[] = "hvdsnp:c:";
+
+static const struct option
+long_options[] = {
+	{ "help",       no_argument,       NULL, 'h' },
+	{ "verbose",    no_argument,       NULL, 'v' },
+	{ "slider",     no_argument,       NULL, 's' },
+	{ "number",     no_argument,       NULL, 'n' },
+	{ "no-comp",    no_argument,       NULL, 'd' },
+	{ "prefix",     required_argument, NULL, 'p' },
+	{ "count",      required_argument, NULL, 'c' },
+	{ 0, 0, 0, 0 }
+};
+
+
+int main(int argc, char **argv) {
+	program_name = argv[0];
+
+	image_options_t options = {
+		.slider = true,
+		.number = true,
+		.compensation = true
+	};
+	int frame_count = 0;
+	for (;;) {
+		int idx = 0;
+		int c = getopt_long(argc, argv, short_options, long_options, &idx);
+
+		if (-1 == c) {
+			break;
+		}
+
+		switch (c) {
+		case 0: // getopt_long() flag
+			break;
+
+		case 'h':
+			usage(NULL);
+
+		case 'v':
+			++verbose;
+			break;
+
+		case 's':
+			options.slider = true;
+			break;
+
+		case 'n':
+			options.number = true;
+			break;
+
+		case 'd':
+			options.compensation = false;
+			break;
+
+		case 'p':
+		{
+			size_t n = strlen(optarg) + 1;
+			if (n < 2) {
+				usage("missing output file name");
+			}
+			char *prefix = malloc(n);
+			if (NULL == prefix) {
+				usage("unable to allocate memory for prefix: '%s'", optarg);
+			}
+			strlcpy(prefix, optarg, n);
+		}
+		break;
+
+		case 'c':
+			errno = 0;
+			frame_count = strtol(optarg, NULL, 0);
+			if (0 != errno) {
+				usage("invalid count '%s': %d, %s", optarg, errno, strerror(errno));
+			}
+			break;
+
+		default:
+			usage("invalid option: '%c'", c);
+		}
+	}
+
+	if (optind >= argc) {
+		usage("missing arguments");
+	}
+
+	if (verbose > 1) {
+		printf("verbose level: %d\n", verbose);
+	}
+	int count = 0;
+	for (int i = optind; i < argc; ++i) {
+		count = make_frames(count, frame_count, options, prefix, argv[i]);
+	}
+
+	return EXIT_SUCCESS;
+}
+
 
 // Given "bitmap", this returns the pixel of bitmap at the point ("x", "y")
 
@@ -43,8 +195,8 @@ static int save_png_to_file(bitmap_t *bitmap, const char *path) {
 	// The following number is set by trial and error only. I cannot
 	// see where it it is documented in the libpng manual.
 
-	int pixel_size = 3;
-	int depth = 8;
+	int pixel_size = 3*2;  // 3 colours @ 2 bytes
+	int depth = 16;
 
 	fp = fopen(path, "wb");
 	if (!fp) {
@@ -89,8 +241,11 @@ static int save_png_to_file(bitmap_t *bitmap, const char *path) {
 		for (x = 0; x < bitmap->width; ++x) {
 			pixel_t *pixel = pixel_at(bitmap, x, y);
 			*row++ = pixel->red;
+			*row++ = pixel->red >> 8;
 			*row++ = pixel->green;
+			*row++ = pixel->green >> 8;
 			*row++ = pixel->blue;
+			*row++ = pixel->blue >> 8;
 		}
 	}
 
@@ -120,7 +275,7 @@ fopen_failed:
 }
 
 
-static uint8_t average_red(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
+static uint16_t average_red(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
 	int count = 0;
 	int sum = 0;
 	if (NULL != a) {
@@ -147,7 +302,7 @@ static uint8_t average_red(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
 }
 
 
-static uint8_t average_green(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
+static uint16_t average_green(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
 	int count = 0;
 	int sum = 0;
 	if (NULL != a) {
@@ -174,7 +329,7 @@ static uint8_t average_green(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
 }
 
 
-static uint8_t average_blue(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
+static uint16_t average_blue(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
 	int count = 0;
 	int sum = 0;
 	if (NULL != a) {
@@ -200,7 +355,7 @@ static uint8_t average_blue(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
 	return sum / count;
 }
 
-static void fill(bitmap_t *frame, int start_x, int start_y, int width, int height, uint8_t red, uint8_t green, uint8_t blue) {
+static void fill(bitmap_t *frame, int start_x, int start_y, int width, int height, uint16_t red, uint16_t green, uint16_t blue) {
 
 	int end_x = start_x + width;
 	int end_y = start_y + height;
@@ -248,11 +403,15 @@ static void number(int value, bitmap_t *frame, int start_x, int start_y, int wid
 }
 
 
-int main(int argc, char *argv[]) {
-	FILE *fp = fopen("frames.data", "rb");
+static int make_frames(int start, int limit, image_options_t options, const char *output_prefix, const char *input_file) {
+	FILE *fp = fopen(input_file, "rb");
 	if (NULL == fp) {
-		fprintf(stderr, "failed to open input file\n");
-		return 1;
+		usage("failed to open input file: '%s'", input_file);
+		return 0;
+	}
+
+	if (verbose > 1) {
+		printf("opened input file: '%s'\n", input_file);
 	}
 
 	bitmap_t frame;
@@ -261,59 +420,63 @@ int main(int argc, char *argv[]) {
 
 	frame.pixels = calloc(sizeof(pixel_t), frame.width * frame.height);
 	if (NULL == frame.pixels) {
-		fprintf(stderr, "failed to allocate pixels\n");
-		return 1;
+		usage("failed to allocate pixels");
+		return 0;
 	}
 
-	// only up to frame 9999
-	for (int count = 0; count < 9999; ++count) {
+	int rc = limit;
+	for (int count = start; (0 == limit) || (count < limit); ++count) {
 		char output_name[256];
-		if (snprintf(output_name, sizeof(output_name), "frame%04d.png", count) >= sizeof(output_name)) {
-			fprintf(stderr, "failed to create output name\n");
-			return 1;
-		}
-
-		// extract one frame from the input file
-		uint8_t pixels[1920 * 1080 * 2];
-		if (1 != fread(pixels, sizeof(pixels), 1, fp)) {
+		if (snprintf(output_name, sizeof(output_name), "%s%04d.png", output_prefix, count) >= sizeof(output_name)) {
+			usage("failed to create output name - increase buffer size");
+			rc = count;
 			break;
 		}
 
-		// rows are GR...,bg...
-		typedef enum {
-			MODE_GRBG = 0,
-			MODE_RGGB = 1
-		} mode_t;
+		// extract one frame from the input file
+		const int bytes_per_line = 1920 * 2;
+		uint8_t pixels[1080 * bytes_per_line];
+		if (1 != fread(pixels, sizeof(pixels), 1, fp)) {
+			rc = count;
+			break;
+		}
 
-		mode_t mode  = MODE_GRBG;
+		if (verbose > 2) {
 
+			for (int line = 0; line < 8; ++line) {
+				printf("line: %2d: ", line);
+				const uint8_t *p = &pixels[bytes_per_line * line];
+				for (int col = 0; col < 8; ++col) {
+					printf(" %02x", *p++);
+				}
+				printf("\n");
+			}
+		}
+
+		// even rows are: GRGR...
+		// odd  rows are: bgbg...
+		// note the case sensitive labelling:
+		//      the GREEN(G) pixels are on RED/GREEN rows
+		//      the green(g) pixels are on green/blue rows
 		pixel_t *pixel = frame.pixels;
 		uint8_t *in = pixels;
 		for (int y = 0; y < frame.height; ++y) {
-			if (mode == (y & 1)) {
+			if (0 == (y & 1)) {  // even: GRGR...
 				for (int x = 0; x < frame.width; ++x) {
 					uint16_t px = (uint16_t)(*in++);
 					px |= (uint16_t)(*in++) << 8;
-					px >>= 4;
-					if (px > 255) {
-						px = 255;
-					}
-					if (mode == (x & 1)) {
+					if (0 == (x & 1)) {
 						pixel->green = px;
 					} else {
 						pixel->red = px;
 					}
 					++pixel;
 				}
-			} else {
+			} else { // odd: bgbg...
 				for (int x = 0; x < frame.width; ++x) {
 					uint16_t px = (uint16_t)(*in++);
 					px |= (uint16_t)(*in++) << 8;
-					px >>= 4;
-					if (px > 255) {
-						px = 255;
-					}
-					if (mode == (x & 1)) {
+					if (0 == (x & 1)) {
 						pixel->blue = px;
 					} else {
 						pixel->green = px;
@@ -323,49 +486,59 @@ int main(int argc, char *argv[]) {
 			}
 		}
 
-		int hm1 = frame.height - 1;
-		int wm1 = frame.width - 1;
-		for (int y = 0; y < frame.height; ++y) {
-			for (int x = 0; x < frame.width; ++x) {
-				pixel_t *sw = (0   == y) || (0   == x) ? NULL : pixel_at(&frame, x - 1, y - 1);
-				pixel_t *s  = (0   == y)               ? NULL : pixel_at(&frame, x,     y - 1);
-				pixel_t *se = (0   == y) || (wm1 == x) ? NULL : pixel_at(&frame, x + 1, y - 1);
-				pixel_t *nw = (hm1 == y) || (0   == x) ? NULL : pixel_at(&frame, x - 1, y + 1);
-				pixel_t *n  = (hm1 == y)               ? NULL : pixel_at(&frame, x,     y + 1);
-				pixel_t *ne = (hm1 == y) || (wm1 == x) ? NULL : pixel_at(&frame, x + 1, y + 1);
-				pixel_t *w  = (0   == x)               ? NULL : pixel_at(&frame, x - 1, y    );
-				pixel_t *e  = (wm1 == x)               ? NULL : pixel_at(&frame, x + 1, y    );
+		if (options.compensation) {
+			int hm1 = frame.height - 1;
+			int wm1 = frame.width - 1;
+			for (int y = 0; y < frame.height; ++y) {
+				for (int x = 0; x < frame.width; ++x) {
+					pixel_t *sw = (0   == y) || (0   == x) ? NULL : pixel_at(&frame, x - 1, y - 1);
+					pixel_t *s  = (0   == y)               ? NULL : pixel_at(&frame, x,     y - 1);
+					pixel_t *se = (0   == y) || (wm1 == x) ? NULL : pixel_at(&frame, x + 1, y - 1);
+					pixel_t *nw = (hm1 == y) || (0   == x) ? NULL : pixel_at(&frame, x - 1, y + 1);
+					pixel_t *n  = (hm1 == y)               ? NULL : pixel_at(&frame, x,     y + 1);
+					pixel_t *ne = (hm1 == y) || (wm1 == x) ? NULL : pixel_at(&frame, x + 1, y + 1);
+					pixel_t *w  = (0   == x)               ? NULL : pixel_at(&frame, x - 1, y    );
+					pixel_t *e  = (wm1 == x)               ? NULL : pixel_at(&frame, x + 1, y    );
 
-				pixel_t *pixel = pixel_at(&frame, x, y);
+					pixel_t *pixel = pixel_at(&frame, x, y);
 
-				if (mode == (y & 1)) {
-					if (mode == (x & 1)) { // green(red)
-						pixel->blue = average_blue(n, s, NULL, NULL);
-						pixel->red  = average_red(w, e, NULL, NULL);
-					} else {               // red
-						pixel->green = average_green(n, s, e, w);
-						pixel->blue  = average_blue(nw, ne, sw, se);
-					}
-				} else {
-					if (mode == (x & 1)) { // blue
-						pixel->green = average_green(n, s, e, w);
-						pixel->red   = average_red(nw, ne, sw, se);
-					} else {               // green(blue)
-						pixel->blue = average_blue(w, e, NULL, NULL);
-						pixel->red  = average_red(n, s, NULL, NULL);
+					if (0 == (y & 1)) { // even line: GRGR...
+						if (0 == (x & 1)) {
+							pixel->blue = average_blue(n, s, NULL, NULL);
+							pixel->red  = average_red(w, e, NULL, NULL);
+						} else {
+							pixel->green = average_green(n, s, e, w);
+							pixel->blue  = average_blue(nw, ne, sw, se);
+						}
+					} else {             // odd line: bgbg...
+						if (0 == (x & 1)) {
+							pixel->green = average_green(n, s, e, w);
+							pixel->red   = average_red(nw, ne, sw, se);
+						} else {
+							pixel->blue = average_blue(w, e, NULL, NULL);
+							pixel->red  = average_red(n, s, NULL, NULL);
+						}
 					}
 				}
 			}
 		}
 
-		printf("creating: %s\n", output_name);
-		fill(&frame, count + 0, 10, 20, 10, 0x00, 0x00, 0x00);
-		fill(&frame, count + 5, 10, 10, 10, 0xff, 0xff, 0xff);
-		number(count, &frame, 10, 30, 4, 4);
+		if (verbose > 0) {
+			printf("creating: %s\n", output_name);
+		}
+
+		if (options.slider) {
+			fill(&frame, count + 0, 10, 20, 10, 0x00, 0x00, 0x00);
+			fill(&frame, count + 5, 10, 10, 10, 0xff, 0xff, 0xff);
+		}
+
+		if(options.number) {
+			number(count, &frame, 10, 30, 4, 4);
+		}
 		save_png_to_file(&frame, output_name);
 	}
 
-	frame.pixels = calloc(sizeof(pixel_t), frame.width * frame.height);
 	fclose(fp);
-	return 0;
+	free(frame.pixels);
+	return rc;
 }

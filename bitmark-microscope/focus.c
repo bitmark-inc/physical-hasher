@@ -41,6 +41,7 @@
 // focus motor normal running
 #define STEP_MINIMUM   0
 #define STEP_MAXIMUM  60
+#define STEP_MATCH    required_position == current_position
 
 // process control
 #define THREAD_STACK     0x2000
@@ -54,22 +55,34 @@ static int required_position = 0;
 
 // pixel buffers
 // to capture the middle line, and a one pixel border all around
-static uint8_t pre_pixels[MAXIMUM_PIXEL_BYTES];
-static uint8_t pixels[MAXIMUM_PIXEL_BYTES];
-static uint8_t post_pixels[MAXIMUM_PIXEL_BYTES];
+//(aligned to RED so first usable pixel is GREEN(on red line) (same as first frame pixel)
+static uint8_t pre_pixels[MAXIMUM_PIXEL_BYTES];   // gbgb...
+static uint8_t pixels[MAXIMUM_PIXEL_BYTES];       // RGRG...
+static uint8_t post_pixels[MAXIMUM_PIXEL_BYTES];  // gbgb...
 // to hold the converted greyscale
 static uint16_t grey[FOCUS_LINE_LENGTH];
 
 typedef struct {
-	int x;  // byte offset of "border" pixel
-	int y;  // line offset
+	struct {
+		int begin;
+		int end;
+	} offsets[3];  // byte offset of "border" pixel
 	bool is_green;
 } StartPoint_t;
 
+#define LINE_BYTES   (2 * 1920)
+#define CENTRE_LINE   540
+#define LINE_OFFSET  ((LINE_BYTES - MAXIMUM_PIXEL_BYTES) / 2)
+#define BEGIN_OFFSET(offset) ((CENTRE_LINE - (offset)) * LINE_BYTES + LINE_OFFSET)
+#define END_OFFSET(offset) (BEGIN_OFFSET((offset)) + MAXIMUM_PIXEL_BYTES)
+
 static const StartPoint_t start_1080 = {
-	.x = (2 * 1920 - MAXIMUM_PIXEL_BYTES) / 2,
-	.y = 1080 / 2,
-	.is_green = false
+	.offsets = {
+		{.begin = BEGIN_OFFSET(-1), .end = END_OFFSET(-1)},
+		{.begin = BEGIN_OFFSET(0),  .end = END_OFFSET(0)},
+		{.begin = BEGIN_OFFSET(1),  .end = END_OFFSET(1)}
+	},
+	.is_green = true // == value of "second" pixel in pixels
 };
 
 static const StartPoint_t *current_start = &start_1080;
@@ -132,14 +145,85 @@ void Focus_Start(void) {
 }
 
 
-void Focus_SetLine(const int32_t line, const uint8_t *buffer, const size_t buffer_length) {
+// keep track of the current data range in the line buffer
+// this buffer is not synchronised with the image lines
+static int buffer_begin = 0;
+static int buffer_end   = 0;
+void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const size_t buffer_length) {
 
-	if (line == current_start->y - 1) {
-		CyU3PMemCopy(pre_pixels, (uint8_t *)&buffer[current_start->x], MAXIMUM_PIXEL_BYTES);
-	} else if (line == current_start->y) {
-		CyU3PMemCopy(pixels, (uint8_t *)&buffer[current_start->x], MAXIMUM_PIXEL_BYTES);
-	} else if (line == current_start->y + 1) {
-		CyU3PMemCopy(post_pixels, (uint8_t *)&buffer[current_start->x], MAXIMUM_PIXEL_BYTES);
+	if (0 == buffer_number) {
+		buffer_begin = 0;
+		buffer_end = buffer_length;
+	} else {
+		buffer_begin += buffer_length;
+		buffer_end += buffer_length;
+	}
+
+	if (current_start->offsets[0].begin >= buffer_begin && current_start->offsets[0].begin < buffer_end) {
+		// have some/all of the data
+		size_t length = buffer_end - current_start->offsets[0].begin;
+		if (length > MAXIMUM_PIXEL_BYTES) {
+			length = MAXIMUM_PIXEL_BYTES;
+		}
+		size_t offset = current_start->offsets[0].begin - buffer_begin;
+		CyU3PMemCopy(pre_pixels, (uint8_t *)&buffer[offset], length);
+
+	} else if (current_start->offsets[0].end > buffer_begin && current_start->offsets[0].end <= buffer_end) {
+		// have trailing bytes of data
+		size_t length = current_start->offsets[0].end - buffer_begin;
+		if (length > MAXIMUM_PIXEL_BYTES) {
+			length = MAXIMUM_PIXEL_BYTES;
+		}
+		size_t offset = MAXIMUM_PIXEL_BYTES - length;
+		CyU3PMemCopy(&pre_pixels[offset], (uint8_t *)buffer, length);
+
+	}
+
+	if (current_start->offsets[1].begin >= buffer_begin && current_start->offsets[1].begin < buffer_end) {
+		// have some/all of the data
+		size_t length = buffer_end - current_start->offsets[1].begin;
+		if (length > MAXIMUM_PIXEL_BYTES) {
+			length = MAXIMUM_PIXEL_BYTES;
+		}
+		size_t offset = current_start->offsets[1].begin - buffer_begin;
+		CyU3PMemCopy(pixels, (uint8_t *)&buffer[offset], length);
+
+	} else if (current_start->offsets[1].end > buffer_begin && current_start->offsets[1].end <= buffer_end) {
+		// have trailing bytes of data
+		size_t length = current_start->offsets[1].end - buffer_begin;
+		if (length > MAXIMUM_PIXEL_BYTES) {
+			length = MAXIMUM_PIXEL_BYTES;
+		}
+		size_t offset = MAXIMUM_PIXEL_BYTES - length;
+		CyU3PMemCopy(&pixels[offset], (uint8_t *)buffer, length);
+
+	}
+
+	if (current_start->offsets[2].begin >= buffer_begin && current_start->offsets[2].begin < buffer_end) {
+		// have some/all of the data
+		size_t length = buffer_end - current_start->offsets[2].begin;
+		if (length > MAXIMUM_PIXEL_BYTES) {
+			length = MAXIMUM_PIXEL_BYTES;
+		}
+		size_t offset = current_start->offsets[2].begin - buffer_begin;
+		CyU3PMemCopy(post_pixels, (uint8_t *)&buffer[offset], length);
+
+		if (MAXIMUM_PIXEL_BYTES == length) {
+			// signal capture complete
+			uint32_t rc = CyU3PEventSet(&focus_event, EVENT_PIXELS, CYU3P_EVENT_OR);
+			if (CY_U3P_SUCCESS != rc) {
+				CyU3PDebugPrint(4, "Focus_Setline: EventSet error: %d 0x%x\r\n", rc, rc);
+			}
+		}
+
+	} else if (current_start->offsets[2].end > buffer_begin && current_start->offsets[2].end <= buffer_end) {
+		// have trailing bytes of data
+		size_t length = current_start->offsets[2].end - buffer_begin;
+		if (length > MAXIMUM_PIXEL_BYTES) {
+			length = MAXIMUM_PIXEL_BYTES;
+		}
+		size_t offset = MAXIMUM_PIXEL_BYTES - length;
+		CyU3PMemCopy(&post_pixels[offset], (uint8_t *)buffer, length);
 
 		// signal capture complete
 		uint32_t rc = CyU3PEventSet(&focus_event, EVENT_PIXELS, CYU3P_EVENT_OR);
@@ -150,7 +234,7 @@ void Focus_SetLine(const int32_t line, const uint8_t *buffer, const size_t buffe
 }
 
 
-void Focus_EndFrame(const int32_t line) {
+void Focus_EndFrame(const int32_t buffer_number) {
 	uint32_t rc = CyU3PEventSet(&focus_event, EVENT_FRAME, CYU3P_EVENT_OR);
 	if (CY_U3P_SUCCESS != rc) {
 		CyU3PDebugPrint(4, "Focus_EndFrame: EventSet error: %d 0x%x\r\n", rc, rc);
@@ -159,8 +243,8 @@ void Focus_EndFrame(const int32_t line) {
 
 
 bool Focus_Initialise(void) {
-	current_position = 0;
-	required_position = 0;
+	current_position = STEP_MINIMUM;
+	required_position = STEP_MINIMUM;
 
 	CyU3PDebugPrint(4, "Focus_Initialise\r\n");
 
@@ -232,29 +316,38 @@ static void focus_process(uint32_t input) {
 	CyU3PDebugPrint(4, "focus_process\r\n");
 	focus_state = FOCUS_IDLE;
 	home_state = HOME_IDLE;
-	//uint32_t maximum_contrast = 0;
+	uint32_t maximum_contrast = 0;
 	uint32_t current_contrast = 0;
-	//uint32_t focus_position = 0;
+	uint32_t focus_position = STEP_MINIMUM;
 
-	int nnn = 0;
+#define FRAME_DIV_1 0x00
+#define FRAME_DIV_2 0x01
+#define FRAME_DIV_4 0x03
+#define FRAME_DIV_8 0x07
+
+	// this is used to step on a multiple of frame_count
+	uint8_t frame_modulus_count = 0;
+	uint8_t frame_modulus_mask = FRAME_DIV_1;
 
 	for (;;) {
 		uint32_t event = 0;
 		CyU3PEventGet(&focus_event, EVENT_MASK, CYU3P_EVENT_OR_CLEAR, &event, CYU3P_WAIT_FOREVER);
 
 		if (0 != (event & EVENT_ABORT)) {
-			//maximum_contrast = 0;
-			//current_contrast = 0;
+			maximum_contrast = 0;
+			current_contrast = 0;
 			focus_state = FOCUS_IDLE;
 			home_state = HOME_IDLE;
 			motor_off();
 
 		} else if (0 != (event & EVENT_HOME)) {
 			if (FOCUS_HOME != focus_state) {
-				//maximum_contrast = 0;
-				//current_contrast = 0;
-				current_position = 0;
-				required_position = 0;
+				maximum_contrast = 0;
+				current_contrast = 0;
+				current_position = STEP_MINIMUM;
+				required_position = STEP_MINIMUM;
+				frame_modulus_count = 0;
+				frame_modulus_mask = FRAME_DIV_1;
 				focus_state = FOCUS_HOME;
 				home_state = HOME_START;
 			}
@@ -262,11 +355,31 @@ static void focus_process(uint32_t input) {
 		} else if (event & EVENT_PIXELS) {
 			if (FOCUS_HOME != focus_state) {
 				pixel_compensation();
-				current_contrast = pixel_contrast();
-				CyU3PDebugPrint(4, "focus contrast = %d\r\n", current_contrast);
+				uint32_t c = pixel_contrast();
+				if (c != current_contrast) {
+					current_contrast = c;
+					CyU3PDebugPrint(4, "focus contrast = %d\r\n", current_contrast);
+				}
 			}
 
 		} else if (event & EVENT_FRAME) {
+
+#if 0
+			// debug
+			CyU3PDebugPrint(4, "FS-: %x %x %x %x\r\n", pre_pixels[0], pre_pixels[1], pre_pixels[2], pre_pixels[3]);
+			CyU3PDebugPrint(4, "FS0: %x %x %x %x\r\n", pixels[0], pixels[1], pixels[2], pixels[3]);
+			CyU3PDebugPrint(4, "FS+: %x %x %x %x\r\n", post_pixels[0], post_pixels[1], post_pixels[2], post_pixels[3]);
+			pixel_compensation();
+			uint32_t c = pixel_contrast();
+			CyU3PDebugPrint(4, "contrast = %d\r\n", c);
+#endif
+
+
+			++frame_modulus_count;
+			if (0 != (frame_modulus_count & frame_modulus_mask)) {
+				continue;
+			}
+
 			focus_step();
 
 			switch (focus_state) {
@@ -284,8 +397,10 @@ static void focus_process(uint32_t input) {
 				case HOME_SUCCESS:
 					CyU3PDebugPrint(4, "focus_home success\r\n");
 					focus_state = FOCUS_OUT;
-					nnn = 0;
-					break;
+					frame_modulus_mask = FRAME_DIV_4;
+					required_position = STEP_MAXIMUM;
+					focus_position = STEP_MINIMUM;
+				break;
 
 				default:
 					break;
@@ -293,35 +408,31 @@ static void focus_process(uint32_t input) {
 				break;
 
 			case FOCUS_OUT:
-				++nnn;
-				if (nnn > 30) {
-					CyU3PDebugPrint(4, "focus_hold\r\n");
-					focus_state = FOCUS_HOLD;
-				}
-
-#if 0
-				++required_position;
-				if (current_contrast > maximum_contrast) {
-					maximum_contrast = current_contrast;
-					focus_position = current_position;
-				} else if (current_contrast + DELTA_CONTRAST < maximum_contrast) {
-					focus_state = FOCUS_HOLD;
+				if (STEP_MATCH) {
 					required_position = focus_position;
+					focus_state = FOCUS_HOLD;
+					CyU3PDebugPrint(4, "focus_hold: %d\r\n", required_position);
+				} else {
+					if (current_contrast > maximum_contrast) {
+						maximum_contrast = current_contrast;
+						focus_position = current_position;
+					}
 				}
-#endif
 				break;
 
 			case FOCUS_HOLD:
+#if 0
 				// just for a test
-				if (required_position == current_position) {
-					if (0 == required_position) {
-						required_position = 60;
+				if (STEP_MATCH) {
+					if (STEP_MINIMUM == required_position) {
+						required_position = STEP_MAXIMUM;
 					} else {
-						required_position = 0;
+						required_position = STEP_MINIMUM;
 					}
 					CyU3PDebugPrint(4, "focus_hold: %d\r\n", required_position);
 
 				}
+#endif
 				break;
 			}
 		}
@@ -334,7 +445,7 @@ static void pixel_compensation(void) {
 	bool is_green = current_start->is_green;
 
 	for (int i = 0; i < SIZE_OF_ARRAY(grey); ++i) {
-		int byte_offset = 2 * i + 2;
+		int byte_offset = 2 * i + 2;  // to start at second pixel
 		if (is_green) {
 			uint16_t n = pre_pixels[byte_offset] | (pre_pixels[byte_offset + 1] << 8);
 			uint16_t w = pixels[byte_offset - 2] | (pixels[byte_offset - 1] << 8);
@@ -386,7 +497,7 @@ static HomeState_t seek_home(void) {
 
 	case HOME_START:
 		current_position = BOTTOM_LIMIT;
-		required_position = 0;
+		required_position = STEP_MINIMUM;
 		home_state = HOME_WAIT_HIGH;
 		motor_on();
 		break;
@@ -394,16 +505,16 @@ static HomeState_t seek_home(void) {
 	case HOME_WAIT_HIGH:
 		if (photo_switch()) {
 			home_state = HOME_WAIT_N;
-			required_position = 0;
+			required_position = STEP_MINIMUM;
 			current_position = N_STEPS;
-		} else if (required_position == current_position) {
+		} else if (STEP_MATCH) {
 			home_state = HOME_FAILED;
 		}
 		break;
 
 	case HOME_WAIT_N:
-		if (required_position == current_position) {
-			current_position = 0;
+		if (STEP_MATCH) {
+			current_position = STEP_MINIMUM;
 			required_position = TOP_LIMIT;
 			home_state = HOME_WAIT_LOW;
 		}
@@ -411,10 +522,10 @@ static HomeState_t seek_home(void) {
 
 	case HOME_WAIT_LOW:
 		if (!photo_switch()) {
-			current_position = 0;
-			required_position = 0;
+			current_position = STEP_MINIMUM;
+			required_position = STEP_MINIMUM;
 			home_state = HOME_SUCCESS;
-		} else if (required_position == current_position) {
+		} else if (STEP_MATCH) {
 			home_state = HOME_FAILED;
 		}
 		break;
@@ -430,30 +541,16 @@ static HomeState_t seek_home(void) {
 static bool focus_step(void) {
 	//CyU3PDebugPrint(4, "focus_step: current_position: %d\r\n", current_position);
 
-#if 0
-	const uint8_t half_step[] = {
-		037, 037, 037,
-		033, 073, 023, 027,  022, 062, 032, 036,
-		033, 073, 023, 027,  022, 062, 032, 036
-	};
-#endif
-
 	// set new position demand, only if last position was reached
-	if (current_position == required_position) {
+	if (STEP_MATCH) {
 		return true;
 	}
 
 	// stepper patterns
 	const uint8_t full_step[] = {
-#if 1
 		//0354, 0344, 0345, 0355  // low
 		0323, 0322, 0332, 0333  // medium
 		//0310, 0300, 0301, 0311  // high
-#else
-		//0355, 0345, 0344, 0354  // low
-		0333, 0332, 0322, 0323  // medium
-		//0311, 0301, 0300, 0310,  // high
-#endif
 	};
 
 	// the current position only changes when the state value transitions to 1

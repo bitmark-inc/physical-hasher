@@ -601,8 +601,8 @@ static void usage(const char *message, ...) {
 		"Usage: %s [options]\n\n"
 		"Version 1.3\n"
 		"Options:\n"
-		"-d | --device name   Video device name [%s]\n"
 		"-h | --help          Print this message\n"
+		"-d | --device name   Video device name [%s]\n"
 		"-m | --mmap          Use memory mapped buffers [default]\n"
 		"-r | --read          Use read() calls\n"
 		"-u | --userp         Use application allocated buffers\n"
@@ -624,8 +624,8 @@ static const char short_options[] = "d:hmruo:ftc:b:s:n:l:";
 
 static const struct option
 long_options[] = {
-	{ "device",     required_argument, NULL, 'd' },
 	{ "help",       no_argument,       NULL, 'h' },
+	{ "device",     required_argument, NULL, 'd' },
 	{ "mmap",       no_argument,       NULL, 'm' },
 	{ "read",       no_argument,       NULL, 'r' },
 	{ "userp",      no_argument,       NULL, 'u' },

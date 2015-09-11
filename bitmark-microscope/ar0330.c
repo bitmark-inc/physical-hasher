@@ -19,6 +19,15 @@
 
 #define DEBUG_ENABLE 0
 
+// test mode -- uncomment only one for testing
+//           -- comment all for normal operation
+//#define TEST_MODE TEST_MODE_IDENTIFY
+//#define TEST_MODE TEST_MODE_RED
+//#define TEST_MODE TEST_MODE_GREEN_RED
+//#define TEST_MODE TEST_MODE_BLUE
+//#define TEST_MODE TEST_MODE_GREEN_BLUE
+//#define TEST_MODE TEST_MODE_GREEN_ALL
+
 
 // set pixel resolution: 8, 10 or 12
 // lanes: 2 or 4
@@ -151,32 +160,70 @@ static const sensor_data_t AR0330_PrimaryInitialisation[] = {
 #error "only 10 or 12 bit modes supported"
 #endif
 
-	// Timing_settings
-	{0x3002, 0x0216},               // y_addr_start = 534
-	{0x3004, 0x0346},               // x_addr_start = 838
-	{0x3006, 0x03F5},               // y_addr_end = 1013
-	{0x3008, 0x05C5},               // x_addr_end = 1477
-	{0x300A, 0x0508},               // frame_length_lines = 2579
-	{0x300C, 0x04DA},               // line_length_pck = 1242
-	{0x3012, 0x0304},               // coarse_integration_time = 1210
-	{0x3014, 0x0000},               // fine_integration_time = 0
-	{0x30A2, 0x0001},               // x_odd_inc = 1
-	{0x30A6, 0x0001},               // y_odd_inc = 1
-	{0x308C, 0x0216},               // y_addr_start_cb = 534
-	{0x308A, 0x0346},               // x_addr_start_cb = 838
-	{0x3090, 0x03F5},               // y_addr_end_cb = 1013
-	{0x308E, 0x05C5},               // x_addr_end_cb = 1477
-	{0x30AA, 0x0508},               // frame_length_lines_cb = 2579
-	{0x303E, 0x04DA},               // line_length_pck_cb = 1242
-	{0x3016, 0x0304},               // coarse_integration_time_cb = 1554
-	{0x3018, 0x0000},               // fine_integration_time_cb = 0
-	{0x30AE, 0x0001},               // x_odd_inc_cb = 1
-	{0x30A8, 0x0001},               // y_odd_inc_cb = 1
+
+// IMPORTANT NOTE:
+//
+//   I did not see thin in the data sheet, but determined it experimentally.
+//
+//   Pixel order if the vertical start is:
+//
+//     even: GRGR..., bgbg...
+//     odd:  bgbg..., RGRG...
+//
+// The capture is coded for GRGR..., bgbg...  so keep starts even.
+
+//
+// VGA settings
+//
+// 640x480 @ 60Hz
+// NOTE: values MUST be even
+#define X_VGA_RG 838
+#define Y_VGA_RG 534
+	{0x3004, X_VGA_RG},             // x address start  - this is red pixel
+	{0x3008, X_VGA_RG + 640 - 1},   // x address end
+	{0x3002, Y_VGA_RG},             // y address start  - this is red/green line
+	{0x3006, Y_VGA_RG + 480 - 1},   // y address end
+
+	{0x30A2,      1},               // x odd inc (No Skip)
+	{0x30A6,      1},               // y odd inc (No Skip)
+
+	{0x300C,    640 +  6},          // the number of pixel clock periods in one line time
+	{0x300A,    480 + 12},          // the number of complete lines(rows) in the frame timing
+
+	{0x3014,      0},               // fine integration time
+	{0x3012,   1349},               // coarse integration time
+	{0x3042,      0},               // extra delay
+
+	// [cb] VGA
+
+	{0x308A, X_VGA_RG},             // [cb] x address start  - this is red pixel
+	{0x308E, X_VGA_RG + 640 - 1},   // [cb] x address end
+	{0x308C, Y_VGA_RG},             // [cb] y address start  - this is red/green line
+	{0x3090, Y_VGA_RG + 480 - 1},   // [cb] y address end
+
+	{0x30AE,      1},               // [cb] x odd inc (No Skip)
+	{0x30A8,      1},               // [cb] y odd inc (No Skip)
+
+	{0x303E,    640 +  6},          // [cb] the number of pixel clock periods in one line time
+	{0x30AA,    480 + 12},          // [cb] the number of complete lines(rows) in the frame timing
+
+	{0x3018,      0},               // [cb] fine integration time
+	{0x3016,   1349},               // [cb] coarse integration time
+
+
+	//{0x3012, 0x0304},               // coarse_integration_time = 1210
+	//{0x3016, 0x0304},               // coarse_integration_time_cb = 1554
+
+	// general configuration
 	{0x3040, 0x0000},               // read_mode = 0
 	{0x3042, 0x0130},               // extra_delay = 85
 
 	{0x3028, 0x0010},               // row_speed
-	{0x3064, 0x1902},               // smia_test
+#if 0
+	{0x3064, 0x1902},               // smia_test (embedded data)
+#else
+	{0x3064, 0x1802},               // smia_test (no embedded data)
+#endif
 
 	{0x301E, 0x00a8},               // data_pedestal
 
@@ -187,7 +234,6 @@ static const sensor_data_t AR0330_PrimaryInitialisation[] = {
 	{0x30C4, 0x0080},               // global_gain_cb = 1x
 	{0x30BA, 0x000C},               // digital_ctrl = no dither
 
-	{0x301A, 0x0050},               // reset_register = lock
 	{SENSOR_DELAY, 5},
 };
 
@@ -195,57 +241,49 @@ static const sensor_data_t AR0330_PrimaryInitialisation[] = {
 //
 // 720p setting
 //
-// 1280 * 720 @ 60 fps
+// 1280x720 @ 60 fps
+// NOTE: values MUST be even
+#define X_720_RG 518
+#define Y_720_RG 418
 static const sensor_data_t sensor_720p_regs[] = {
-	{0x3004,    518},               // x address start
-	{0x3008,   1797},               // x address end
-	{0x3002,    418},               // y address start
-	{0x3006,   1137},               // y address end
+	{0x3004, X_720_RG},             // x address start  - this is red pixel
+	{0x3008, X_720_RG + 1280 - 1},  // x address end
+	{0x3002, Y_720_RG},             // y address start  - this is red/green line
+	{0x3006, Y_720_RG + 720 - 1},   // y address end
 
 	{0x30A2,      1},               // x odd inc (No Skip)
 	{0x30A6,      1},               // y odd inc (No Skip)
 
-	{0x3040, 0x0000},               // read mode
 	{0x300C,   1280 +  6},          // the number of pixel clock periods in one line time
 	{0x300A,    720 + 12},          // the number of complete lines(rows) in the frame timing
 
 	{0x3014,      0},               // fine integration time
 	{0x3012,   1349},               // coarse integration time
 	{0x3042,      0},               // extra delay
-
-#if 0
-	{SENSOR_DELAY, 10},
-	{0x301A, 0x0058},               // reset_register = lock
-	{SENSOR_DELAY, 10},
-#endif
 };
 
 //
 // 1080p settings
 //
-// 1920 * 1080 @ 30 fps EIS
+// 1920x1080 @ 30 fps EIS
+// NOTE: values MUST be even
+#define X_1080_RG 198
+#define Y_1080_RG 238
 static const sensor_data_t sensor_1080p_regs[] = {
-	{0x3004,    198},               // x address start
-	{0x3008,   2117},               // x address end
-	{0x3002,    238},               // y address start
-	{0x3006,   1317},               // y address end
+	{0x3004, X_1080_RG},            // x address start  - this is red pixel
+	{0x3008, X_1080_RG + 1920 - 1}, // x address end
+	{0x3002, Y_1080_RG},            // y address start  - this is red/green line
+	{0x3006, Y_1080_RG + 1080 - 1}, // y address end
 
 	{0x30A2,      1},               // x odd inc (No Skip)
 	{0x30A6,      1},               // y odd inc (No Skip)
 
-	{0x3040, 0x0000},               // read mode
 	{0x300C,   1920 +  6},          // the number of pixel clock periods in one line time
 	{0x300A,   1080 + 12},          // the number of complete lines(rows) in the frame timing
 
 	{0x3014,      0},               // fine integration time
 	{0x3012,   1349},               // coarse integration time
 	{0x3042,      0},               // extra delay
-
-#if 0
-	{SENSOR_DELAY, 10},
-	{0x301A, 0x0058},               // reset_register = lock
-	{SENSOR_DELAY, 10},
-#endif
 };
 
 
@@ -253,28 +291,24 @@ static const sensor_data_t sensor_1080p_regs[] = {
 // 5M pixel settings
 //
 // 2304 X 1296
+// NOTE: values MUST be even
+#define X_5M_RG 6
+#define Y_5M_RG 120
 static const sensor_data_t sensor_5MP_regs[] = {
-	{0x3004,      6},               // x address start
-	{0x3008,   2309},               // x address end
-	{0x3002,    120},               // y address start
-	{0x3006,   1415},               // y address end
+	{0x3004, X_5M_RG},              // x address start  - this is red pixel
+	{0x3008, X_5M_RG + 2304 - 1},   // x address end
+	{0x3002, Y_5M_RG},              // y address start  - this is red/green line
+	{0x3006, Y_5M_RG + 1296 - 1},   // y address end
 
 	{0x30A2,      1},               // x odd inc (No Skip)
 	{0x30A6,      1},               // y odd inc (No Skip)
 
-	{0x3040, 0x0000},               // read mode
 	{0x300c,   2304 +  6},          // the number of pixel clock periods in one line time
 	{0x300A,   1296 + 12},          // the number of complete lines(rows) in the frame timing
 
 	{0x3014,      0},               // fine integration time
 	{0x3012,   1349},               // coarse integration time
 	{0x3042,      0},               // extra delay
-
-#if 0
-	{SENSOR_DELAY, 10},
-	{0x301A, 0x0058},               // reset_register = lock
-	{SENSOR_DELAY, 10},
-#endif
 };
 
 
@@ -448,157 +482,7 @@ void AR0330_Base_Config(void) {
 	// set up focus system
 	Focus_Initialise();
 
-	// SPI configuration
-#define SPI_ENABLE 0
-#if SPI_ENABLE
-	CyU3PReturnStatus_t status = CyU3PSpiInit();
-	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "AR0330_Base_Config: SPI init error = %d 0x%x\r\n", status, status);
-	}
-
-	// cpha:cpol  0:0=mode0 .. 1:1=mode3
-	CyU3PSpiConfig_t SPI_config = {
-		.isLsbFirst = CyFalse,
-		.cpha = CyTrue,         // Slave samples: Low→high
-		.cpol = CyTrue,         // SCK idle: high
-		.ssnPol = CyFalse,      // SSN is active low
-		.ssnCtrl = CY_U3P_SPI_SSN_CTRL_HW_EACH_WORD,
-		.leadTime = CY_U3P_SPI_SSN_LAG_LEAD_HALF_CLK,  // time between SSN assertion and first SCLK edge
-		.lagTime  = CY_U3P_SPI_SSN_LAG_LEAD_HALF_CLK,  // time between the last SCK edge to SSN de-assertion
-		.clock = 1500000,       // clock frequency in Hz
-		.wordLen = 8            // bits
-	};
-	status = CyU3PSpiSetConfig(&SPI_config, NULL);
-	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "AR0330_Base_Config: SPI set config error = %d 0x%x\r\n", status, status);
-	}
-
-	// enable the stepper driver chip
-	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyTrue);
-	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "AR0330_Base_Config: enable motor driver error = %d 0x%x\r\n", status, status);
-	}
-	CyU3PThreadSleep(50);
-	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyFalse);
-	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "AR0330_Base_Config: enable motor driver error = %d 0x%x\r\n", status, status);
-	}
-	CyU3PSpiDisableBlockXfer(CyTrue, CyTrue);
-	CyU3PThreadSleep(5);
-
-#if 1
-	// some test data
-	const uint8_t idle[] = {0xff, 0xff, 0xff, 0xff};
-
-#define SPI_Send(b) ({                                                  \
-			for (int i = 0; i < sizeof(b); ++i) {           \
-				CyU3PSpiTransmitWords((uint8_t *)&b[i], 1); \
-				CyU3PThreadSleep(10);                   \
-			}                                               \
-		})
-
-	for (int k = 0; k < 10; ++k) {
-		CyU3PDebugPrint(4, "Try: %d\r\n", k);
-
-		// just testing
-		SPI_Send(idle);
-		CyU3PThreadSleep(500);
-
-		int n = 0;
-		while (!check_photo_switch()) {
-			step(1);
-			++n;
-			if (n > 100) {
-				CyU3PDebugPrint(4, "under focus\r\n");
-				return;
-			}
-		}
-
-		for (int i = 0; i < 10; ++i) {
-			step(1);
-		}
-
-		n = 0;
-		while (check_photo_switch()) {
-			step(-1);
-			++n;
-			if (n > 200) {
-				CyU3PDebugPrint(4, "over focus\r\n");
-				return;
-			}
-		}
-
-		CyU3PDebugPrint(4, "***HOME achieved\007\r\n");
-		CyU3PThreadSleep(1000);
-
-		for (int j = 0; j < 5; ++j) {
-			for (int i = 0; i < 50; ++i) {
-				step(-1);
-			}
-			for (int i = 0; i < 50; ++i) {
-				step(1);
-			}
-		}
-		for (int i = 0; i < 70; ++i) {
-			step(-1);
-		}
-
-		SPI_Send(idle);
-		CyU3PThreadSleep(3500);
-	}
-#else
-	// some test data
-	const uint8_t idle[] = {0xff, 0xff, 0xff, 0xff};
-
-	const uint8_t full_fwd_step[] = {
-		//0355, 0345, 0344, 0354 // low
-		0333, 0332, 0322, 0323 // medium
-		//0311, 0301, 0300, 0310, // high
-	};
-
-	const uint8_t full_rev_step[] = {
-		//0354, 0344, 0345, 0355  // low
-		0323, 0322, 0332, 0333  // medium
-		//0310, 0300, 0301, 0311  // high
-	};
-
-#define SPI_Send(b) ({                                                 \
-			for (int i = 0; i < sizeof(b); ++i) {           \
-				CyU3PSpiTransmitWords((uint8_t *)&b[i], 1); \
-				CyU3PThreadSleep(10);                   \
-				check_photo_switch();                   \
-			}                                               \
-		})
-
-	// just testing
-	SPI_Send(idle);
-	CyU3PThreadSleep(500);
-	for (int j = 0; j < 20; ++j) {
-		p_n = 0;
-		p_i = 1;
-		CyU3PDebugPrint(4, "AR0330_Base_Config: Fwd: %d\r\n", j);
-		for (int i = 0; i < 36; ++i) {
-			SPI_Send(full_fwd_step);
-		}
-		p_n = 0;
-		p_i = -1;
-		CyU3PDebugPrint(4, "AR0330_Base_Config: Rev: %d\r\n", j);
-		for (int i = 0; i < 36; ++i) {
-			SPI_Send(full_rev_step);
-		}
-	}
-	SPI_Send(idle);
-#endif
-	// disable the stepper driver chip
-	status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyTrue);
-	if (CY_U3P_SUCCESS != status) {
-		CyU3PDebugPrint(4, "AR0330_Base_Config: enable motor driver error = %d 0x%x\r\n", status, status);
-	}
-#endif
-
-
 	// sensor configuration
-
 	SENSOR_WRITE_ARRAY(AR0330_PrimaryInitialisation);
 
 	// display versions
@@ -664,15 +548,70 @@ void AR0330_Power_Down(void) {
 }
 
 
+// possible test modes
+#define TEST_MODE_IDENTIFY     1
+#define TEST_MODE_RED          2
+#define TEST_MODE_GREEN_RED    3
+#define TEST_MODE_BLUE         4
+#define TEST_MODE_GREEN_BLUE   5
+#define TEST_MODE_GREEN_ALL    6
+
 void AR0330_Power_Up(void) {
 	CyU3PDebugPrint(4, "AR0330_Power_Up\r\n");
 
 	// set test mode
-	sensor_write(0x3070, 0x0000);
-	sensor_write(0x3072, 0x0180 + 'R'); // red
-	sensor_write(0x3074, 0x0280 + 'G'); // green (in red row)
-	sensor_write(0x3076, 0x0380 + 'b'); // blue
-	sensor_write(0x3078, 0x0480 + 'g'); // green (in blue row)
+#if defined(TEST_MODE)
+	sensor_write(0x301E, 0x00a8);            // data_pedestal
+	sensor_write(0x3070, 0x0001);            // set test mode
+
+#define pedestal 0x80
+#define full (0x0fff - pedestal)
+#define low  (0x001f + pedestal)
+
+#if TEST_MODE == TEST_MODE_IDENTIFY
+	sensor_write(0x3072, 0x01aa + pedestal); // red
+	sensor_write(0x3074, 0x02bb + pedestal); // green (in red row)
+	sensor_write(0x3076, 0x03cc + pedestal); // blue
+	sensor_write(0x3078, 0x04dd + pedestal); // green (in blue row)
+
+#elif TEST_MODE == TEST_MODE_RED
+	sensor_write(0x3072, full);              // red
+	sensor_write(0x3074, low);               // green (in red row)
+	sensor_write(0x3076, low);               // blue
+	sensor_write(0x3078, low);               // green (in blue row)
+
+#elif TEST_MODE == TEST_MODE_GREEN_RED
+	sensor_write(0x3072, low);               // red
+	sensor_write(0x3074, full);              // green (in red row)
+	sensor_write(0x3076, low);               // blue
+	sensor_write(0x3078, low);               // green (in blue row)
+
+#elif TEST_MODE == TEST_MODE_BLUE
+	sensor_write(0x3072, low);               // red
+	sensor_write(0x3074, low);               // green (in red row)
+	sensor_write(0x3076, full);              // blue
+	sensor_write(0x3078, low);               // green (in blue row)
+
+#elif TEST_MODE == TEST_MODE_GREEN_BLUE
+	sensor_write(0x3072, low);               // red
+	sensor_write(0x3074, low);               // green (in red row)
+	sensor_write(0x3076, low);               // blue
+	sensor_write(0x3078, full);              // green (in blue row)
+
+#elif TEST_MODE == TEST_MODE_GREEN_ALL
+	sensor_write(0x3072, low);               // red
+	sensor_write(0x3074, full);              // green (in red row)
+	sensor_write(0x3076, low);               // blue
+	sensor_write(0x3078, full);              // green (in blue row)
+
+#else
+#error "undefined test mode"
+#endif
+
+#else
+	// normal mode
+	sensor_write(0x3070, 0x0000);            // disable test mode
+#endif
 
 	// start streaming
 	//sensor_write(0x301a, 0x005c);
@@ -737,8 +676,9 @@ void AR0330_SetContrast(int32_t contrast) {
 		return; // ignore invalid values
 	}
 	current_contrast = contrast;
-	uint16_t gain = analog_gain[contrast];
-	sensor_write(0x3060, gain);  // analog_gain
+	uint16_t gain = analog_gain[contrast] & 0x3f;
+	// 6 bit fields: cb=13..8  ca=5..0
+	sensor_write(0x3060, (gain << 8) | gain);  // analog_gain_cb | analog_gain
 }
 
 

@@ -17,13 +17,19 @@ ANIMATION_OFFSET ?= +0+0
 ANIMATION_EXTRACT = ${ANIMATION_SIZE}${ANIMATION_OFFSET}
 
 
-CAPTURE_OPTS = -c "${FRAMES}" -t
-CAPTURE_OPTS += -o "${FRAMES_OUT}"
-CAPTURE_OPTS += -d "${VIDEO_DEVICE}"
-CAPTURE_OPTS += --brightness="${BRIGHTNESS}"
-CAPTURE_OPTS += --sharpness="${SHARPNESS}"
-CAPTURE_OPTS += --contrast="${CONTRAST}"
-CAPTURE_OPTS += --leds="${LEDS}"
+CAPTURE_OPTS = -c '${FRAMES}' -t
+CAPTURE_OPTS += -o '${FRAMES_OUT}'
+CAPTURE_OPTS += -d '${VIDEO_DEVICE}'
+CAPTURE_OPTS += --brightness='${BRIGHTNESS}'
+CAPTURE_OPTS += --sharpness='${SHARPNESS}'
+CAPTURE_OPTS += --contrast='${CONTRAST}'
+CAPTURE_OPTS += --leds='${LEDS}'
+
+CREATE_PNG_OPTS = --prefix='frame'
+CREATE_PNG_OPTS += --verbose
+CREATE_PNG_OPTS += --slider
+CREATE_PNG_OPTS += --number
+
 
 CFLAGS += -std=gnu99 -Wall -Werror
 
@@ -39,7 +45,7 @@ capture: capture.c
 	${CC} ${CFLAGS} -o '$@' '$<' ${LFLAGS}
 
 create-png: create-png.c
-	${CC} ${CFLAGS}  -o '$@' '$<' $$(pkg-config --cflags --libs libpng12)
+	${CC} ${CFLAGS}  -o '$@' '$<' $$(pkg-config --cflags --libs libpng12) ${LFLAGS}
 
 list-controls: list-controls.c
 	${CC} ${CFLAGS} -o '$@' '$<' ${LFLAGS}
@@ -67,7 +73,7 @@ cap: capture
 
 .PHONY: dec
 dec: create-png
-	./create-png
+	./create-png ${CREATE_PNG_OPTS} '${FRAMES_OUT}'
 
 
 .PHONY: full
