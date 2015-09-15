@@ -10,20 +10,8 @@
 #include <bsd/string.h>
 #include <getopt.h>
 
+#include "ahd_bayer.h"
 
-// coloured pixel
-typedef struct {
-	uint16_t red;
-	uint16_t green;
-	uint16_t blue;
-} pixel_t;
-
-// image
-typedef struct {
-	pixel_t *pixels;
-	size_t width;
-	size_t height;
-} bitmap_t;
 
 // image processing oprions
 typedef struct {
@@ -38,13 +26,9 @@ static const char *prefix = "frame";
 static int verbose = 0; // incremented by --verbose / -v
 
 // prototypes
-static pixel_t *pixel_at(bitmap_t *bitmap, int x, int y);
-static int save_png_to_file(bitmap_t *bitmap, const char *path);
-static uint16_t average_red(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d);
-static uint16_t average_green(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d);
-static uint16_t average_blue(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d);
-static void fill(bitmap_t *frame, int start_x, int start_y, int width, int height, uint16_t red, uint16_t green, uint16_t blue);
-static void number(int value, bitmap_t *frame, int start_x, int start_y, int width, int height);
+static bool write_png(const ahd_pixel_t *image, int width, int height, const char *path);
+static void fill(ahd_pixel_t *image, int x1, int y1, int x2, int y2, int width, int height, uint16_t red, uint16_t green, uint16_t blue);
+static void number(int value, ahd_pixel_t *image, int start_x, int start_y, int size, int width, int height);
 static int make_frames(int start, int limit, image_options_t options, const char *output_prefix, const char *input_file);
 
 
@@ -173,97 +157,55 @@ int main(int argc, char **argv) {
 }
 
 
-// Given "bitmap", this returns the pixel of bitmap at the point ("x", "y")
+static bool write_png(const ahd_pixel_t *image, const int width, const int height, const char *path) {
 
-static pixel_t *pixel_at(bitmap_t *bitmap, int x, int y) {
-	return bitmap->pixels + bitmap->width * y + x;
-}
+	bool rc = false; // assume failure
 
-// Write "bitmap" to a PNG file specified by "path"; returns 0 on success, non-zero on error
+	const int depth = 8 * sizeof(ahd_pixel_t);       // number of bits in a pixel
 
-static int save_png_to_file(bitmap_t *bitmap, const char *path) {
-	FILE *fp;
-	png_structp png_ptr = NULL;
-	png_infop info_ptr = NULL;
-	size_t x, y;
-	png_byte **row_pointers = NULL;
-	// "status" contains the return value of this function. At first
-	// it is set to a value which means 'failure'. When the routine
-	// has finished its work, it is set to a value which means
-	// 'success'
-	int status = -1;
-	// The following number is set by trial and error only. I cannot
-	// see where it it is documented in the libpng manual.
-
-	int pixel_size = 3*2;  // 3 colours @ 2 bytes
-	int depth = 16;
-
-	fp = fopen(path, "wb");
-	if (!fp) {
+	FILE *fp = fopen(path, "wb");
+	if (NULL == fp) {
 		goto fopen_failed;
 	}
 
-	png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-	if (png_ptr == NULL) {
+	png_structp png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+	if (NULL == png_ptr) {
 		goto png_create_write_struct_failed;
 	}
 
-	info_ptr = png_create_info_struct(png_ptr);
-	if (info_ptr == NULL) {
+	png_infop info_ptr = png_create_info_struct(png_ptr);
+	if (NULL == info_ptr) {
 		goto png_create_info_struct_failed;
 	}
 
-	// Set up error handling
-
+	// error handling
 	if (setjmp(png_jmpbuf(png_ptr))) {
 		goto png_failure;
 	}
 
-	// Set image attributes
+	// image attributes
+	png_set_IHDR(png_ptr, info_ptr,
+		     width, height, depth,
+		     PNG_COLOR_TYPE_RGB,
+		     PNG_INTERLACE_NONE,
+		     PNG_COMPRESSION_TYPE_DEFAULT,
+		     PNG_FILTER_TYPE_DEFAULT);
 
-	png_set_IHDR(png_ptr,
-		      info_ptr,
-		      bitmap->width,
-		      bitmap->height,
-		      depth,
-		      PNG_COLOR_TYPE_RGB,
-		      PNG_INTERLACE_NONE,
-		      PNG_COMPRESSION_TYPE_DEFAULT,
-		      PNG_FILTER_TYPE_DEFAULT);
-
-	// Initialize rows of PNG
-
-	row_pointers = png_malloc(png_ptr, bitmap->height * sizeof(png_byte *));
-	for (y = 0; y < bitmap->height; ++y) {
-		png_byte *row =
-			png_malloc(png_ptr, sizeof(uint8_t) * bitmap->width * pixel_size);
-		row_pointers[y] = row;
-		for (x = 0; x < bitmap->width; ++x) {
-			pixel_t *pixel = pixel_at(bitmap, x, y);
-			*row++ = pixel->red;
-			*row++ = pixel->red >> 8;
-			*row++ = pixel->green;
-			*row++ = pixel->green >> 8;
-			*row++ = pixel->blue;
-			*row++ = pixel->blue >> 8;
-		}
+	// PNG row pointers
+	png_byte **row_pointers = png_malloc(png_ptr, height * sizeof(png_byte *));
+	for (size_t y = 0; y < height; ++y) {
+		row_pointers[y] = (png_byte *)&image[y * width * 3];  // R G B pixel order
 	}
 
-	// Write the image data to "fp"
-
+	// create PNG
 	png_init_io(png_ptr, fp);
 	png_set_rows(png_ptr, info_ptr, row_pointers);
 	png_write_png(png_ptr, info_ptr, PNG_TRANSFORM_IDENTITY, NULL);
 
-	// The routine has successfully written the file, so we set
-	// "status" to a value which indicates success
-
-	status = 0;
-
-	for (y = 0; y < bitmap->height; y++) {
-		png_free(png_ptr, row_pointers[y]);
-	}
+	// no need to free the actual rows as these are owned by the caller
 	png_free(png_ptr, row_pointers);
+
+	rc = true; // success
 
 png_failure:
 png_create_info_struct_failed:
@@ -271,106 +213,26 @@ png_create_info_struct_failed:
 png_create_write_struct_failed:
 	fclose(fp);
 fopen_failed:
-	return status;
+	return rc;  // success if true
 }
 
 
-static uint16_t average_red(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
-	int count = 0;
-	int sum = 0;
-	if (NULL != a) {
-		sum += (int)(a->red);
-		++count;
-	}
-	if (NULL != b) {
-		sum += (int)(b->red);
-		++count;
-	}
-	if (NULL != c) {
-		sum += (int)(c->red);
-		++count;
-	}
-	if (NULL != d) {
-		sum += (int)(d->red);
-		++count;
-	}
+// fill starting at (x1, y1) to  < (x2, y2) in RGB bitmap of size width, height
+static void fill(ahd_pixel_t *image, int x1, int y1, int x2, int y2, int width, int height, uint16_t red, uint16_t green, uint16_t blue) {
 
-	if (0 == count) {
-		return 0;
-	}
-	return sum / count;
-}
-
-
-static uint16_t average_green(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
-	int count = 0;
-	int sum = 0;
-	if (NULL != a) {
-		sum += (int)(a->green);
-		++count;
-	}
-	if (NULL != b) {
-		sum += (int)(b->green);
-		++count;
-	}
-	if (NULL != c) {
-		sum += (int)(c->green);
-		++count;
-	}
-	if (NULL != d) {
-		sum += (int)(d->green);
-		++count;
-	}
-
-	if (0 == count) {
-		return 0;
-	}
-	return sum / count;
-}
-
-
-static uint16_t average_blue(pixel_t *a, pixel_t *b, pixel_t *c, pixel_t *d) {
-	int count = 0;
-	int sum = 0;
-	if (NULL != a) {
-		sum += (int)(a->blue);
-		++count;
-	}
-	if (NULL != b) {
-		sum += (int)(b->blue);
-		++count;
-	}
-	if (NULL != c) {
-		sum += (int)(c->blue);
-		++count;
-	}
-	if (NULL != d) {
-		sum += (int)(d->blue);
-		++count;
-	}
-
-	if (0 == count) {
-		return 0;
-	}
-	return sum / count;
-}
-
-static void fill(bitmap_t *frame, int start_x, int start_y, int width, int height, uint16_t red, uint16_t green, uint16_t blue) {
-
-	int end_x = start_x + width;
-	int end_y = start_y + height;
-
-	for (int y = start_y; y < end_y; ++y) {
-		for (int x = start_x; x < end_x; ++x) {
-			pixel_t *pixel = pixel_at(frame, x, y);
-			pixel->red = red;
-			pixel->green = green;
-			pixel->blue = blue;
+	for (int y = y1; y < y2 && y < height; ++y) {
+		ahd_pixel_t *pixel = &image[3 * x1 + 3 * width * y];
+		for (int x = x1; x < x2 && x < width; ++x) {
+			*pixel++ = red;
+			*pixel++ = green;
+			*pixel++ = blue;
 		}
 	}
 }
 
-static void number(int value, bitmap_t *frame, int start_x, int start_y, int width, int height) {
+
+// stamp a 4 digit number into the bitmap
+static void number(int value, ahd_pixel_t *image, int start_x, int start_y, int size, int width, int height) {
 	static const uint16_t bitmaps[] = {
 		075557, // 0
 		026227, // 1
@@ -385,16 +247,17 @@ static void number(int value, bitmap_t *frame, int start_x, int start_y, int wid
 	};
 
 	int divisor = 1000;
+	value %= 9999;
 	for (int i = 0; i < 4; ++i, divisor /= 10) {
 		int d = value / divisor;
 		uint16_t bm = bitmaps[d % 10];
-		int x_begin = start_x + 4 * width * i;
-		for (int y = 0, ys = start_y; y < 5; ++y, ys += height) {
-			for (int x = 0, xs = x_begin; x < 3; ++x, xs += width) {
+		int x_begin = start_x + 4 * size * i;
+		for (int y = 0, ys = start_y; y < 5; ++y, ys += size) {
+			for (int x = 0, xs = x_begin; x < 3; ++x, xs += size) {
 				if (0 != (040000 & bm)) {
-					fill(frame, xs, ys, width, height, 0xff, 0xff, 0xff);
+					fill(image, xs, ys, xs + size, ys + size, width, height, 0xff, 0xff, 0xff);
 				} else {
-					fill(frame, xs, ys, width, height, 0, 0, 0);
+					fill(image, xs, ys, xs + size, ys + size, width, height, 0x00, 0x00, 0x00);
 				}
 				bm <<= 1;
 			}
@@ -414,16 +277,6 @@ static int make_frames(int start, int limit, image_options_t options, const char
 		printf("opened input file: '%s'\n", input_file);
 	}
 
-	bitmap_t frame;
-	frame.width = 1920;
-	frame.height = 1080;
-
-	frame.pixels = calloc(sizeof(pixel_t), frame.width * frame.height);
-	if (NULL == frame.pixels) {
-		usage("failed to allocate pixels");
-		return 0;
-	}
-
 	int rc = limit;
 	for (int count = start; (0 == limit) || (count < limit); ++count) {
 		char output_name[256];
@@ -434,18 +287,18 @@ static int make_frames(int start, int limit, image_options_t options, const char
 		}
 
 		// extract one frame from the input file
-		const int bytes_per_line = 1920 * 2;
-		uint8_t pixels[1080 * bytes_per_line];
+		const int width = 1920;
+		const int height = 1080;
+		ahd_pixel_t pixels[width * height];
 		if (1 != fread(pixels, sizeof(pixels), 1, fp)) {
 			rc = count;
 			break;
 		}
 
 		if (verbose > 2) {
-
 			for (int line = 0; line < 8; ++line) {
 				printf("line: %2d: ", line);
-				const uint8_t *p = &pixels[bytes_per_line * line];
+				const uint8_t *p = (uint8_t *)&pixels[width * line];
 				for (int col = 0; col < 8; ++col) {
 					printf(" %02x", *p++);
 				}
@@ -453,74 +306,10 @@ static int make_frames(int start, int limit, image_options_t options, const char
 			}
 		}
 
-		// even rows are: GRGR...
-		// odd  rows are: bgbg...
-		// note the case sensitive labelling:
-		//      the GREEN(G) pixels are on RED/GREEN rows
-		//      the green(g) pixels are on green/blue rows
-		pixel_t *pixel = frame.pixels;
-		uint8_t *in = pixels;
-		for (int y = 0; y < frame.height; ++y) {
-			if (0 == (y & 1)) {  // even: GRGR...
-				for (int x = 0; x < frame.width; ++x) {
-					uint16_t px = (uint16_t)(*in++);
-					px |= (uint16_t)(*in++) << 8;
-					if (0 == (x & 1)) {
-						pixel->green = px;
-					} else {
-						pixel->red = px;
-					}
-					++pixel;
-				}
-			} else { // odd: bgbg...
-				for (int x = 0; x < frame.width; ++x) {
-					uint16_t px = (uint16_t)(*in++);
-					px |= (uint16_t)(*in++) << 8;
-					if (0 == (x & 1)) {
-						pixel->blue = px;
-					} else {
-						pixel->green = px;
-					}
-					++pixel;
-				}
-			}
-		}
-
-		if (options.compensation) {
-			int hm1 = frame.height - 1;
-			int wm1 = frame.width - 1;
-			for (int y = 0; y < frame.height; ++y) {
-				for (int x = 0; x < frame.width; ++x) {
-					pixel_t *sw = (0   == y) || (0   == x) ? NULL : pixel_at(&frame, x - 1, y - 1);
-					pixel_t *s  = (0   == y)               ? NULL : pixel_at(&frame, x,     y - 1);
-					pixel_t *se = (0   == y) || (wm1 == x) ? NULL : pixel_at(&frame, x + 1, y - 1);
-					pixel_t *nw = (hm1 == y) || (0   == x) ? NULL : pixel_at(&frame, x - 1, y + 1);
-					pixel_t *n  = (hm1 == y)               ? NULL : pixel_at(&frame, x,     y + 1);
-					pixel_t *ne = (hm1 == y) || (wm1 == x) ? NULL : pixel_at(&frame, x + 1, y + 1);
-					pixel_t *w  = (0   == x)               ? NULL : pixel_at(&frame, x - 1, y    );
-					pixel_t *e  = (wm1 == x)               ? NULL : pixel_at(&frame, x + 1, y    );
-
-					pixel_t *pixel = pixel_at(&frame, x, y);
-
-					if (0 == (y & 1)) { // even line: GRGR...
-						if (0 == (x & 1)) {
-							pixel->blue = average_blue(n, s, NULL, NULL);
-							pixel->red  = average_red(w, e, NULL, NULL);
-						} else {
-							pixel->green = average_green(n, s, e, w);
-							pixel->blue  = average_blue(nw, ne, sw, se);
-						}
-					} else {             // odd line: bgbg...
-						if (0 == (x & 1)) {
-							pixel->green = average_green(n, s, e, w);
-							pixel->red   = average_red(nw, ne, sw, se);
-						} else {
-							pixel->blue = average_blue(w, e, NULL, NULL);
-							pixel->red  = average_red(n, s, NULL, NULL);
-						}
-					}
-				}
-			}
+		ahd_pixel_t image[3 * width * height];
+		if (!ahd_decode(pixels, width, height, image, BAYER_TILE_GRBG)) {
+			usage("failed to demosaic");
+			return 0;
 		}
 
 		if (verbose > 0) {
@@ -528,17 +317,16 @@ static int make_frames(int start, int limit, image_options_t options, const char
 		}
 
 		if (options.slider) {
-			fill(&frame, count + 0, 10, 20, 10, 0x00, 0x00, 0x00);
-			fill(&frame, count + 5, 10, 10, 10, 0xff, 0xff, 0xff);
+			fill(image, count + 0, 10, count + 20, 20, width, height, 0x00, 0x00, 0x00);
+			fill(image, count + 5, 10, count + 10, 20, width, height, 0xff, 0xff, 0xff);
 		}
 
 		if(options.number) {
-			number(count, &frame, 10, 30, 4, 4);
+			number(count, image, 10, 30, 4, width, height);
 		}
-		save_png_to_file(&frame, output_name);
+		write_png(image, width, height, output_name);
 	}
 
 	fclose(fp);
-	free(frame.pixels);
 	return rc;
 }

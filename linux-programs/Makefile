@@ -6,15 +6,17 @@ DOWNLOAD_FX3 = ../../../../cyusb_linux_1.0.4/src/download_fx3
 
 FRAMES ?= 300
 BRIGHTNESS ?= 0
-SHARPNESS ?= 0x0080
-CONTRAST ?= 10
+SHARPNESS ?= 0x00a0
+CONTRAST ?= 15
 LEDS ?= 0x0f
 FRAMES_OUT ?= frames.data
 
 ANIMATION_DELAY ?= 15
-ANIMATION_SIZE ?= 640x480
-ANIMATION_OFFSET ?= +0+0
+ANIMATION_SIZE ?= 300x300
+#ANIMATION_OFFSET ?= +0+0
+ANIMATION_OFFSET ?= +810+390
 ANIMATION_EXTRACT = ${ANIMATION_SIZE}${ANIMATION_OFFSET}
+ANIMATION_REPAGE = ${ANIMATION_SIZE}$(subst +,-,${ANIMATION_OFFSET})
 
 
 CAPTURE_OPTS = -c '${FRAMES}' -t
@@ -32,8 +34,10 @@ CREATE_PNG_OPTS += --number
 
 
 CFLAGS += -std=gnu99 -Wall -Werror
+CFLAGS += $(shell pkg-config --cflags)
 
 LFLAGS += -lbsd
+LFLAGS += $(shell pkg-config --libs libpng12)
 
 RM = rm -f
 
@@ -41,18 +45,28 @@ RM = rm -f
 .PHONY: all
 all: capture create-png list-controls test-leds
 
-capture: capture.c
-	${CC} ${CFLAGS} -o '$@' '$<' ${LFLAGS}
+CAPTURE_OBJECTS = capture.o
+capture: ${CAPTURE_OBJECTS}
+	${CC} ${CFLAGS} -o '$@' ${CAPTURE_OBJECTS} ${LFLAGS}
 
-create-png: create-png.c
-	${CC} ${CFLAGS}  -o '$@' '$<' $$(pkg-config --cflags --libs libpng12) ${LFLAGS}
+CREATE_PNG_OBJECTS = create-png.o
+CREATE_PNG_OBJECTS += ahd_bayer.o
+create-png:  ${CREATE_PNG_OBJECTS}
+	${CC} ${CFLAGS}  -o '$@' ${CREATE_PNG_OBJECTS} ${LFLAGS}
 
-list-controls: list-controls.c
-	${CC} ${CFLAGS} -o '$@' '$<' ${LFLAGS}
+LIST_CONTROLS_OBJECTS = list-controls.o
+list-controls: ${LIST_CONTROLS_OBJECTS}
+	${CC} ${CFLAGS} -o '$@' ${LIST_CONTROLS_OBJECTS} ${LFLAGS}
 
+TEST_LEDS_OBJECTS = test-leds.o
+test-leds: ${TEST_LEDS_OBJECTS}
+	${CC} ${CFLAGS} -o '$@'  ${TEST_LEDS_OBJECTS} ${LFLAGS}
 
-test-leds: test-leds.c
-	${CC} ${CFLAGS} -o '$@' '$<' ${LFLAGS}
+create-png.o: ahd_bayer.h
+ahd_bayer.o: ahd_bayer.h
+
+%.o: %.c
+	${CC} -c ${CFLAGS} -o '$@' '$<'
 
 
 .PHONY: led
@@ -80,12 +94,20 @@ dec: create-png
 .PHONY: full
 full:
 	${RM} animated_full.gif
-	convert -dispose previous -delay '${ANIMATION_DELAY}' -loop 0 'frame*.png' animated_full.gif
+	convert -dispose previous -delay '${ANIMATION_DELAY}' -loop 0 \
+	  -fill none -stroke black \
+	  -draw 'rectangle 99,539,201,541' \
+	  'frame*.png' animated_full.gif
 
 .PHONY: small
 small:
 	${RM} animated_small.gif
-	convert -dispose previous -delay '${ANIMATION_DELAY}' -loop 0 -page '${ANIMATION_SIZE}' -extract '${ANIMATION_EXTRACT}' 'frame*.png' animated_small.gif
+	convert -dispose previous -delay '${ANIMATION_DELAY}' -loop 0 \
+	  -repage '${ANIMATION_REPAGE}' \
+	  -extract '${ANIMATION_EXTRACT}' \
+	  -fill none -stroke black \
+	  -draw 'rectangle 99,149,201,151' \
+	  'frame*.png' animated_small.gif
 
 
 .PHONY: run
@@ -112,5 +134,6 @@ cheese: all
 
 .PHONY: clean
 clean:
+	${RM} *.o
 	${RM} frame*.png
 	${RM} animated*.gif
