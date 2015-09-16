@@ -17,7 +17,6 @@
 typedef struct {
 	bool slider;
 	bool number;
-	bool compensation;
 } image_options_t;
 
 // global variables
@@ -48,7 +47,6 @@ static void usage(const char *message, ...) {
 		"Options:\n"
 		"-h | --help          Print this message\n"
 		"-v | --verbose       Output messages\n"
-		"-d | --no-comp       Disable compensation\n"
 		"-s | --slider        Add slider\n"
 		"-n | --number        Add frame number\n"
 		"-p | --prefix T      Prefix [%s]\n"
@@ -67,7 +65,6 @@ long_options[] = {
 	{ "verbose",    no_argument,       NULL, 'v' },
 	{ "slider",     no_argument,       NULL, 's' },
 	{ "number",     no_argument,       NULL, 'n' },
-	{ "no-comp",    no_argument,       NULL, 'd' },
 	{ "prefix",     required_argument, NULL, 'p' },
 	{ "count",      required_argument, NULL, 'c' },
 	{ 0, 0, 0, 0 }
@@ -80,7 +77,6 @@ int main(int argc, char **argv) {
 	image_options_t options = {
 		.slider = true,
 		.number = true,
-		.compensation = true
 	};
 	int frame_count = 0;
 	for (;;) {
@@ -108,10 +104,6 @@ int main(int argc, char **argv) {
 
 		case 'n':
 			options.number = true;
-			break;
-
-		case 'd':
-			options.compensation = false;
 			break;
 
 		case 'p':

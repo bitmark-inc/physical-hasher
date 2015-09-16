@@ -14,7 +14,7 @@ FRAMES_OUT ?= frames.data
 ANIMATION_DELAY ?= 15
 ANIMATION_SIZE ?= 300x300
 #ANIMATION_OFFSET ?= +0+0
-ANIMATION_OFFSET ?= +810+390
+ANIMATION_OFFSET ?= +910+390
 ANIMATION_EXTRACT = ${ANIMATION_SIZE}${ANIMATION_OFFSET}
 ANIMATION_REPAGE = ${ANIMATION_SIZE}$(subst +,-,${ANIMATION_OFFSET})
 
@@ -91,12 +91,15 @@ dec: create-png
 	./create-png ${CREATE_PNG_OPTS} '${FRAMES_OUT}'
 
 
+
+#BOX = 909,539,1011,541
+BOX = 767,539,1153,541
 .PHONY: full
 full:
 	${RM} animated_full.gif
 	convert -dispose previous -delay '${ANIMATION_DELAY}' -loop 0 \
 	  -fill none -stroke black \
-	  -draw 'rectangle 99,539,201,541' \
+	  -draw 'rectangle ${BOX}' \
 	  'frame*.png' animated_full.gif
 
 .PHONY: small
