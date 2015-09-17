@@ -18,11 +18,14 @@
 #include "macros.h"
 
 
-#define FOCUS_LINE_LENGTH 100
-#define DELTA_CONTRAST    200
+// enable extra debugging output
+#define DEBUG_CONTRAST 0
+#define DEBUG_FOCUS    0
 
-// pixels are 16 bit little endian and need 1 extra pixel at front and back
-#define MAXIMUM_PIXEL_BYTES ((FOCUS_LINE_LENGTH + 2) * 2)
+// raw pixel count (must be multiple of 4
+//#define FOCUS_LINE_LENGTH 100
+#define FOCUS_LINE_LENGTH 384
+
 
 // Event flags
 #define EVENT_ABORT   (1 << 0)
@@ -54,35 +57,42 @@ static int current_position = 0;
 static int required_position = 0;
 
 // pixel buffers
+#if FOCUS_LINE_LENGTH % 4 != 0
+#error "FOCUS_LINE_LENGTH must be multiple of 4"
+#endif
 // to capture the middle line, and a one pixel border all around
-//(aligned to RED so first usable pixel is GREEN(on red line) (same as first frame pixel)
-static uint8_t pre_pixels[MAXIMUM_PIXEL_BYTES];   // gbgb...
-static uint8_t pixels[MAXIMUM_PIXEL_BYTES];       // RGRG...
-static uint8_t post_pixels[MAXIMUM_PIXEL_BYTES];  // gbgb...
+static uint16_t pre_pixels[FOCUS_LINE_LENGTH];   // bgbg...
+static uint16_t pixels[FOCUS_LINE_LENGTH];       // GRGR...
+static uint16_t post_pixels[FOCUS_LINE_LENGTH];  // bgbg...
 // to hold the converted greyscale
-static uint16_t grey[FOCUS_LINE_LENGTH];
+static uint16_t grey[FOCUS_LINE_LENGTH / 4];
 
 typedef struct {
 	struct {
 		int begin;
 		int end;
 	} offsets[3];  // byte offset of "border" pixel
-	bool is_green;
 } StartPoint_t;
 
+#define MAXIMUM_PIXEL_BYTES (2 * FOCUS_LINE_LENGTH)
 #define LINE_BYTES   (2 * 1920)
 #define CENTRE_LINE   540
 #define LINE_OFFSET  ((LINE_BYTES - MAXIMUM_PIXEL_BYTES) / 2)
 #define BEGIN_OFFSET(offset) ((CENTRE_LINE - (offset)) * LINE_BYTES + LINE_OFFSET)
 #define END_OFFSET(offset) (BEGIN_OFFSET((offset)) + MAXIMUM_PIXEL_BYTES)
+#if 1 == CENTRE_LINE % 2
+#error "CENTRE_LINE must align to an even GRGR... line"
+#endif
+#if 1 == BEGIN_OFFSET(0) % 2
+#error "BEGIN_OFFSET(0) must align to an even green pixel"
+#endif
 
 static const StartPoint_t start_1080 = {
 	.offsets = {
 		{.begin = BEGIN_OFFSET(-1), .end = END_OFFSET(-1)},
 		{.begin = BEGIN_OFFSET(0),  .end = END_OFFSET(0)},
 		{.begin = BEGIN_OFFSET(1),  .end = END_OFFSET(1)}
-	},
-	.is_green = true // == value of "second" pixel in pixels
+	}
 };
 
 static const StartPoint_t *current_start = &start_1080;
@@ -107,7 +117,8 @@ typedef enum {
 	FOCUS_IDLE,
 	FOCUS_HOME,
 	FOCUS_OUT,
-	FOCUS_HOLD
+	FOCUS_HOLD,
+	FOCUS_TEST
 } FocusState_t;
 
 static FocusState_t focus_state;
@@ -166,7 +177,7 @@ void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const siz
 			length = MAXIMUM_PIXEL_BYTES;
 		}
 		size_t offset = current_start->offsets[0].begin - buffer_begin;
-		CyU3PMemCopy(pre_pixels, (uint8_t *)&buffer[offset], length);
+		CyU3PMemCopy((uint8_t *)pre_pixels, (uint8_t *)&buffer[offset], length);
 
 	} else if (current_start->offsets[0].end > buffer_begin && current_start->offsets[0].end <= buffer_end) {
 		// have trailing bytes of data
@@ -175,8 +186,7 @@ void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const siz
 			length = MAXIMUM_PIXEL_BYTES;
 		}
 		size_t offset = MAXIMUM_PIXEL_BYTES - length;
-		CyU3PMemCopy(&pre_pixels[offset], (uint8_t *)buffer, length);
-
+		CyU3PMemCopy((uint8_t *)&pre_pixels[offset], (uint8_t *)buffer, length);
 	}
 
 	if (current_start->offsets[1].begin >= buffer_begin && current_start->offsets[1].begin < buffer_end) {
@@ -186,7 +196,7 @@ void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const siz
 			length = MAXIMUM_PIXEL_BYTES;
 		}
 		size_t offset = current_start->offsets[1].begin - buffer_begin;
-		CyU3PMemCopy(pixels, (uint8_t *)&buffer[offset], length);
+		CyU3PMemCopy((uint8_t *)pixels, (uint8_t *)&buffer[offset], length);
 
 	} else if (current_start->offsets[1].end > buffer_begin && current_start->offsets[1].end <= buffer_end) {
 		// have trailing bytes of data
@@ -195,8 +205,7 @@ void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const siz
 			length = MAXIMUM_PIXEL_BYTES;
 		}
 		size_t offset = MAXIMUM_PIXEL_BYTES - length;
-		CyU3PMemCopy(&pixels[offset], (uint8_t *)buffer, length);
-
+		CyU3PMemCopy((uint8_t *)&pixels[offset], (uint8_t *)buffer, length);
 	}
 
 	if (current_start->offsets[2].begin >= buffer_begin && current_start->offsets[2].begin < buffer_end) {
@@ -206,7 +215,7 @@ void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const siz
 			length = MAXIMUM_PIXEL_BYTES;
 		}
 		size_t offset = current_start->offsets[2].begin - buffer_begin;
-		CyU3PMemCopy(post_pixels, (uint8_t *)&buffer[offset], length);
+		CyU3PMemCopy((uint8_t *)post_pixels, (uint8_t *)&buffer[offset], length);
 
 		if (MAXIMUM_PIXEL_BYTES == length) {
 			// signal capture complete
@@ -223,7 +232,7 @@ void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const siz
 			length = MAXIMUM_PIXEL_BYTES;
 		}
 		size_t offset = MAXIMUM_PIXEL_BYTES - length;
-		CyU3PMemCopy(&post_pixels[offset], (uint8_t *)buffer, length);
+		CyU3PMemCopy((uint8_t *)&post_pixels[offset], (uint8_t *)buffer, length);
 
 		// signal capture complete
 		uint32_t rc = CyU3PEventSet(&focus_event, EVENT_PIXELS, CYU3P_EVENT_OR);
@@ -320,10 +329,12 @@ static void focus_process(uint32_t input) {
 	uint32_t current_contrast = 0;
 	uint32_t focus_position = STEP_MINIMUM;
 
-#define FRAME_DIV_1 0x00
-#define FRAME_DIV_2 0x01
-#define FRAME_DIV_4 0x03
-#define FRAME_DIV_8 0x07
+	enum {
+		FRAME_DIV_1 = 0x00,
+		FRAME_DIV_2 = 0x01,
+		FRAME_DIV_4 = 0x03,
+		FRAME_DIV_8 = 0x07
+	};
 
 	// this is used to step on a multiple of frame_count
 	uint8_t frame_modulus_count = 0;
@@ -355,16 +366,12 @@ static void focus_process(uint32_t input) {
 		} else if (event & EVENT_PIXELS) {
 			if (FOCUS_HOME != focus_state) {
 				pixel_compensation();
-				uint32_t c = pixel_contrast();
-				if (c != current_contrast) {
-					current_contrast = c;
-					CyU3PDebugPrint(4, "focus contrast = %d\r\n", current_contrast);
-				}
+				current_contrast = pixel_contrast();
 			}
 
 		} else if (event & EVENT_FRAME) {
 
-#if 0
+#if DEBUG_CONTRAST
 			// debug
 			CyU3PDebugPrint(4, "FS-: %x %x %x %x\r\n", pre_pixels[0], pre_pixels[1], pre_pixels[2], pre_pixels[3]);
 			CyU3PDebugPrint(4, "FS0: %x %x %x %x\r\n", pixels[0], pixels[1], pixels[2], pixels[3]);
@@ -396,8 +403,12 @@ static void focus_process(uint32_t input) {
 
 				case HOME_SUCCESS:
 					CyU3PDebugPrint(4, "focus_home success\r\n");
+#if FOCUS_TEST
+					focus_state = FOCUS_TEST;
+#else
 					focus_state = FOCUS_OUT;
-					frame_modulus_mask = FRAME_DIV_4;
+#endif
+					frame_modulus_mask = FRAME_DIV_1;
 					required_position = STEP_MAXIMUM;
 					focus_position = STEP_MINIMUM;
 				break;
@@ -414,27 +425,40 @@ static void focus_process(uint32_t input) {
 					CyU3PDebugPrint(4, "focus_hold: %d\r\n", required_position);
 				} else {
 					if (current_contrast > maximum_contrast) {
-						maximum_contrast = current_contrast;
-						focus_position = current_position;
+						uint32_t d = current_contrast - maximum_contrast;
+						uint32_t m = (maximum_contrast >> 4) + 1;
+						if (d > m) {
+							maximum_contrast = current_contrast;
+							focus_position = current_position;
+							CyU3PDebugPrint(4, "contrast^ = %d   @ %d\r\n", maximum_contrast, focus_position);
+						}
 					}
 				}
 				break;
 
 			case FOCUS_HOLD:
-#if 0
-				// just for a test
+				break;
+
+			case FOCUS_TEST: // just for a test
+#if FOCUS_TEST
+			{
+				static bool old_ps = false;
+				bool ps = photo_switch();
+				if (old_ps != ps) {
+					CyU3PDebugPrint(4, "focus_test: ps = %d\r\n", ps);
+					old_ps = ps;
+				}}
 				if (STEP_MATCH) {
 					if (STEP_MINIMUM == required_position) {
 						required_position = STEP_MAXIMUM;
 					} else {
 						required_position = STEP_MINIMUM;
 					}
-					CyU3PDebugPrint(4, "focus_hold: %d\r\n", required_position);
-
+					CyU3PDebugPrint(4, "focus_test: %d\r\n", required_position);
 				}
-#endif
-				break;
 			}
+#endif
+			break;
 		}
 	}
 }
@@ -442,30 +466,22 @@ static void focus_process(uint32_t input) {
 
 static void pixel_compensation(void) {
 
-	bool is_green = current_start->is_green;
+	// pre:     bgb g bgb g ...
+	// pixels:  GRG R GRG R ...
+	// post:    bgb g bgb g ...
+	// grey:     0  -  1  - ...
 
-	for (int i = 0; i < SIZE_OF_ARRAY(grey); ++i) {
-		int byte_offset = 2 * i + 2;  // to start at second pixel
-		if (is_green) {
-			uint16_t n = pre_pixels[byte_offset] | (pre_pixels[byte_offset + 1] << 8);
-			uint16_t w = pixels[byte_offset - 2] | (pixels[byte_offset - 1] << 8);
-			uint16_t c = pixels[byte_offset] | (pixels[byte_offset + 1] << 8);
-			uint16_t e = pixels[byte_offset + 2] | (pixels[byte_offset + 3] << 8);
-			uint16_t s = post_pixels[byte_offset] | (post_pixels[byte_offset + 1] << 8);
-			grey[i] = (n + s) / 2 + (w + e) / 2 + c;
-		} else {
-			uint16_t nw = pre_pixels[byte_offset - 2] | (pre_pixels[byte_offset - 1] << 8);
-			uint16_t n  = pre_pixels[byte_offset] | (pre_pixels[byte_offset + 1] << 8);
-			uint16_t ne = pre_pixels[byte_offset + 2] | (pre_pixels[byte_offset + 3] << 8);
-			uint16_t w  = pixels[byte_offset - 2] | (pixels[byte_offset - 1] << 8);
-			uint16_t c  = pixels[byte_offset] | (pixels[byte_offset + 1] << 8);
-			uint16_t e  = pixels[byte_offset + 2] | (pixels[byte_offset + 3] << 8);
-			uint16_t sw = post_pixels[byte_offset - 2] | (post_pixels[byte_offset - 1] << 8);
-			uint16_t s  = post_pixels[byte_offset] | (post_pixels[byte_offset + 1] << 8);
-			uint16_t se = post_pixels[byte_offset + 2] | (post_pixels[byte_offset + 3] << 8);
-			grey[i] = (nw + ne + sw + se) / 4 + (n + w + e + s) / 4 + c;
-		}
-		is_green = !is_green;
+	for (int i = 0, j = 0; i < SIZE_OF_ARRAY(grey); ++i, j += 4) {
+		uint16_t nw = pre_pixels[j];
+		uint16_t n  = pre_pixels[j + 1];
+		uint16_t ne = pre_pixels[j + 2];
+		uint16_t w  = pixels[j];
+		uint16_t c  = pixels[j + 1];
+		uint16_t e  = pixels[j + 2];
+		uint16_t sw = post_pixels[j];
+		uint16_t s  = post_pixels[j + 1];
+		uint16_t se = post_pixels[j + 2];
+		grey[i] = (nw + ne + sw + se + n + w + e + s + 4 * c) / 4;
 	}
 }
 
@@ -568,13 +584,16 @@ static bool focus_step(void) {
 // this is to detect if the motor is in its home position
 static bool photo_switch(void) {
 	CyBool_t value = CyFalse;
-	CyU3PReturnStatus_t rc = CyU3PGpioSimpleGetValue(FOCUS_POSITION, &value);
-	return (CY_U3P_SUCCESS == rc) && (CyTrue == value);
+	CyU3PReturnStatus_t status = CyU3PGpioSimpleGetValue(FOCUS_POSITION, &value);
+	if (CY_U3P_SUCCESS != status) {
+		CyU3PDebugPrint (4, "photo_switch: error: %d 0x%x\r\n", status, status);
+	}
+	return (CY_U3P_SUCCESS == status) && (CyTrue == value);
 }
 
 static void motor_on(void) {
 	CyU3PReturnStatus_t status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyFalse);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint (4, "motor_on: error: %d 0x%x\r\n", status, status);
 	}
 	CyU3PThreadSleep(5);
@@ -582,7 +601,7 @@ static void motor_on(void) {
 
 static void motor_off(void) {
 	CyU3PReturnStatus_t status = CyU3PGpioSetValue(MOTOR_DRIVER_EN, CyTrue);
-	if (status != CY_U3P_SUCCESS) {
+	if (CY_U3P_SUCCESS != status) {
 		CyU3PDebugPrint (4, "motor_off: error: %d 0x%x\r\n", status, status);
 	}
 	CyU3PThreadSleep(1);
