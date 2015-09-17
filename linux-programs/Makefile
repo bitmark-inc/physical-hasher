@@ -34,7 +34,7 @@ CREATE_PNG_OPTS += --number
 
 
 CFLAGS += -std=gnu99 -Wall -Werror
-CFLAGS += $(shell pkg-config --cflags)
+CFLAGS += $(shell pkg-config --cflags libpng12)
 
 LFLAGS += -lbsd
 LFLAGS += $(shell pkg-config --libs libpng12)
