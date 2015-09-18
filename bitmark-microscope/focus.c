@@ -20,7 +20,7 @@
 
 // enable extra debugging output
 #define DEBUG_CONTRAST 0
-#define DEBUG_FOCUS    0
+#define DEBUG_FOCUS    1
 
 // raw pixel count (must be multiple of 4
 //#define FOCUS_LINE_LENGTH 100
@@ -53,8 +53,8 @@ static CyU3PThread focus_thread;
 static CyU3PEvent focus_event;
 
 // motor state
-static int current_position = 0;
-static int required_position = 0;
+static volatile int current_position = 0;
+static volatile int required_position = 0;
 
 // pixel buffers
 #if FOCUS_LINE_LENGTH % 4 != 0
@@ -109,7 +109,7 @@ typedef enum {
 	HOME_SUCCESS
 } HomeState_t;
 
-static HomeState_t home_state = HOME_START;
+static volatile HomeState_t home_state = HOME_START;
 
 
 // focus stages
@@ -160,11 +160,24 @@ void Focus_Start(void) {
 // this buffer is not synchronised with the image lines
 static int buffer_begin = 0;
 static int buffer_end   = 0;
-void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const size_t buffer_length) {
+static volatile uint8_t embed_nibbles[9];
+static volatile uint8_t embed_flag;
+#define EMBED_PIXEL 8192
+#define EMBED_START (2 * EMBED_PIXEL + 1)
+#define EMBED_LIMIT (EMBED_START + 2 * sizeof(embed_nibbles))
+ void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const size_t buffer_length) {
 
 	if (0 == buffer_number) {
 		buffer_begin = 0;
 		buffer_end = buffer_length;
+		if (0 != embed_flag && buffer_length >= EMBED_LIMIT) {
+			uint8_t *p = (uint8_t *)&buffer[EMBED_START]; // pointer to a high byte of pixel 1024
+			for (int i = 0; i < sizeof(embed_nibbles); ++i) {
+				*p |= embed_nibbles[i] & 0xf0;
+				p += 2;
+			}
+			embed_flag = 0;
+		}
 	} else {
 		buffer_begin += buffer_length;
 		buffer_end += buffer_length;
@@ -329,17 +342,6 @@ static void focus_process(uint32_t input) {
 	uint32_t current_contrast = 0;
 	uint32_t focus_position = STEP_MINIMUM;
 
-	enum {
-		FRAME_DIV_1 = 0x00,
-		FRAME_DIV_2 = 0x01,
-		FRAME_DIV_4 = 0x03,
-		FRAME_DIV_8 = 0x07
-	};
-
-	// this is used to step on a multiple of frame_count
-	uint8_t frame_modulus_count = 0;
-	uint8_t frame_modulus_mask = FRAME_DIV_1;
-
 	for (;;) {
 		uint32_t event = 0;
 		CyU3PEventGet(&focus_event, EVENT_MASK, CYU3P_EVENT_OR_CLEAR, &event, CYU3P_WAIT_FOREVER);
@@ -357,8 +359,6 @@ static void focus_process(uint32_t input) {
 				current_contrast = 0;
 				current_position = STEP_MINIMUM;
 				required_position = STEP_MINIMUM;
-				frame_modulus_count = 0;
-				frame_modulus_mask = FRAME_DIV_1;
 				focus_state = FOCUS_HOME;
 				home_state = HOME_START;
 			}
@@ -371,6 +371,19 @@ static void focus_process(uint32_t input) {
 
 		} else if (event & EVENT_FRAME) {
 
+			if (0 == embed_flag) {
+				embed_nibbles[0] = 0xf0 & (current_position <<  4);
+				embed_nibbles[1] = 0xf0 & (current_position <<  0);
+				embed_nibbles[2] = 0xf0 & (current_contrast <<  4);
+				embed_nibbles[3] = 0xf0 & (current_contrast <<  0);
+				embed_nibbles[4] = 0xf0 & (current_contrast >>  4);
+				embed_nibbles[5] = 0xf0 & (current_contrast >>  8);
+				embed_nibbles[6] = 0xf0 & (current_contrast << 12);
+				embed_nibbles[7] = 0xf0 & (current_contrast << 16);
+				embed_nibbles[8] = 0xa0;
+				embed_flag = 1;
+			}
+
 #if DEBUG_CONTRAST
 			// debug
 			CyU3PDebugPrint(4, "FS-: %x %x %x %x\r\n", pre_pixels[0], pre_pixels[1], pre_pixels[2], pre_pixels[3]);
@@ -381,11 +394,6 @@ static void focus_process(uint32_t input) {
 			CyU3PDebugPrint(4, "contrast = %d\r\n", c);
 #endif
 
-
-			++frame_modulus_count;
-			if (0 != (frame_modulus_count & frame_modulus_mask)) {
-				continue;
-			}
 
 			focus_step();
 
@@ -403,12 +411,11 @@ static void focus_process(uint32_t input) {
 
 				case HOME_SUCCESS:
 					CyU3PDebugPrint(4, "focus_home success\r\n");
-#if FOCUS_TEST
+#if DEBUG_FOCUS
 					focus_state = FOCUS_TEST;
 #else
 					focus_state = FOCUS_OUT;
 #endif
-					frame_modulus_mask = FRAME_DIV_1;
 					required_position = STEP_MAXIMUM;
 					focus_position = STEP_MINIMUM;
 				break;
@@ -440,25 +447,26 @@ static void focus_process(uint32_t input) {
 				break;
 
 			case FOCUS_TEST: // just for a test
-#if FOCUS_TEST
-			{
-				static bool old_ps = false;
-				bool ps = photo_switch();
-				if (old_ps != ps) {
-					CyU3PDebugPrint(4, "focus_test: ps = %d\r\n", ps);
-					old_ps = ps;
-				}}
-				if (STEP_MATCH) {
-					if (STEP_MINIMUM == required_position) {
-						required_position = STEP_MAXIMUM;
-					} else {
-						required_position = STEP_MINIMUM;
+#if DEBUG_FOCUS
+				{
+					static bool old_ps = false;
+					bool ps = photo_switch();
+					if (old_ps != ps) {
+						CyU3PDebugPrint(4, "focus_test: ps = %d\r\n", ps);
+						old_ps = ps;
 					}
-					CyU3PDebugPrint(4, "focus_test: %d\r\n", required_position);
+					if (STEP_MATCH) {
+						if (STEP_MINIMUM == required_position) {
+							required_position = STEP_MAXIMUM;
+						} else {
+							required_position = STEP_MINIMUM;
+						}
+						CyU3PDebugPrint(4, "focus_test: %d\r\n", required_position);
+					}
 				}
-			}
 #endif
-			break;
+				break;
+			}
 		}
 	}
 }
@@ -556,7 +564,11 @@ static HomeState_t seek_home(void) {
 // returns true at hold_position matched
 static bool focus_step(void) {
 	//CyU3PDebugPrint(4, "focus_step: current_position: %d\r\n", current_position);
-
+#if 0
+	if (0 == current_position % 10) {
+		CyU3PDebugPrint(4, "focus_step: current_position: %d\r\n", current_position);
+	}
+#endif
 	// set new position demand, only if last position was reached
 	if (STEP_MATCH) {
 		return true;
