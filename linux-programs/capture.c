@@ -5,7 +5,9 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
+#if defined(__linux__)
 #include <bsd/string.h>
+#endif
 #include <assert.h>
 #include <getopt.h>
 #include <fcntl.h>
@@ -324,7 +326,7 @@ static void init_mmap(int fd) {
 
 	CLEAR(req);
 
-	req.count = 4;
+	req.count = 16;
 	req.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
 	req.memory = V4L2_MEMORY_MMAP;
 
@@ -397,14 +399,14 @@ static void init_userp(int fd, unsigned int buffer_size) {
 		}
 	}
 
-	buffers = calloc(4, sizeof(*buffers));
+	buffers = calloc(req.count, sizeof(*buffers));
 
 	if (!buffers) {
 		fprintf(stderr, "Out of memory\n");
 		exit(EXIT_FAILURE);
 	}
 
-	for (n_buffers = 0; n_buffers < 4; ++n_buffers) {
+	for (n_buffers = 0; n_buffers < req.count; ++n_buffers) {
 		buffers[n_buffers].length = buffer_size;
 		buffers[n_buffers].start = malloc(buffer_size);
 

@@ -4,10 +4,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
-#include <errno.h>
+#if defined(__linux__)
 #include <bsd/string.h>
+#endif
+#include <errno.h>
 #include <getopt.h>
 
 #include "ahd_bayer.h"
@@ -17,6 +20,8 @@
 typedef struct {
 	bool slider;
 	bool number;
+	bool embed;
+	int offset;
 } image_options_t;
 
 // global variables
@@ -51,13 +56,14 @@ static void usage(const char *message, ...) {
 		"-n | --number        Add frame number\n"
 		"-p | --prefix T      Prefix [%s]\n"
 		"-c | --count N       Limit number of frames [no-limit]\n"
+		"-e | --embed N       Embedded data offset\n"
 		"",
 		program_name, prefix);
 	exit(EXIT_FAILURE);
 }
 
 
-static const char short_options[] = "hvdsnp:c:";
+static const char short_options[] = "hvdsnp:c:e:";
 
 static const struct option
 long_options[] = {
@@ -67,6 +73,7 @@ long_options[] = {
 	{ "number",     no_argument,       NULL, 'n' },
 	{ "prefix",     required_argument, NULL, 'p' },
 	{ "count",      required_argument, NULL, 'c' },
+	{ "embed",      required_argument, NULL, 'e' },
 	{ 0, 0, 0, 0 }
 };
 
@@ -77,6 +84,8 @@ int main(int argc, char **argv) {
 	image_options_t options = {
 		.slider = true,
 		.number = true,
+		.embed = false,
+		.offset = 0
 	};
 	int frame_count = 0;
 	for (;;) {
@@ -107,24 +116,36 @@ int main(int argc, char **argv) {
 			break;
 
 		case 'p':
-		{
-			size_t n = strlen(optarg) + 1;
-			if (n < 2) {
-				usage("missing output file name");
+			{
+				size_t n = strlen(optarg) + 1;
+				if (n < 2) {
+					usage("missing output file name");
+				}
+				char *prefix = malloc(n);
+				if (NULL == prefix) {
+					usage("unable to allocate memory for prefix: '%s'", optarg);
+				}
+				strlcpy(prefix, optarg, n);
 			}
-			char *prefix = malloc(n);
-			if (NULL == prefix) {
-				usage("unable to allocate memory for prefix: '%s'", optarg);
-			}
-			strlcpy(prefix, optarg, n);
-		}
-		break;
+			break;
 
 		case 'c':
 			errno = 0;
 			frame_count = strtol(optarg, NULL, 0);
 			if (0 != errno) {
 				usage("invalid count '%s': %d, %s", optarg, errno, strerror(errno));
+			}
+			break;
+
+		case 'e':
+			{
+				errno = 0;
+				int embed_offset = strtol(optarg, NULL, 0);
+				if (0 != errno || embed_offset < 0) {
+					usage("invalid embed value  '%s': %d, %s", optarg, errno, strerror(errno));
+				}
+				options.embed = true;
+				options.offset = embed_offset;
 			}
 			break;
 
@@ -238,9 +259,12 @@ static void number(int value, ahd_pixel_t *image, int start_x, int start_y, int 
 		035311  // 9
 	};
 
-	int divisor = 1000;
-	value %= 9999;
-	for (int i = 0; i < 4; ++i, divisor /= 10) {
+	int divisor = 1000000;
+	value %= 9999999;
+
+	fill(image, start_x, start_y, start_x + size*4*7, start_y + size*5, width, height, 0x00, 0x00, 0x00);
+
+	for (int i = 0; i < 7; ++i, divisor /= 10) {
 		int d = value / divisor;
 		uint16_t bm = bitmaps[d % 10];
 		int x_begin = start_x + 4 * size * i;
@@ -248,8 +272,6 @@ static void number(int value, ahd_pixel_t *image, int start_x, int start_y, int 
 			for (int x = 0, xs = x_begin; x < 3; ++x, xs += size) {
 				if (0 != (040000 & bm)) {
 					fill(image, xs, ys, xs + size, ys + size, width, height, 0xff, 0xff, 0xff);
-				} else {
-					fill(image, xs, ys, xs + size, ys + size, width, height, 0x00, 0x00, 0x00);
 				}
 				bm <<= 1;
 			}
@@ -268,6 +290,16 @@ static int make_frames(int start, int limit, image_options_t options, const char
 	if (verbose > 1) {
 		printf("opened input file: '%s'\n", input_file);
 	}
+	const int width = 1920;
+	const int height = 1080;
+	ahd_pixel_t *pixels = malloc(width * height * sizeof(ahd_pixel_t));
+	if (NULL == pixels) {
+		usage("failed to malloc pixels");
+	}
+	ahd_pixel_t *image = malloc(3 * width * height * sizeof(ahd_pixel_t));
+	if (NULL == pixels) {
+		usage("failed to malloc image");
+	}
 
 	int rc = limit;
 	for (int count = start; (0 == limit) || (count < limit); ++count) {
@@ -279,10 +311,7 @@ static int make_frames(int start, int limit, image_options_t options, const char
 		}
 
 		// extract one frame from the input file
-		const int width = 1920;
-		const int height = 1080;
-		ahd_pixel_t pixels[width * height];
-		if (1 != fread(pixels, sizeof(pixels), 1, fp)) {
+		if (width * height != fread(pixels, sizeof(ahd_pixel_t), width * height, fp)) {
 			rc = count;
 			break;
 		}
@@ -298,7 +327,35 @@ static int make_frames(int start, int limit, image_options_t options, const char
 			}
 		}
 
-		ahd_pixel_t image[3 * width * height];
+		uint8_t steps = 0;
+		uint32_t contrast = 0;
+		bool embed = false;
+		if (options.embed) {
+			uint8_t nibbles[9];
+			if (verbose > 2) {
+				printf("embed: ");
+			}
+			for (int i = 0; i < sizeof(nibbles); ++i) {
+				ahd_pixel_t *p = &pixels[options.offset + i]  ;
+				nibbles[i] = 0x0f & (*p >> 12);
+				*p &= 0x0fff;
+				if (verbose > 2) {
+					printf(" %01x", nibbles[i]);
+				}
+			}
+			steps = (nibbles[0] << 0) | (nibbles[1] << 4);
+			contrast = (nibbles[2] << 0)
+				| (nibbles[3] << 4)
+				| (nibbles[4] << 8)
+				| (nibbles[5] << 12)
+				| (nibbles[6] << 16)
+				| (nibbles[7] << 20);
+			embed = 0x0a == nibbles[8];
+			if (verbose > 2) {
+				printf("  %s\n", embed ? "EMBED" : "-");
+			}
+		}
+
 		if (!ahd_decode(pixels, width, height, image, BAYER_TILE_GRBG)) {
 			usage("failed to demosaic");
 			return 0;
@@ -315,6 +372,14 @@ static int make_frames(int start, int limit, image_options_t options, const char
 
 		if(options.number) {
 			number(count, image, 10, 30, 4, width, height);
+		}
+
+		if(embed) {
+			const int steps_scale = 4;
+			fill(image, 10, 50, 12 + 255 * steps_scale, 60, width, height, 0x00, 0x00, 0x00);
+			fill(image, 11, 51, steps*steps_scale + 11, 59, width, height, 0xff, 0xff, 0xff);
+			number((int)steps, image, 300, 30, 4, width, height);
+			number(contrast, image, 500, 30, 4, width, height);
 		}
 		write_png(image, width, height, output_name);
 	}

@@ -6,7 +6,9 @@
 #include <stdbool.h>
 #include <stdarg.h>
 #include <string.h>
+#if defined(__linux__)
 #include <bsd/string.h>
+#endif
 #include <assert.h>
 #include <getopt.h>
 #include <fcntl.h>

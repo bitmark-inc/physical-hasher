@@ -31,13 +31,16 @@ CREATE_PNG_OPTS = --prefix='frame'
 CREATE_PNG_OPTS += --verbose
 CREATE_PNG_OPTS += --slider
 CREATE_PNG_OPTS += --number
+CREATE_PNG_OPTS += --embed='8192'
 
 
 CFLAGS += -std=gnu99 -Wall -Werror
 CFLAGS += $(shell pkg-config --cflags libpng12)
+CFLAGS += -g
 
 LFLAGS += -lbsd
 LFLAGS += $(shell pkg-config --libs libpng12)
+LFLAGS += -g
 
 RM = rm -f
 
