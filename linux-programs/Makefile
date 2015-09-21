@@ -36,11 +36,13 @@ CREATE_PNG_OPTS += --embed='8192'
 
 CFLAGS += -std=gnu99 -Wall -Werror
 CFLAGS += $(shell pkg-config --cflags libpng12)
-CFLAGS += -g
+#CFLAGS += -g
+CFLAGS += -O3
 
 LFLAGS += -lbsd
 LFLAGS += $(shell pkg-config --libs libpng12)
-LFLAGS += -g
+#LFLAGS += -g
+LFLAGS += -O3
 
 RM = rm -f
 
