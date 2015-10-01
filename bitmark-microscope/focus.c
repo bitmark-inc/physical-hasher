@@ -405,8 +405,12 @@ static void focus_process(uint32_t input) {
 				switch (seek_home()) {
 				case HOME_FAILED:
 					CyU3PDebugPrint(4, "focus_home failed\r\n");
+#if DEBUG_FOCUS
+					focus_state = FOCUS_TEST;
+#else
 					focus_state = FOCUS_IDLE;
 					motor_off();
+#endif
 					break;
 
 				case HOME_SUCCESS:
