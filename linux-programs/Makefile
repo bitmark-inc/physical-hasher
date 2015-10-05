@@ -33,14 +33,24 @@ CREATE_PNG_OPTS += --slider
 CREATE_PNG_OPTS += --number
 CREATE_PNG_OPTS += --embed='8192'
 
+OS := $(shell uname -s)
+
+ifeq (FreeBSD,${OS})
+CFLAGS += -I/usr/local/include
+LFLAGS += -L/usr/local/lib
+CC = gcc5
+endif
+
+ifeq (Linux,${OS})
+LFLAGS += -lbsd
+endif
 
 CFLAGS += -std=gnu99 -Wall -Werror
-CFLAGS += $(shell pkg-config --cflags libpng12)
+CFLAGS += $(shell pkg-config --cflags libpng)
 #CFLAGS += -g
 CFLAGS += -O3
 
-LFLAGS += -lbsd
-LFLAGS += $(shell pkg-config --libs libpng12)
+LFLAGS += $(shell pkg-config --libs libpng)
 #LFLAGS += -g
 LFLAGS += -O3
 
@@ -93,18 +103,14 @@ cap: capture
 
 .PHONY: dec
 dec: create-png
+	${RM} frame*.png
 	./create-png ${CREATE_PNG_OPTS} '${FRAMES_OUT}'
 
 
-
-#BOX = 909,539,1011,541
-BOX = 767,539,1153,541
 .PHONY: full
 full:
 	${RM} animated_full.gif
 	convert -dispose previous -delay '${ANIMATION_DELAY}' -loop 0 \
-	  -fill none -stroke black \
-	  -draw 'rectangle ${BOX}' \
 	  'frame*.png' animated_full.gif
 
 .PHONY: small
@@ -113,8 +119,6 @@ small:
 	convert -dispose previous -delay '${ANIMATION_DELAY}' -loop 0 \
 	  -repage '${ANIMATION_REPAGE}' \
 	  -extract '${ANIMATION_EXTRACT}' \
-	  -fill none -stroke black \
-	  -draw 'rectangle 99,149,201,151' \
 	  'frame*.png' animated_small.gif
 
 

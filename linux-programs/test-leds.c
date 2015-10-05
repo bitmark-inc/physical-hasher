@@ -39,6 +39,7 @@ static void usage(const char *message, ...)
 		 "options:\n"
 		 "-h | --help          this message\n"
 		 "-v | --verbose       verbose output\n"
+		 "-c | --count N       number of cycles\n"
 		 "-d | --device name   video device name [%s]\n"
 		 "", program_name, device_name);
 	exit(EXIT_FAILURE);
