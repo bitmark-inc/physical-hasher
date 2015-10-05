@@ -22,6 +22,9 @@
 #define DEBUG_CONTRAST 0
 #define DEBUG_FOCUS    1
 
+// to include the contrast code (0 removes all contrast pixel buffering)
+#define ENABLE_CONTRAST 0
+
 // raw pixel count (must be multiple of 4
 //#define FOCUS_LINE_LENGTH 100
 #define FOCUS_LINE_LENGTH 384
@@ -56,6 +59,11 @@ static CyU3PEvent focus_event;
 static volatile int current_position = 0;
 static volatile int required_position = 0;
 
+
+// variables and data for contrast
+// -------------------------------
+
+#if ENABLE_CONTRAST
 // pixel buffers
 #if FOCUS_LINE_LENGTH % 4 != 0
 #error "FOCUS_LINE_LENGTH must be multiple of 4"
@@ -96,6 +104,7 @@ static const StartPoint_t start_1080 = {
 };
 
 static const StartPoint_t *current_start = &start_1080;
+#endif
 
 
 // home position
@@ -125,8 +134,10 @@ static FocusState_t focus_state;
 
 // prototypes
 static void focus_process(uint32_t input);
+#if ENABLE_CONTRAST
 static void pixel_compensation(void);
 static uint32_t pixel_contrast(void);
+#endif
 static HomeState_t seek_home(void);
 static bool focus_step(void);
 static bool photo_switch(void);
@@ -165,7 +176,7 @@ static volatile uint8_t embed_flag;
 #define EMBED_PIXEL 8192
 #define EMBED_START (2 * EMBED_PIXEL + 1)
 #define EMBED_LIMIT (EMBED_START + 2 * sizeof(embed_nibbles))
- void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const size_t buffer_length) {
+void Focus_SetLine(const int32_t buffer_number, const uint8_t *buffer, const size_t buffer_length) {
 
 	if (0 == buffer_number) {
 		buffer_begin = 0;
@@ -183,6 +194,7 @@ static volatile uint8_t embed_flag;
 		buffer_end += buffer_length;
 	}
 
+#if ENABLE_CONTRAST
 	if (current_start->offsets[0].begin >= buffer_begin && current_start->offsets[0].begin < buffer_end) {
 		// have some/all of the data
 		size_t length = buffer_end - current_start->offsets[0].begin;
@@ -253,6 +265,7 @@ static volatile uint8_t embed_flag;
 			CyU3PDebugPrint(4, "Focus_Setline: EventSet error: %d 0x%x\r\n", rc, rc);
 		}
 	}
+#endif
 }
 
 
@@ -365,8 +378,10 @@ static void focus_process(uint32_t input) {
 
 		} else if (event & EVENT_PIXELS) {
 			if (FOCUS_HOME != focus_state) {
+#if ENABLE_CONTRAST
 				pixel_compensation();
 				current_contrast = pixel_contrast();
+#endif
 			}
 
 		} else if (event & EVENT_FRAME) {
@@ -476,6 +491,7 @@ static void focus_process(uint32_t input) {
 }
 
 
+#if ENABLE_CONTRAST
 static void pixel_compensation(void) {
 
 	// pre:     bgb g bgb g ...
@@ -496,8 +512,10 @@ static void pixel_compensation(void) {
 		grey[i] = (nw + ne + sw + se + n + w + e + s + 4 * c) / 4;
 	}
 }
+#endif
 
 
+#if ENABLE_CONTRAST
 static uint32_t pixel_contrast(void) {
 	uint32_t contrast = 0;
 	for (int i = 1; i < SIZE_OF_ARRAY(grey); ++i) {
@@ -509,6 +527,7 @@ static uint32_t pixel_contrast(void) {
 	}
 	return contrast;
 }
+#endif
 
 
 // process to locate the home position
