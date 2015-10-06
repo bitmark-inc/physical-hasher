@@ -1,0 +1,70 @@
+#!/bin/sh
+
+# default video device
+VIDEO_DEVICE=/dev/video1
+
+# default frame count
+FRAMES=300
+
+# default image configuration
+BRIGHTNESS=0
+SHARPNESS=0x00a0
+CONTRAST=15
+LEDS=0x0f
+
+# GIF animation creation and delay
+ANIMATE=no
+ANIMATION_DELAY=10
+
+FRAMES_OUT=frames.data
+FIRMWARE=./bitmark-microscope.img
+
+# override above configuration
+[ -e run-test.config ] ||  echo 'Warning: configuration file not found: using defaults'
+[ -e run-test.config ] && . ./run-test.config
+
+# set frame count from first arument (if present)
+[ -z "$1" ] || FRAMES="$1"
+
+
+# download the firmware if no video device present
+[ -e "${VIDEO_DEVICE}" ] || ./download_fx3 -t RAM -i "${FIRMWARE}"
+
+# if just downloaded, wait for device to initialise
+for i in 1 2 3 4 5 6 7 8 9 10
+do
+  [ -e "${VIDEO_DEVICE}" ] && break
+  printf '.'
+  sleep 1
+done
+sleep 1
+printf '.\n'
+
+# capture some frames to a binary data file
+echo 'Start capturing'
+rm -f "${FRAMES_OUT}"
+./capture --ten \
+          --device="${VIDEO_DEVICE}" \
+          --count="${FRAMES}" \
+          --brightness="${BRIGHTNESS}" \
+          --sharpness="${SHARPNESS}" \
+          --contrast="${CONTRAST}" \
+          --leds="${LEDS}" \
+          --output="${FRAMES_OUT}"
+
+# decode binary dump into separate PNG frames (remove old frames first)
+echo 'Decoding frames to PNG'
+rm -f frames*.png
+./create-png --prefix='frame' --verbose --slider --number --embed='8192' "${FRAMES_OUT}"
+
+# if animation is enabled
+if [ X"yes" = X"${ANIMATE}" ]
+then
+  echo 'Building GIF animation'
+  # convert all frames to animated GIF needs imagemagick
+  rm -f animated_full.gif
+  convert -dispose previous -delay "${ANIMATION_DELAY}" -loop 0 'frame*.png' animated_full.gif
+
+  # display the result
+  eog animated_full.gif
+fi

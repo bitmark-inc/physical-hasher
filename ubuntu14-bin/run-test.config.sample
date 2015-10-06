@@ -1,0 +1,13 @@
+# sample configuration file
+
+VIDEO_DEVICE=/dev/video1
+
+FRAMES=300
+
+BRIGHTNESS=0
+SHARPNESS=0x00a0
+CONTRAST=15
+LEDS=0x03
+
+ANIMATE=yes
+ANIMATION_DELAY=10
