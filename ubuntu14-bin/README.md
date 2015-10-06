@@ -39,6 +39,14 @@ rate this can be up to 100 frames.
 Once zero is established the stepper will ramp 0→60→0 in a repeating
 pattern, this moves the lens a total of 0.8mm.
 
+To run an alternative firmware add to run-test.config a line like:
+
+~~~
+FIRMWARE=./bitmark-microscope-no-focus.img
+~~~
+
+This firmware only sets forcus motor to zero, and does not move it
+after that.
 
 ## data format
 
