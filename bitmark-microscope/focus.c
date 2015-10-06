@@ -20,7 +20,11 @@
 
 // enable extra debugging output
 #define DEBUG_CONTRAST 0
-#define DEBUG_FOCUS    1
+#define DEBUG_FOCUS    0
+
+// 0 => stop focus after home is found
+// 1 => run focus process
+#define ENABLE_FOCUS    1
 
 // to include the contrast code (0 removes all contrast pixel buffering)
 #define ENABLE_CONTRAST 0
@@ -432,8 +436,10 @@ static void focus_process(uint32_t input) {
 					CyU3PDebugPrint(4, "focus_home success\r\n");
 #if DEBUG_FOCUS
 					focus_state = FOCUS_TEST;
-#else
+#elif FOCUS_ENABLE
 					focus_state = FOCUS_OUT;
+#else
+					focus_state = FOCUS_HOLD;
 #endif
 					required_position = STEP_MAXIMUM;
 					focus_position = STEP_MINIMUM;
@@ -463,6 +469,7 @@ static void focus_process(uint32_t input) {
 				break;
 
 			case FOCUS_HOLD:
+				motor_off();
 				break;
 
 			case FOCUS_TEST: // just for a test
