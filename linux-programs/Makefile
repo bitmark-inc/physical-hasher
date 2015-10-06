@@ -60,19 +60,25 @@ RM = rm -f
 .PHONY: all
 all: capture create-png list-controls test-leds
 
+CLEAN_FILES =
+
+CLEAN_FILES += capture
 CAPTURE_OBJECTS = capture.o
 capture: ${CAPTURE_OBJECTS}
 	${CC} ${CFLAGS} -o '$@' ${CAPTURE_OBJECTS} ${LFLAGS}
 
+CLEAN_FILES += create-png
 CREATE_PNG_OBJECTS = create-png.o
 CREATE_PNG_OBJECTS += ahd_bayer.o
 create-png:  ${CREATE_PNG_OBJECTS}
 	${CC} ${CFLAGS}  -o '$@' ${CREATE_PNG_OBJECTS} ${LFLAGS}
 
+CLEAN_FILES += list-controls
 LIST_CONTROLS_OBJECTS = list-controls.o
 list-controls: ${LIST_CONTROLS_OBJECTS}
 	${CC} ${CFLAGS} -o '$@' ${LIST_CONTROLS_OBJECTS} ${LFLAGS}
 
+CLEAN_FILES += test-leds
 TEST_LEDS_OBJECTS = test-leds.o
 test-leds: ${TEST_LEDS_OBJECTS}
 	${CC} ${CFLAGS} -o '$@'  ${TEST_LEDS_OBJECTS} ${LFLAGS}
@@ -146,6 +152,7 @@ cheese: all
 
 .PHONY: clean
 clean:
-	${RM} *.o
+	${RM} *.o ${CLEAN_FILES}
+	${RM} frames.data
 	${RM} frame*.png
 	${RM} animated*.gif
