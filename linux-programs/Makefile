@@ -52,7 +52,7 @@ CFLAGS += -O3
 
 LFLAGS += $(shell pkg-config --libs libpng)
 #LFLAGS += -g
-LFLAGS += -O3
+
 
 RM = rm -f
 
@@ -81,7 +81,7 @@ list-controls: ${LIST_CONTROLS_OBJECTS}
 CLEAN_FILES += test-leds
 TEST_LEDS_OBJECTS = test-leds.o
 test-leds: ${TEST_LEDS_OBJECTS}
-	${CC} ${CFLAGS} -o '$@'  ${TEST_LEDS_OBJECTS} ${LFLAGS}
+	${CC} ${CFLAGS} -o '$@' ${TEST_LEDS_OBJECTS} ${LFLAGS}
 
 create-png.o: ahd_bayer.h
 ahd_bayer.o: ahd_bayer.h
