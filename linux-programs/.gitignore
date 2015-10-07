@@ -1,0 +1,7 @@
+*.png
+*.gif
+*.data
+capture
+create-png
+list-controls
+test-leds
