@@ -75,6 +75,68 @@ static void *allocate(size_t length) {
 	return p;
 }
 
+// returns the default value
+#define CHECK(fd, control) check_control(fd, #control, control)
+static uint32_t check_control(int fd, const char *name, uint32_t id) {
+
+	uint32_t result = 0;
+
+	struct v4l2_queryctrl queryctrl;
+	memset(&queryctrl, 0, sizeof(queryctrl));
+	queryctrl.id = id;
+
+	if (-1 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl)) {
+		if (errno != EINVAL) {
+			usage("VIDIOC_QUERYCTRL(%s) error: (%d) '%s'",  name, errno, strerror(errno));
+		} else {
+			usage("%s is not supported", name);
+		}
+	} else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
+		usage("%s is not supported", name);
+	} else {
+		struct v4l2_control control;
+		memset(&control, 0, sizeof (control));
+		control.id = id;
+		control.value = 0;
+		if (-1 == ioctl(fd, VIDIOC_G_CTRL, &control)) {
+			usage("VIDIOC_G_CTRL: (%d) '%s'", errno, strerror(errno));
+		}
+		printf("%s type: 0x%08x\n"
+		       "  minimum: 0x%08x  %10d\n"
+		       "  maximum: 0x%08x  %10d\n"
+		       "  step :   0x%08x  %10d\n"
+		       "  default: 0x%08x  %10d\n"
+		       "  current: 0x%08x  %10d\n"
+		       "  flags:   0x%08x  %10d\n"
+		       "",
+		       queryctrl.name, queryctrl.type,
+		       queryctrl.minimum, queryctrl.minimum,
+		       queryctrl.maximum, queryctrl.maximum,
+		       queryctrl.step, queryctrl.step,
+		       queryctrl.default_value, queryctrl.default_value,
+		       control.value, control.value,
+		       queryctrl.flags, queryctrl.flags);
+		result = queryctrl.default_value;
+	}
+	return result;
+}
+
+
+static void set_control(int fd, uint32_t id, uint32_t value) {
+	struct v4l2_control control;
+	memset(&control, 0, sizeof (control));
+	control.id = id;
+	control.value = value;
+	if (-1 == ioctl(fd, VIDIOC_S_CTRL, &control) && errno != ERANGE) {
+		usage("VIDIOC_S_CTRL: (%d) '%s'", errno, strerror(errno));
+	}
+}
+
+
+static void set_leds(int fd, uint32_t value) {
+	set_control(fd, V4L2_CID_HUE, value);
+}
+
 
 int main(int argc, char *argv[]) {
 
@@ -145,87 +207,33 @@ int main(int argc, char *argv[]) {
 
 	int fd = open_device(device_name);
 
-
-	struct v4l2_queryctrl queryctrl;
-	memset(&queryctrl, 0, sizeof(queryctrl));
-	queryctrl.id = V4L2_CID_HUE;
-
-	if (-1 == ioctl(fd, VIDIOC_QUERYCTRL, &queryctrl)) {
-		if (errno != EINVAL) {
-			usage("VIDIOC_QUERYCTRL error: (%d) '%s'", errno, strerror(errno));
-		} else {
-			usage("V4L2_CID_HUE is not supported");
-		}
-	} else if (queryctrl.flags & V4L2_CTRL_FLAG_DISABLED) {
-		usage("V4L2_CID_HUE is not supported");
-	} else {
-		printf("%s type: 0x%08x\n"
-		       "  minimum: 0x%08x  %10d\n"
-		       "  maximum: 0x%08x  %10d\n"
-		       "  step :   0x%08x  %10d\n"
-		       "  default: 0x%08x  %10d\n"
-		       "  flags:   0x%08x  %10d\n"
-		       "",
-		       queryctrl.name, queryctrl.type,
-		       queryctrl.minimum, queryctrl.minimum,
-		       queryctrl.maximum, queryctrl.maximum,
-		       queryctrl.step, queryctrl.step,
-		       queryctrl.default_value, queryctrl.default_value,
-		       queryctrl.flags, queryctrl.flags);
-
-		struct v4l2_control control;
-		memset(&control, 0, sizeof (control));
-		control.id = V4L2_CID_HUE;
-		control.value = queryctrl.default_value + 100;
-
-		if (-1 == ioctl(fd, VIDIOC_S_CTRL, &control)) {
-			usage("VIDIOC_S_CTRL: (%d) '%s'", errno, strerror(errno));
-		}
-
-	}
-
+	uint32_t default_hue = CHECK(fd, V4L2_CID_HUE);
+	uint32_t default_contrast = CHECK(fd, V4L2_CID_CONTRAST);
+	uint32_t default_sharpness = CHECK(fd, V4L2_CID_SHARPNESS);
+	uint32_t default_brightness = CHECK(fd, V4L2_CID_BRIGHTNESS);
 
 	for (int n = 0; n < count; ++n) {
 
 		printf("loop: %d\n", n);
-#if 0
-		for (int32_t value = 0; value < 16; ++value) {
-			struct v4l2_control control;
-			memset(&control, 0, sizeof (control));
-			control.id = V4L2_CID_HUE;
-			control.value = value;
-			if (-1 == ioctl(fd, VIDIOC_S_CTRL, &control) && errno != ERANGE) {
-				usage("VIDIOC_S_CTRL: (%d) '%s'", errno, strerror(errno));
-			}
-			usleep(100000);
-		}
-#else
+
 		for (int32_t value = 1; value < 16; value <<= 1) {
 			printf("  set: 0x%04x\n", value);
-
-			struct v4l2_control control;
-			memset(&control, 0, sizeof (control));
-			control.id = V4L2_CID_HUE;
-			control.value = value;
-			if (-1 == ioctl(fd, VIDIOC_S_CTRL, &control) && errno != ERANGE) {
-				usage("VIDIOC_S_CTRL: (%d) '%s'", errno, strerror(errno));
-			}
-
-#if 0
-			if (0 == ioctl(fd, VIDIOC_G_CTRL, &control)) {
-				control.value = value;
-				// The driver may clamp the value or return ERANGE, ignored here
-				if (-1 == ioctl(fd, VIDIOC_S_CTRL, &control) && errno != ERANGE) {
-					usage("VIDIOC_S_CTRL: (%d) '%s'", errno, strerror(errno));
-				}
-			} else if (errno != EINVAL) {
-				usage("VIDIOC_G_CTRL: (%d) '%s'", errno, strerror(errno));
-			}
-#endif
+			set_leds(fd, value);
 			usleep(500000);
 		}
-#endif
 	}
 
+	// set all off
+	printf("turn off\n");
+	set_leds(fd, 0);
+
+	set_control(fd, V4L2_CID_HUE, default_hue);
+	set_control(fd, V4L2_CID_CONTRAST, default_contrast);
+	set_control(fd, V4L2_CID_SHARPNESS, default_sharpness);
+	set_control(fd, V4L2_CID_BRIGHTNESS, default_brightness);
+
+
+	// finished
+	close(fd);
 	return 0;
 }
